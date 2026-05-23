@@ -3,90 +3,86 @@
 
 @section('content')
 
-    <!-- PAGE HEADER -->
-    <div class="rc-header-container">
+    <div class="flex items-center justify-between gap-4 mb-8 flex-wrap">
         <div>
-            <h1 class="rc-title">Rekening & Dompet</h1>
-            <p class="rc-subtitle">Kelola semua pos dan tempat penyimpanan uang kalian</p>
+            <h1 class="text-3xl font-bold text-slate-900 mb-1">Rekening & Dompet</h1>
+            <p class="text-sm text-slate-500">Kelola semua pos dan tempat penyimpanan uang kalian</p>
         </div>
-        <button onclick="openModal('modalBank')" class="btn-primary">
+        <button onclick="openModal('modalBank')" class="btn-primary whitespace-nowrap">
             <i class="fa-solid fa-plus"></i> Tambah Rekening
         </button>
     </div>
 
-    <!-- REKENING CARDS GRID -->
-    <div class="rc-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         @forelse($banks as $bank)
-            <div class="rc-card" id="bank-{{ $bank->id }}" style="--bank-theme: {{ $bank->color }};">
-                <!-- Lapisan Efek Gradasi Kartu -->
-                <div class="rc-card-overlay"></div>
+            <div id="bank-{{ $bank->id }}" class="relative bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden group">
 
-                <div class="rc-card-header">
-                    <div class="rc-icon-box">
+                <div class="absolute top-0 left-0 right-0 h-1.5 rounded-t-3xl" style="background: {{ $bank->color }};"></div>
+
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl">
                         {{ $bank->icon }}
                     </div>
 
                     @if($bank->transactions_count === 0)
-                        <button onclick="deleteBank({{ $bank->id }})" class="rc-action-delete" title="Hapus Rekening">
+                        <button onclick="deleteBank({{ $bank->id }})" class="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-100 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     @endif
                 </div>
 
-                <div class="rc-card-body">
-                    <div class="rc-label-balance">Saldo Saat Ini</div>
-                    <div class="rc-balance">
-                        <span class="rc-currency">Rp</span>{{ number_format($bank->current_balance, 0, ',', '.') }}
+                <div class="my-4">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Saldo Saat Ini</div>
+                    <div class="text-3xl font-extrabold text-slate-900">
+                        <span class="text-base font-semibold text-slate-400 mr-1">Rp</span>{{ number_format($bank->current_balance, 0, ',', '.') }}
                     </div>
                 </div>
 
-                <div class="rc-card-footer">
-                    <div class="rc-meta-left">
-                        <div class="rc-bank-name">{{ $bank->name }}</div>
-                        <div class="rc-owner">{{ $bank->account_name }}</div>
+                <div class="flex items-end justify-between pt-3.5 border-t border-slate-100">
+                    <div>
+                        <div class="text-sm font-bold text-slate-700">{{ $bank->name }}</div>
+                        <div class="text-xs text-slate-500 font-medium">{{ $bank->account_name }}</div>
                     </div>
 
                     @if($bank->account_number)
-                        <div class="rc-number-badge">
-                            <span>•••• {{ substr($bank->account_number, -4) }}</span>
+                        <div class="text-xs font-semibold text-white px-2 py-1 rounded" style="background: {{ $bank->color }};">
+                            •••• {{ substr($bank->account_number, -4) }}
                         </div>
                     @endif
                 </div>
 
-                <!-- Indikator Jumlah Transaksi Kecil di Pojok Atas -->
-                <div class="rc-transaction-pill">
+                <div class="absolute top-6 right-6 text-xs font-semibold text-slate-500 bg-slate-50 px-2 py-1 rounded-full border border-slate-200 flex items-center gap-1.5 group-hover:opacity-0 transition-opacity">
                     <i class="fa-solid fa-clock-rotate-left"></i> {{ $bank->transactions_count }}
                 </div>
             </div>
         @empty
-            <div class="rc-empty-box">
-                <div class="rc-empty-emoji">🏦</div>
-                <h3 class="rc-empty-title">Belum Ada Rekening Aktif</h3>
-                <p class="rc-empty-text">Dompet digital atau rekening bank kamu belum terdaftar. Yuk masukkan biar bisa langsung
-                    hitung pengeluaran!</p>
-                <button onclick="openModal('modalBank')" class="rc-btn-add" style="margin: 0 auto;">
+            <div class="col-span-full text-center py-16 px-5 bg-slate-50 border-2 border-dashed border-slate-300 rounded-3xl">
+                <div class="text-5xl mb-3">🏦</div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Belum Ada Rekening Aktif</h3>
+                <p class="text-sm text-slate-500 max-w-sm mx-auto mb-5 leading-relaxed">
+                    Dompet digital atau rekening bank kamu belum terdaftar. Yuk masukkan biar bisa langsung hitung pengeluaran!
+                </p>
+                <button onclick="openModal('modalBank')" class="btn-primary mx-auto">
                     <i class="fa-solid fa-plus"></i> Hubungkan Sekarang
                 </button>
             </div>
         @endforelse
     </div>
 
-    <!-- MODAL POPUP (Tetap dipertahankan strukturnya agar sinkron dengan JS) -->
-    <div id="modalBank" class="modal-overlay">
-        <div class="modal-box" style="max-width: 440px; border-radius: 24px; padding: 28px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
-                <h2 class="modal-title" style="margin:0; font-size:20px; font-weight:700;">Tambah Rekening</h2>
-                <button onclick="closeModal('modalBank')"
-                    style="background:none; border:none; cursor:pointer; color:#94a3b8; padding:8px; font-size:18px;"><i
-                        class="fa-solid fa-xmark"></i></button>
+    <div id="modalBank" class="modal-overlay" onclick="if(event.target === this) closeModal('modalBank')">
+        <div class="w-full max-w-md bg-white rounded-3xl p-7 shadow-2xl m-4 max-h-[90vh] overflow-y-auto md:m-0">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-slate-900">Tambah Rekening</h2>
+                <button onclick="closeModal('modalBank')" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 text-xl rounded-lg hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <div style="display:grid; grid-template-columns:80px 1fr; gap:12px;">
+            <div class="space-y-4">
+                <div class="grid grid-cols-[80px_1fr] gap-3">
                     <div>
                         <label class="label">Icon</label>
-                        <input type="text" id="bankIcon" value="🏦" class="input-field" maxlength="4"
-                            style="font-size:24px; text-align:center; padding:10px;">
+                        <input type="text" id="bankIcon" value="🏦" maxlength="4" class="input-field text-2xl text-center p-2.5">
                     </div>
                     <div>
                         <label class="label">Nama Bank / E-Wallet</label>
@@ -95,11 +91,10 @@
                 </div>
 
                 <div>
-                    <label class="label" style="margin-bottom:8px; display:block;">Pilih Warna Tema Kartu</label>
-                    <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap:8px;">
+                    <label class="label mb-2 block">Pilih Warna Tema Kartu</label>
+                    <div class="grid grid-cols-6 gap-2">
                         @foreach(['#10b981', '#3b82f6', '#f97316', '#8b5cf6', '#f43f5e', '#06b6d4', '#d946ef', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1', '#6b7280'] as $c)
-                            <button onclick="pickBankColor('{{ $c }}')" id="bc-{{ ltrim($c, '#') }}" class="rc-color-dot"
-                                style="background:{{ $c }}; width:100%; height:34px; border-radius:10px; border:2px solid transparent; cursor:pointer; transition:0.2s;"></button>
+                            <button onclick="pickBankColor('{{ $c }}')" id="bc-{{ ltrim($c, '#') }}" class="w-full h-9 rounded-lg border-2 border-transparent hover:scale-105 transition-transform" style="background: {{ $c }};"></button>
                         @endforeach
                     </div>
                     <input type="hidden" id="bankColor" value="#10b981">
@@ -107,297 +102,52 @@
 
                 <div>
                     <label class="label">Nama Pemilik</label>
-                    <input type="text" id="bankAccountName" placeholder="Nama sesuai aplikasi/buku tabungan"
-                        class="input-field">
+                    <input type="text" id="bankAccountName" placeholder="Nama sesuai aplikasi/buku tabungan" class="input-field">
                 </div>
 
                 <div>
-                    <label class="label">Nomor Rekening <span
-                            style="color:#94a3b8; font-weight:400;">(Opsional)</span></label>
+                    <label class="label">Nomor Rekening <span class="text-slate-400 font-normal">(Opsional)</span></label>
                     <input type="text" id="bankAccountNumber" placeholder="Contoh: 123456789" class="input-field">
                 </div>
 
                 <div>
                     <label class="label">Saldo Awal (Rp)</label>
-                    <input type="number" id="bankBalance" placeholder="0" class="input-field" style="font-weight:600;">
+                    <input type="number" id="bankBalance" placeholder="0" class="input-field font-semibold">
                 </div>
             </div>
 
-            <div style="display:flex; gap:12px; margin-top:28px;">
-                <button onclick="closeModal('modalBank')" class="btn-ghost"
-                    style="flex:1; justify-content:center;">Batal</button>
-                <button onclick="submitBank()" class="btn-primary" style="flex:1; justify-content:center;">
+            <div class="flex gap-3 mt-7">
+                <button onclick="closeModal('modalBank')" class="btn-ghost flex-1 justify-center">Batal</button>
+                <button onclick="submitBank()" class="btn-primary flex-1 justify-center">
                     <i class="fa-solid fa-floppy-disk"></i> Simpan
                 </button>
             </div>
         </div>
     </div>
 
-    <style>
-        /* Header Area */
-        .rc-header-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 30px;
-        }
-
-        .rc-title {
-            font-size: 26px !important;
-            font-weight: 800 !important;
-            color: #0f172a !important;
-            letter-spacing: -0.02em !important;
-            margin: 0 0 4px 0 !important;
-        }
-
-        .rc-subtitle {
-            font-size: 14px !important;
-            color: #64748b !important;
-            margin: 0 !important;
-        }
-
-        .rc-btn-add {
-            background: #0f172a !important;
-            color: white !important;
-            padding: 10px 18px !important;
-            border-radius: 12px !important;
-            font-weight: 600 !important;
-            font-size: 14px !important;
-            border: none !important;
-            cursor: pointer !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            transition: all 0.2s ease !important;
-        }
-
-        .rc-btn-add:hover {
-            background: #1e293b !important;
-            transform: translateY(-1px);
-        }
-
-        /* Grid System */
-        .rc-grid {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)) !important;
-            gap: 22px !important;
-        }
-
-        /* CARD MODEL BARU: DEBIT STYLE */
-        .rc-card {
-            position: relative !important;
-            background: #ffffff !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 24px !important;
-            padding: 24px !important;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03) !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            min-height: 195px !important;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-
-        /* Efek ambient di bawah kartu saat di-hover */
-        .rc-card:hover {
-            transform: translateY(-6px) !important;
-            box-shadow: 0 20px 32px rgba(15, 23, 42, 0.07) !important;
-            border-color: var(--bank-theme) !important;
-        }
-
-        /* Aksen Bias Warna Sesuai Pilihan */
-        .rc-card-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: var(--bank-theme) !important;
-        }
-
-        /* Atas Kartu */
-        .rc-card-header {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            margin-bottom: 12px !important;
-            z-index: 2;
-        }
-
-        .rc-icon-box {
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 14px !important;
-            background: #f1f5f9 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 22px !important;
-            border: 1px solid #e2e8f0 !important;
-        }
-
-        .rc-action-delete {
-            background: #fff1f2 !important;
-            color: #f43f5e !important;
-            border: 1px solid #ffe4e6 !important;
-            width: 30px !important;
-            height: 30px !important;
-            border-radius: 8px !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 12px !important;
-            opacity: 0;
-            transform: scale(0.95);
-            transition: all 0.2s ease;
-        }
-
-        .rc-card:hover .rc-action-delete {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .rc-action-delete:hover {
-            background: #ffe4e6 !important;
-            color: #e11d48 !important;
-        }
-
-        /* Tengah Kartu (Informasi Uang) */
-        .rc-card-body {
-            margin-top: auto !important;
-            margin-bottom: auto !important;
-            padding: 12px 0 !important;
-            z-index: 2;
-        }
-
-        .rc-label-balance {
-            font-size: 11px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
-            color: #94a3b8 !important;
-            margin-bottom: 4px !important;
-        }
-
-        .rc-balance {
-            font-size: 26px !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.02em !important;
-            color: #0f172a !important;
-            line-height: 1 !important;
-        }
-
-        .rc-currency {
-            font-size: 16px !important;
-            font-weight: 600 !important;
-            color: #94a3b8 !important;
-            margin-right: 3px !important;
-        }
-
-        /* Bawah Kartu */
-        .rc-card-footer {
-            display: flex !important;
-            align-items: flex-end !important;
-            justify-content: space-between !important;
-            padding-top: 14px !important;
-            border-top: 1px solid #f1f5f9 !important;
-            z-index: 2;
-        }
-
-        .rc-bank-name {
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            color: #334155 !important;
-        }
-
-        .rc-owner {
-            font-size: 12px !important;
-            color: #64748b !important;
-            font-weight: 500 !important;
-        }
-
-        .rc-number-badge {
-            font-size: 11px !important;
-            font-family: monospace !important;
-            color: white !important;
-            background: var(--bank-theme) !important;
-            padding: 3px 8px !important;
-            border-radius: 6px !important;
-            font-weight: 600 !important;
-        }
-
-        /* Status Transaksi Melayang */
-        .rc-transaction-pill {
-            position: absolute !important;
-            top: 24px !important;
-            right: 24px !important;
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            color: #64748b !important;
-            background: #f8fafc !important;
-            padding: 4px 8px !important;
-            border-radius: 20px !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 4px !important;
-            border: 1px solid #e2e8f0 !important;
-            transition: opacity 0.2s;
-        }
-
-        .rc-card:hover .rc-transaction-pill {
-            opacity: 0;
-            /* Sembunyikan pencatat transaksi saat tombol hapus muncul */
-        }
-
-        /* Empty State */
-        .rc-empty-box {
-            grid-column: 1 / -1 !important;
-            text-align: center !important;
-            padding: 50px 20px !important;
-            background: #f8fafc !important;
-            border: 2px dashed #cbd5e1 !important;
-            border-radius: 24px !important;
-        }
-
-        .rc-empty-emoji {
-            font-size: 44px !important;
-            margin-bottom: 12px !important;
-        }
-
-        .rc-empty-title {
-            font-size: 18px !important;
-            font-weight: 700 !important;
-            color: #1e293b !important;
-            margin-bottom: 6px !important;
-        }
-
-        .rc-empty-text {
-            font-size: 14px !important;
-            color: #64748b !important;
-            max-width: 380px !important;
-            margin: 0 auto 20px !important;
-            line-height: 1.5 !important;
-        }
-    </style>
-
 @endsection
 
 @push('scripts')
     <script>
-        function openModal(id) { $('#' + id).addClass('active'); }
-        function closeModal(id) { $('#' + id).removeClass('active'); }
+        function openModal(id) { 
+            $('#' + id).addClass('active'); 
+            if (window.innerWidth <= 768) {
+                document.body.style.overflow = 'hidden';
+            }
+        }
 
-        $('#modalBank').on('click', function (e) {
-            if ($(e.target).is('#modalBank')) closeModal('modalBank');
-        });
+        function closeModal(id) { 
+            $('#' + id).removeClass('active'); 
+            document.body.style.overflow = '';
+        }
 
         function pickBankColor(c) {
             $('#bankColor').val(c);
-            $('.rc-color-dot').css({ border: '2px solid transparent', transform: 'scale(1)', boxShadow: 'none' });
+            $('.grid button[id^="bc-"]').css({ 
+                border: '2px solid transparent', 
+                transform: 'scale(1)',
+                outline: 'none'
+            });
             $('#bc-' + c.replace('#', '')).css({
                 border: '2px solid white',
                 outline: '3px solid ' + c,

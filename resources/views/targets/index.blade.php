@@ -260,17 +260,31 @@
 
             <div style="display:flex; flex-direction:column; gap:16px;">
                 {{-- Dropdown Pilihan Sumber Bank --}}
-                <div>
-                    <label class="label">Ambil Dari Rekening/Bank</label>
-                    <select id="savingBankId" class="input-field"
-                        style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
-                        <option value="">-- Pilih Rekening/Bank --</option>
-                        @foreach($banks as $bank)
-                            <option value="{{ $bank->id }}">{{ $bank->name }} (Saldo: Rp
-                                {{ number_format($bank->balance ?? 0, 0, ',', '.') }})
-                            </option>
-                        @endforeach
-                    </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label class="label">Dari Rekening (Berkurang)</label>
+                        <select id="savingSourceBankId" class="input-field"
+                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+                            <option value="">-- Pilih Sumber --</option>
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_name }}) (Rp
+                                    {{ number_format($bank->balance ?? 0, 0, ',', '.') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Ke Rekening (Bertambah)</label>
+                        <select id="savingTargetBankId" class="input-field"
+                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+                            <option value="">-- Pilih Tujuan --</option>
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_name }}) (Rp
+                                    {{ number_format($bank->balance ?? 0, 0, ',', '.') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div>
@@ -357,22 +371,27 @@
         async function submitSaving() {
             const id = $('#savingTargetId').val();
             const data = {
-                bank_id: $('#savingBankId').val(), // Ambil id bank dari dropdown
+                source_bank_id: $('#savingSourceBankId').val(), // Bank Asal
+                target_bank_id: $('#savingTargetBankId').val(), // Bank Tujuan
                 amount: $('#savingAmount').val(),
                 date: $('#savingDate').val(),
                 notes: $('#savingNotes').val(),
             };
 
-            if (!data.bank_id) {
-                Toast.fire({ icon: 'warning', title: 'Pilih rekening asal terlebih dahulu!' });
+            if (!data.source_bank_id || !data.target_bank_id) {
+                Toast.fire({ icon: 'warning', title: 'Pilih rekening asal dan tujuan!' });
                 return;
             }
-
+            if (data.source_bank_id === data.target_bank_id) {
+                Toast.fire({ icon: 'warning', title: 'Rekening asal dan tujuan tidak boleh sama!' });
+                return;
+            }
             if (!data.amount) {
                 Toast.fire({ icon: 'warning', title: 'Masukkan jumlah!' });
                 return;
             }
 
+            // Eksekusi Ajax (URL tetap sama menuju controller)
             const res = await $.ajax({
                 url: `/targets/${id}/saving`,
                 method: 'POST',
@@ -384,20 +403,13 @@
             if (res.success) {
                 closeModal('modalSaving');
                 if (res.completed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '🎉 Target Tercapai!',
-                        text: 'Selamat! Kalian berhasil mencapai target!',
-                        background: '#fff',
-                        color: '#1a1a2e',
-                        confirmButtonColor: '#db2777'
-                    }).then(() => location.reload());
+                    Swal.fire({ icon: 'success', title: '🎉 Target Tercapai!', text: 'Selamat! Kalian berhasil mencapai target!', confirmButtonColor: '#db2777' }).then(() => location.reload());
                 } else {
                     Toast.fire({ icon: 'success', title: res.message });
                     setTimeout(() => location.reload(), 1200);
                 }
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: res.message, background: '#fff', color: '#1a1a2e', confirmButtonColor: '#db2777' });
+                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#db2777' });
             }
         }
 

@@ -422,6 +422,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow-y: auto;
         }
 
         .modal-overlay.active {
@@ -438,6 +439,7 @@
             max-height: 90vh;
             overflow-y: auto;
             animation: modalIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin: auto;
         }
 
         @keyframes modalIn {
@@ -582,24 +584,77 @@
             margin-top: 4px;
         }
 
-        /* PERBAIKAN MEDIA QUERIES UNTUK MOBILE SCREEN */
         @media (max-width: 768px) {
+
+            .modal-overlay {
+                padding: 0;
+                align-items: flex-start;
+                /* Modal mulai dari atas */
+            }
+
+            .modal-box {
+                max-height: none;
+                /* Hilangkan batasan tinggi */
+                min-height: 100vh;
+                /* Full screen di mobile */
+                border-radius: 0;
+                /* Hilangkan border radius di mobile */
+                padding: 20px 16px;
+                padding-bottom: 40px;
+                /* Extra padding bawah */
+                margin: 0;
+            }
+
+            /* Perbaikan untuk input fields di mobile */
+            .modal-box .input-field {
+                font-size: 16px !important;
+                /* Prevent zoom on iOS */
+                padding: 14px 16px;
+                /* Lebih besar, lebih mudah tap */
+            }
+
+            .modal-box select.input-field {
+                font-size: 16px !important;
+                padding: 14px 16px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                padding-right: 40px;
+                appearance: none;
+                -webkit-appearance: none;
+            }
+
+            .modal-box .btn-primary,
+            .modal-box .btn-ghost {
+                padding: 14px 22px;
+                /* Tombol lebih besar */
+                font-size: 15px;
+            }
+
+            /* Header modal di mobile */
+            .modal-box .modal-title {
+                font-size: 18px;
+            }
+
+            /* Type toggle buttons lebih besar */
+            .modal-box button[id^="type"] {
+                padding: 12px !important;
+                font-size: 14px !important;
+            }
+
             .layout-wrapper {
                 height: auto;
                 min-height: 100vh;
                 display: block;
-                /* Matikan flex agar scroll mengikuti body html global */
                 overflow: visible;
             }
 
             aside.sidebar {
                 display: none;
-                /* Sembunyikan sidebar di mobile */
             }
 
             .bottom-nav {
                 display: flex;
-                /* Aktifkan bottom nav di mobile */
             }
 
             .main-content {
@@ -608,8 +663,15 @@
                 height: auto;
                 overflow: visible;
                 padding: 24px 16px;
-                padding-bottom: 100px;
-                /* Jarak aman mutlak agar konten paling bawah tidak tenggelam di balik navbar */
+                padding-bottom: 120px;
+                /* DINAIKKAN dari 100px ke 120px */
+                min-height: calc(100vh - 68px);
+                /* Tambahkan ini */
+            }
+
+            .label {
+                font-size: 13px;
+                margin-bottom: 8px;
             }
         }
 
@@ -767,19 +829,19 @@
         </div>
     </div>
 
-    <!-- GLOBAL TRANSACTION MODAL CONTAINER -->
-    <div id="modalTransaction" class="modal-overlay" onclick="closeGlobalTransactionModal()">
-        <div class="modal-box" onclick="event.stopPropagation()">
+    <div id="modalTransaction" class="modal-overlay" onclick="if(event.target === this) closeGlobalTransactionModal()">
+        <div class="modal-box w-full max-w-lg m-4 max-h-[90vh] overflow-y-auto md:m-0"
+            style="max-width: 440px; border-radius: 24px; padding: 28px;">
+
             <div class="flex items-center justify-between border-b pb-3 mb-4">
                 <h3 class="text-lg font-semibold text-slate-800"><span class="pink-dot"></span>Tambah Transaksi</h3>
                 <button onclick="closeGlobalTransactionModal()"
                     class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
             </div>
 
-            <!-- Form Transaksi Cepat Mobile -->
             <form action="{{ route('transactions.store') }}" method="POST" id="globalTransactionForm">
                 @csrf
-                <div class="space-y-4">
+                <div class="space-y-4 pb-24">
                     <div>
                         <label class="label">Jenis Transaksi</label>
                         <div class="grid grid-cols-2 gap-2">
@@ -794,17 +856,57 @@
                             </label>
                         </div>
                     </div>
+
                     <div>
                         <label class="label">Nominal (Rp)</label>
                         <input type="number" name="amount" required placeholder="Contoh: 50000"
                             class="input-field font-semibold text-lg">
                     </div>
+
+                    <div>
+                        <label class="label">Pilih Rekening / Dompet</label>
+                        <select name="bank_id" required class="input-field"
+                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+                            <option value="">-- Pilih Rekening --</option>
+                            @php
+                                $couple = Auth::user()->couple;
+                                $banks = $couple->banks()->get();
+                                $categories = $couple->categories()->orderBy('type')->orderBy('name')->get();
+                            @endphp
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank->id }}">{{ $bank->icon }} {{ $bank->name }} (Rp
+                                    {{ number_format($bank->current_balance ?? 0, 0, ',', '.') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label">Kategori</label>
+                        <select name="category_id" required class="input-field"
+                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+                            <option value="">-- Pilih Kategori --</option>
+                            @foreach($categories ?? [] as $category)
+                                <option value="{{ $category->id }}" data-type="{{ $category->type }}">{{ $category->icon }}
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label">Tanggal</label>
+                        <input type="date" name="date" required value="{{ now()->format('Y-m-d') }}"
+                            class="input-field">
+                    </div>
+
                     <div>
                         <label class="label">Keterangan</label>
                         <input type="text" name="description" required
                             placeholder="Beli apa atau pendapatan dari mana..." class="input-field">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
                         <button type="button" onclick="closeGlobalTransactionModal()"
                             class="btn-ghost w-full justify-center">Batal</button>
                         <button type="submit" class="btn-primary w-full justify-center">Simpan</button>

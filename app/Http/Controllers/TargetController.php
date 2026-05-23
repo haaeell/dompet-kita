@@ -59,14 +59,33 @@ class TargetController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:1',
-            'bank_id' => 'required|exists:banks,id',
+            'source_bank_id' => 'required|exists:banks,id',
+            'target_bank_id' => 'required|exists:banks,id',
             'notes' => 'nullable|string|max:255',
             'date' => 'required|date',
         ]);
 
+        if ($request->source_bank_id == $request->target_bank_id) {
+            return response()->json(['success' => false, 'message' => 'Rekening asal dan tujuan tidak boleh sama.'], 422);
+        }
+
         DB::beginTransaction();
 
         try {
+            $couple = Auth::user()->couple;
+            $sourceBank = $couple->banks()->findOrFail($request->source_bank_id);
+            $targetBank = $couple->banks()->findOrFail($request->target_bank_id);
+
+            // Validasi kecukupan saldo di rekening asal
+            if ($sourceBank->balance < $request->amount) {
+                return response()->json(['success' => false, 'message' => 'Saldo rekening asal tidak mencukupi!'], 422);
+            }
+
+            // 1. Amankan Saldo Bank (Pindah Buku)
+            $sourceBank->decrement('balance', $request->amount);
+            $targetBank->increment('balance', $request->amount);
+
+            // 2. Catat Riwayat Tabungan Target
             $saving = TargetSaving::create([
                 'target_id' => $target->id,
                 'user_id' => Auth::id(),
@@ -75,16 +94,29 @@ class TargetController extends Controller
                 'date' => $request->date,
             ]);
 
-            $target->couple->transactions()->create([
+            // 3. Catat Transaksi Sisi Pengeluaran (Bank Asal)
+            $couple->transactions()->create([
                 'user_id' => Auth::id(),
-                'bank_id' => $request->bank_id,
-                'category_id' => $this->getOrCreateSavingCategory($target->couple),
+                'bank_id' => $sourceBank->id,
+                'category_id' => $this->getOrCreateSavingCategory($couple, 'expense'),
                 'type' => 'expense',
                 'amount' => $request->amount,
-                'description' => "Menabung untuk: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
+                'description' => "Pindah dana ke " . $targetBank->name . " untuk target: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
                 'date' => $request->date,
             ]);
 
+            // 4. Catat Transaksi Sisi Pemasukan (Bank Tujuan)
+            $couple->transactions()->create([
+                'user_id' => Auth::id(),
+                'bank_id' => $targetBank->id,
+                'category_id' => $this->getOrCreateSavingCategory($couple, 'income'),
+                'type' => 'income',
+                'amount' => $request->amount,
+                'description' => "Terima dana dari " . $sourceBank->name . " untuk target: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
+                'date' => $request->date,
+            ]);
+
+            // 5. Tambah akumulasi pencapaian target
             $target->increment('current_amount', $request->amount);
 
             DB::commit();
@@ -100,22 +132,22 @@ class TargetController extends Controller
                 ]);
             }
 
-            return response()->json(['success' => true, 'message' => 'Tabungan berhasil ditambahkan dan saldo bank terpotong!', 'target' => $target]);
+            return response()->json(['success' => true, 'message' => 'Dana berhasil dipindahkan antar rekening dan tabungan target diperbarui!', 'target' => $target]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Gagal memproses tabungan: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal memproses transfer tabungan: ' . $e->getMessage()], 500);
         }
     }
 
-    private function getOrCreateSavingCategory($couple)
+    private function getOrCreateSavingCategory($couple, $type)
     {
-        $category = $couple->categories()->where('name', 'Tabungan')->first();
+        $category = $couple->categories()->where('name', 'Tabungan')->where('type', $type)->first();
         if (!$category) {
             $category = $couple->categories()->create([
                 'name' => 'Tabungan',
                 'icon' => '🐷',
-                'color' => '#db2777',
-                'type' => 'expense'
+                'color' => $type == 'expense' ? '#db2777' : '#10b981',
+                'type' => $type
             ]);
         }
         return $category->id;

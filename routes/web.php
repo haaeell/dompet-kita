@@ -1,49 +1,62 @@
 <?php
 
-use App\Http\Controllers\AnnouncementDateController;
-use App\Http\Controllers\StudentCheckController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\WaLinkController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\BankController;
+use App\Http\Controllers\TargetController;
+use App\Http\Controllers\ReportController;
 
-Route::get('/', function () {
-    return view('welcome');
+// ─── Auth Routes ─────────────────────────────────────────
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
-Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::post('/check', [StudentCheckController::class, 'check'])->name('check.result');
-Route::get('/students/{student}/certificate', [StudentCheckController::class, 'certificate'])->name('check.certificate');
+// ─── Protected Routes ─────────────────────────────────────
+Route::middleware(['auth'])->group(function () {
 
-Route::middleware('auth')->prefix('students')->group(function () {
-    Route::delete('/reset', [StudentController::class, 'reset'])->name('students.reset');
-    Route::get('/template', [StudentController::class, 'template'])->name('students.template');
-    Route::post('/import', [StudentController::class, 'import'])->name('students.import');
-    Route::get('/generate-all-surat', [StudentController::class, 'generateAllSurat'])
-        ->name('students.generateAllSurat');
-    Route::post('/{id}/generate-surat', [StudentController::class, 'generateSurat'])
-        ->name('students.generateSurat');
-    Route::get('/', [StudentController::class, 'index'])->name('students.index');
-    Route::get('/{student}', [StudentController::class, 'show'])->name('students.show');
-    Route::post('/', [StudentController::class, 'store'])->name('students.store');
-    Route::put('/{student}', [StudentController::class, 'update'])->name('students.update');
-    Route::delete('/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
-});
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
-    Route::controller(AnnouncementDateController::class)->prefix('announcements')->name('announcements.')->group(function () {
-        Route::get('/',           'index')->name('index');
-        Route::post('/',          'store')->name('store');
-        Route::put('/{announcement}',    'update')->name('update');
-        Route::delete('/{announcement}', 'destroy')->name('destroy');
-        Route::patch('/{announcement}/toggle', 'toggleActive')->name('toggle');
+    // Transaksi
+    Route::prefix('transactions')->name('transactions.')->group(function () {
+        Route::get('/', [TransactionController::class, 'index'])->name('index');
+        Route::post('/', [TransactionController::class, 'store'])->name('store');
+        Route::put('/{transaction}', [TransactionController::class, 'update'])->name('update');
+        Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('destroy');
     });
-});
 
+    // Kategori
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('index');
+        Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+    });
 
-Route::get('/home', function () {
-    return redirect()->route('students.index');
+    // Bank / Rekening
+    Route::prefix('banks')->name('banks.')->group(function () {
+        Route::get('/', [BankController::class, 'index'])->name('index');
+        Route::post('/', [BankController::class, 'store'])->name('store');
+        Route::put('/{bank}', [BankController::class, 'update'])->name('update');
+        Route::delete('/{bank}', [BankController::class, 'destroy'])->name('destroy');
+    });
+
+    // Target Tabungan
+    Route::prefix('targets')->name('targets.')->group(function () {
+        Route::get('/', [TargetController::class, 'index'])->name('index');
+        Route::post('/', [TargetController::class, 'store'])->name('store');
+        Route::post('/{target}/saving', [TargetController::class, 'addSaving'])->name('saving');
+        Route::delete('/{target}', [TargetController::class, 'destroy'])->name('destroy');
+    });
+
+    // Laporan
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 });

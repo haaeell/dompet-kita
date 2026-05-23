@@ -657,6 +657,10 @@
                 display: flex;
             }
 
+            #mobileTopbar {
+                display: flex !important;
+            }
+
             .main-content {
                 display: block;
                 width: 100%;
@@ -664,9 +668,8 @@
                 overflow: visible;
                 padding: 24px 16px;
                 padding-bottom: 120px;
-                /* DINAIKKAN dari 100px ke 120px */
                 min-height: calc(100vh - 68px);
-                /* Tambahkan ini */
+                padding-top: 84px;
             }
 
             .label {
@@ -690,6 +693,53 @@
 </head>
 
 <body>
+    <header id="mobileTopbar"
+        style="display:none; position:fixed; top:0; left:0; right:0; height:60px; background:white; border-bottom:1px solid var(--border); z-index:990; padding:0 16px; align-items:center; justify-content:space-between; box-shadow:0 1px 8px rgba(0,0,0,0.04);">
+
+        {{-- Kiri: Logo + Nama Couple --}}
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div
+                style="width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg,var(--pink),var(--pink-dark)); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; flex-shrink:0;">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+
+
+            {{-- Avatar bertumpuk --}}
+            <div style="display:flex; align-items:center;">
+                @foreach(auth()->user()->couple->users ?? [] as $i => $member)
+                    <div
+                        style="width:30px; height:30px; border-radius:50%; background:var(--pink-light); border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:15px; position:relative; {{ $i > 0 ? 'margin-left:-8px;' : '' }}">
+                        {{ $member->avatar }}
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Kanan: Avatar + Kode Undangan --}}
+        <div style="display:flex; align-items:center; gap:10px;">
+
+            {{-- Divider --}}
+            <div style="width:1px; height:28px; background:var(--border);"></div>
+
+            {{-- Kode Undangan --}}
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;">
+                <span
+                    style="font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Kode
+                    Undangan</span>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span
+                        style="font-size:13px; font-weight:700; color:var(--pink-dark); letter-spacing:0.1em; font-family:monospace;">
+                        {{ auth()->user()->couple->invite_code ?? '' }}
+                    </span>
+                    <button onclick="copyInvite()"
+                        style="background:var(--pink-light); border:none; border-radius:6px; padding:3px 7px; cursor:pointer; color:var(--pink-dark); font-size:11px; line-height:1;">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </header>
     <div class="layout-wrapper">
 
         <aside class="sidebar">

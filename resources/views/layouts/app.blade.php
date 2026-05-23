@@ -779,6 +779,20 @@
                 </div>
             </div>
 
+            {{-- Divider --}}
+            <div style="width:1px; height:28px; background:var(--border);"></div>
+
+            {{-- Logout --}}
+            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                @csrf
+                <button type="submit"
+                    style="background:none; border:none; cursor:pointer; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#ef4444; transition:all 0.15s;"
+                    onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'"
+                    title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket" style="font-size:15px;"></i>
+                </button>
+            </form>
+
         </div>
     </header>
     <div class="layout-wrapper">

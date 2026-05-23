@@ -16,7 +16,7 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="Daftar – DompetKita">
     <meta property="og:description" content="Daftar ke DompetKita dan mulai kelola keuangan bersama pasangan.">
-    <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+    <meta property="og:image" content="https://placehold.co/1200x630/db2777/ffffff?text=DompetKita+💗">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:site_name" content="DompetKita">
     <meta property="og:locale" content="id_ID">

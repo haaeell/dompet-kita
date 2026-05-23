@@ -19,7 +19,7 @@
     <meta property="og:title" content="@yield('title', 'DompetKita') – Keuangan Bersama">
     <meta property="og:description"
         content="Aplikasi keuangan bersama untuk pasangan. Catat pemasukan, pengeluaran, dan raih target nabung berdua.">
-    <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+    <meta property="og:image" content="https://placehold.co/1200x630/db2777/ffffff?text=DompetKita+💗">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:site_name" content="DompetKita">
     <meta property="og:locale" content="id_ID">

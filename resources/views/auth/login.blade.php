@@ -4,8 +4,46 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- SEO Meta --}}
+    <meta name="description" content="Masuk ke DompetKita – Aplikasi keuangan bersama untuk pasangan.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#db2777">
+    <meta name="author" content="DompetKita">
+
+    {{-- Open Graph --}}
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Masuk – DompetKita">
+    <meta property="og:description" content="Masuk ke DompetKita dan kelola keuangan bersama pasangan.">
+    <meta property="og:image" content="{{ asset('images/og-image.png') }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:site_name" content="DompetKita">
+    <meta property="og:locale" content="id_ID">
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Masuk – DompetKita">
+    <meta name="twitter:description" content="Masuk ke DompetKita dan kelola keuangan bersama pasangan.">
+    <meta name="twitter:image" content="{{ asset('images/og-image.png') }}">
+
+    {{-- PWA & Mobile --}}
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DompetKita">
+    <meta name="application-name" content="DompetKita">
+    <meta name="msapplication-TileColor" content="#db2777">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="format-detection" content="telephone=no">
+
+    {{-- Favicon --}}
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+
     <title>Masuk – DompetKita</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link

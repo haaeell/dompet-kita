@@ -29,6 +29,10 @@ class TargetController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'target_amount' => str_replace(['.', ','], '', $request->target_amount),
+        ]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'icon' => 'required|string|max:10',

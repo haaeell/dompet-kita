@@ -24,7 +24,7 @@
     @endif
 
     <div class="card p-6 max-w-3xl">
-        <form action="{{ route('transactions.store') }}" method="POST">
+        <form action="{{ route('transactions.store') }}" method="POST" id="transaction-form">
             @csrf
 
             <div class="flex gap-2 mb-5 p-1.5 rounded-xl bg-slate-50 border border-slate-200">
@@ -42,7 +42,7 @@
             <div class="space-y-5">
                 <div>
                     <label class="label">Jumlah (Rp)</label>
-                    <input type="text" name="amount" value="{{ old('amount') }}" required
+                    <input type="text" name="amount" id="amountDisplay" value="{{ old('amount') }}" required
                            placeholder="Contoh: 50.000" class="input-field rupiah font-semibold text-lg">
                 </div>
 
@@ -102,41 +102,61 @@
 @endsection
 
 @push('scripts')
-    <script>
-        const selectedTransactionCategory = '{{ old('category_id', '') }}';
+<script>
+    const selectedTransactionCategory = '{{ old('category_id', '') }}';
 
-        function setTxType(type) {
-            document.getElementById('typeField').value = type;
-            document.getElementById('btnIncome').classList.remove('bg-green-50', 'text-green-700');
-            document.getElementById('btnExpense').classList.remove('bg-rose-50', 'text-rose-700');
-            document.getElementById('btnIncome').classList.add('text-slate-600');
-            document.getElementById('btnExpense').classList.add('text-slate-600');
+    const allCategories = [];
+    document.querySelectorAll('#category_id option[data-type]').forEach(option => {
+        allCategories.push({
+            value: option.value,
+            type: option.dataset.type,
+            text: option.textContent,
+        });
+    });
 
-            if (type === 'income') {
-                document.getElementById('btnIncome').classList.remove('text-slate-600');
-                document.getElementById('btnIncome').classList.add('bg-green-50', 'text-green-700');
-            } else {
-                document.getElementById('btnExpense').classList.remove('text-slate-600');
-                document.getElementById('btnExpense').classList.add('bg-rose-50', 'text-rose-700');
-            }
+    function setTxType(type) {
+        document.getElementById('typeField').value = type;
 
-            document.querySelectorAll('#category_id option[data-type]').forEach(option => {
-                option.hidden = option.dataset.type !== type;
-            });
+        const btnIncome = document.getElementById('btnIncome');
+        const btnExpense = document.getElementById('btnExpense');
 
-            const categorySelect = document.getElementById('category_id');
-            if (selectedTransactionCategory) {
-                const selectedOption = categorySelect.querySelector(`option[value="${selectedTransactionCategory}"]`);
-                if (selectedOption && selectedOption.dataset.type === type) {
-                    categorySelect.value = selectedTransactionCategory;
-                } else {
-                    categorySelect.value = '';
-                }
-            }
+        btnIncome.classList.remove('bg-green-50', 'text-green-700', 'text-slate-600');
+        btnExpense.classList.remove('bg-rose-50', 'text-rose-700', 'text-slate-600');
+
+        if (type === 'income') {
+            btnIncome.classList.add('bg-green-50', 'text-green-700');
+            btnExpense.classList.add('text-slate-600');
+        } else {
+            btnExpense.classList.add('bg-rose-50', 'text-rose-700');
+            btnIncome.classList.add('text-slate-600');
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            setTxType('{{ old('type', 'expense') }}');
-        });
-    </script>
+        const categorySelect = document.getElementById('category_id');
+        categorySelect.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+
+        allCategories
+            .filter(cat => cat.type === type)
+            .forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.value;
+                option.dataset.type = cat.type;
+                option.textContent = cat.text;
+
+                if (selectedTransactionCategory && cat.value == selectedTransactionCategory) {
+                    option.selected = true;
+                }
+
+                categorySelect.appendChild(option);
+            });
+    }
+
+    document.getElementById('transaction-form').addEventListener('submit', function () {
+        const amountInput = document.getElementById('amountDisplay');
+        amountInput.value = amountInput.value.replace(/\./g, '').replace(/,/g, '');
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTxType('{{ old('type', 'expense') }}');
+    });
+</script>
 @endpush

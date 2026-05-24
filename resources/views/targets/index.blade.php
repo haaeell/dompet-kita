@@ -212,7 +212,7 @@
 
                 <div>
                     <label class="label">Target Jumlah (Rp)</label>
-                    <input type="number" id="tAmount" placeholder="5000000" class="input-field" min="1"
+                    <input type="text" id="tAmount" placeholder="5.000.000" class="input-field rupiah"
                         style="font-size:18px; font-family:'Playfair Display',serif; font-weight:700;">
                 </div>
 
@@ -289,7 +289,7 @@
 
                 <div>
                     <label class="label">Jumlah (Rp)</label>
-                    <input type="number" id="savingAmount" placeholder="100000" class="input-field" min="1"
+                    <input type="text" id="savingAmount" placeholder="100.000" class="input-field rupiah"
                         style="font-size:22px; font-family:'Playfair Display',serif; font-weight:700;">
                 </div>
                 <div>

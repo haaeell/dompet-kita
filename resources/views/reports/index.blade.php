@@ -45,7 +45,15 @@
     </div>
 
     {{-- Ringkasan / Summary Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+        <div class="card p-6"
+            style="background: #fff; border-left: 4px solid #2563eb; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Total Kekayaan</div>
+            <div class="font-display text-3xl font-bold text-sky-700">
+                Rp {{ number_format($totalWealth, 0, ',', '.') }}
+            </div>
+            <div class="text-xs text-gray-500 mt-2">Saldo semua rekening aktif</div>
+        </div>
         <div class="card p-6"
             style="background: #fff; border-left: 4px solid #22c55e; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
             <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Total Pemasukan</div>
@@ -66,6 +74,25 @@
             <div class="font-display text-3xl font-bold {{ $balance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                 {{ $balance >= 0 ? '+' : '' }}Rp {{ number_format($balance, 0, ',', '.') }}
             </div>
+        </div>
+    </div>
+
+    {{-- Debt & Receivable Summary --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+        <div class="card p-6" style="background:#fff; border-left:4px solid #ef4444; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Hutang Belum Dibayar</div>
+            <div class="font-display text-3xl font-bold text-rose-600">Rp {{ number_format($outstandingHutang, 0, ',', '.') }}</div>
+            <div class="text-xs text-gray-500 mt-2">Semua hutang yang belum diselesaikan</div>
+        </div>
+        <div class="card p-6" style="background:#fff; border-left:4px solid #16a34a; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Piutang Belum Kembali</div>
+            <div class="font-display text-3xl font-bold text-emerald-600">Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}</div>
+            <div class="text-xs text-gray-500 mt-2">Piutang yang masih harus dikembalikan</div>
+        </div>
+        <div class="card p-6" style="background:#fff; border-left:4px solid #8b5cf6; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Total Catatan Hutang/Piutang</div>
+            <div class="font-display text-3xl font-bold text-violet-700">{{ $debts->count() }}</div>
+            <div class="text-xs text-gray-500 mt-2">Jumlah catatan hutang/piutang</div>
         </div>
     </div>
 
@@ -172,6 +199,64 @@
                     <p class="text-sm">Tidak ada transaksi di periode ini</p>
                 </div>
             @endforelse
+        </div>
+    </div>
+
+    {{-- Daftar Hutang dan Piutang --}}
+    <div class="card p-6 mb-8" style="background:#fff; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div class="flex items-center justify-between mb-4 gap-3">
+            <h3 class="font-display font-bold text-gray-800 text-lg">Daftar Hutang & Piutang</h3>
+            <span class="text-xs bg-slate-100 px-3 py-1 rounded-full text-slate-700">{{ $debts->count() }} Catatan</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[12px] uppercase text-[var(--text-secondary)] tracking-[0.12em] border-b border-slate-200">
+                        <th class="px-4 py-3">Tipe</th>
+                        <th class="px-4 py-3">Pihak</th>
+                        <th class="px-4 py-3">Jumlah</th>
+                        <th class="px-4 py-3">Rekening</th>
+                        <th class="px-4 py-3">Jatuh Tempo</th>
+                        <th class="px-4 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($debts as $debt)
+                        <tr class="border-b border-slate-200">
+                            <td class="px-4 py-4">
+                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $debt->type === 'hutang' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700' }}">
+                                    {{ ucfirst($debt->type) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4">
+                                <div class="font-semibold">{{ $debt->counterparty }}</div>
+                                <div class="text-xs text-[var(--text-secondary)]">{{ $debt->purpose }}</div>
+                            </td>
+                            <td class="px-4 py-4">
+                                Rp {{ number_format($debt->amount, 0, ',', '.') }}
+                            </td>
+                            <td class="px-4 py-4">
+                                {{ $debt->bank->name }}
+                            </td>
+                            <td class="px-4 py-4">
+                                {{ $debt->due_date->format('d M Y') }}
+                                @if($debt->paid_at)
+                                    <div class="text-xs text-[var(--text-secondary)]">Lunas {{ $debt->paid_at->format('d M Y') }}</div>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4">
+                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $debt->status === 'pending' ? 'bg-yellow-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
+                                    {{ ucfirst($debt->status) }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Belum ada catatan hutang/piutang.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 @endsection

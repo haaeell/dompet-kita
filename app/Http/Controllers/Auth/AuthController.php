@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Bank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -81,6 +82,63 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+
+    public function profile()
+    {
+        return view('profile.index', ['user' => Auth::user()]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
+            'avatar' => 'nullable|string|max:3',
+            'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $user = Auth::user();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->avatar = $request->avatar ?: $user->avatar;
+
+        if ($request->hasFile('profile_photo')) {
+            $folder = public_path('uploads/profiles');
+            if (!File::exists($folder)) {
+                File::makeDirectory($folder, 0755, true);
+            }
+
+            if ($user->profile_photo && File::exists($folder . '/' . $user->profile_photo)) {
+                File::delete($folder . '/' . $user->profile_photo);
+            }
+
+            $filename = time() . '_' . uniqid() . '.' . $request->file('profile_photo')->getClientOriginalExtension();
+            $request->file('profile_photo')->move($folder, $filename);
+            $user->profile_photo = $filename;
+        }
+
+        $user->save();
+
+        return redirect()->route('profile')->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|confirmed|min:8',
+        ]);
+
+        $user = Auth::user();
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Password saat ini salah.']);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('profile')->with('success', 'Password berhasil diperbarui.');
     }
 
     private function seedDefaultCategories(int $coupleId): void

@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     // Transaksi
     Route::prefix('transactions')->name('transactions.')->group(function () {
         Route::get('/', [TransactionController::class, 'index'])->name('index');
+        Route::get('/create', [TransactionController::class, 'create'])->name('create');
         Route::post('/', [TransactionController::class, 'store'])->name('store');
         Route::put('/{transaction}', [TransactionController::class, 'update'])->name('update');
         Route::delete('/{transaction}', [TransactionController::class, 'destroy'])->name('destroy');
@@ -57,6 +58,18 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{target}', [TargetController::class, 'destroy'])->name('destroy');
     });
 
+    // Hutang & Piutang
+    Route::prefix('debts')->name('debts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DebtController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\DebtController::class, 'store'])->name('store');
+        Route::put('/{debt}/pay', [App\Http\Controllers\DebtController::class, 'pay'])->name('pay');
+        Route::delete('/{debt}', [App\Http\Controllers\DebtController::class, 'destroy'])->name('destroy');
+    });
+
     // Laporan
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
 });

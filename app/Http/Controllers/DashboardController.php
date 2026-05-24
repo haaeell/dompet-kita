@@ -50,6 +50,9 @@ class DashboardController extends Controller
             ->sum('amount');
 
         $banks = $couple->banks()->where('is_active', true)->get();
+        $totalWealth = $banks->sum('current_balance');
+        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
         $targets = $couple->targets()->where('status', 'active')->latest()->take(3)->get();
 
         $chartData = [];
@@ -98,6 +101,9 @@ class DashboardController extends Controller
             'monthlyIncome',
             'monthlyExpense',
             'banks',
+            'totalWealth',
+            'outstandingHutang',
+            'outstandingPiutang',
             'targets',
             'chartData',
             'expenseByCategory'

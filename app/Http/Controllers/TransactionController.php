@@ -29,6 +29,23 @@ class TransactionController extends Controller
         return view('transactions.index', compact('transactions', 'categories', 'banks', 'coupleUsers'));
     }
 
+    public function create()
+    {
+        $couple = Auth::user()->couple;
+        $categories = $couple->categories()->orderBy('type')->orderBy('name')->get();
+
+        $banks = $couple->banks()
+            ->where('is_active', true)
+            ->where('account_name', Auth::user()->name)
+            ->get();
+
+        if ($banks->isEmpty()) {
+            $banks = $couple->banks()->where('is_active', true)->get();
+        }
+
+        return view('transactions.create', compact('categories', 'banks'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -59,11 +76,17 @@ class TransactionController extends Controller
             'date' => $request->date,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaksi berhasil ditambahkan! 🎉',
-            'transaction' => $transaction->load(['user', 'category', 'bank']),
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil ditambahkan! 🎉',
+                'transaction' => $transaction->load(['user', 'category', 'bank']),
+            ]);
+        }
+
+        return redirect()
+            ->route('transactions.index')
+            ->with('success', 'Transaksi berhasil ditambahkan! 🎉');
     }
 
     public function update(Request $request, Transaction $transaction)

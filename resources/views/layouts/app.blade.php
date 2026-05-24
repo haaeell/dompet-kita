@@ -831,6 +831,10 @@
                     class="nav-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> Transaksi
                 </a>
+                <a href="{{ route('debts.index') }}"
+                    class="nav-link {{ request()->routeIs('debts.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Hutang / Piutang
+                </a>
                 <a href="{{ route('categories.index') }}"
                     class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-tag"></i> Kategori
@@ -886,9 +890,8 @@
                 <span>Transaksi</span>
             </a>
 
-            <!-- Tombol Tambah Langsung Buka Modal -->
             <div class="bottom-nav-center">
-                <a href="javascript:void(0)" onclick="openGlobalTransactionModal()" class="bottom-nav-fab">
+                <a href="{{ route('transactions.create') }}" class="bottom-nav-fab">
                     <i class="fa-solid fa-plus"></i>
                 </a>
             </div>
@@ -924,102 +927,28 @@
                             class="fa-solid fa-bullseye"></i></div>
                     <span class="text-xs font-medium">Target</span>
                 </a>
+                <a href="{{ route('debts.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('debts.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <span class="text-xs font-medium">Hutang</span>
+                </a>
                 <a href="{{ route('reports.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('reports.*') ? 'text-pink-600 bg-pink-50' : '' }}">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
                             class="fa-solid fa-chart-column"></i></div>
                     <span class="text-xs font-medium">Laporan</span>
                 </a>
+                <a href="{{ route('profile') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('profile') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-user"></i></div>
+                    <span class="text-xs font-medium">Profil</span>
+                </a>
             </div>
         </div>
     </div>
 
-    <div id="modalTransaction" class="modal-overlay" onclick="if(event.target === this) closeGlobalTransactionModal()">
-        <div class="modal-box w-full max-w-lg m-4 max-h-[90vh] overflow-y-auto md:m-0"
-            style="max-width: 440px; border-radius: 24px; padding: 28px;">
-
-            <div class="flex items-center justify-between border-b pb-3 mb-4">
-                <h3 class="text-lg font-semibold text-slate-800"><span class="pink-dot"></span>Tambah Transaksi</h3>
-                <button onclick="closeGlobalTransactionModal()"
-                    class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
-            </div>
-
-            <form action="{{ route('transactions.store') }}" method="POST" id="globalTransactionForm">
-                @csrf
-                <div class="space-y-4 pb-24">
-                    <div>
-                        <label class="label">Jenis Transaksi</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label
-                                class="border rounded-xl p-3 flex items-center justify-center gap-2 cursor-pointer bg-emerald-50 border-emerald-200 text-emerald-700 font-medium">
-                                <input type="radio" name="type" value="income" checked class="accent-emerald-600">
-                                Pemasukan
-                            </label>
-                            <label
-                                class="border rounded-xl p-3 flex items-center justify-center gap-2 cursor-pointer bg-rose-50 border-rose-200 text-rose-700 font-medium">
-                                <input type="radio" name="type" value="expense" class="accent-rose-600"> Pengeluaran
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="label">Nominal (Rp)</label>
-                        <input type="number" name="amount" required placeholder="Contoh: 50000"
-                            class="input-field font-semibold text-lg">
-                    </div>
-
-                    <div>
-                        <label class="label">Pilih Rekening / Dompet</label>
-                        <select name="bank_id" required class="input-field"
-                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
-                            <option value="">-- Pilih Rekening --</option>
-                            @php
-                                $couple = Auth::user()->couple;
-                                $banks = $couple->banks()->get();
-                                $categories = $couple->categories()->orderBy('type')->orderBy('name')->get();
-                            @endphp
-                            @foreach($banks as $bank)
-                                <option value="{{ $bank->id }}">{{ $bank->icon }} {{ $bank->name }} (Rp
-                                    {{ number_format($bank->current_balance ?? 0, 0, ',', '.') }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="label">Kategori</label>
-                        <select name="category_id" required class="input-field"
-                            style="background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
-                            <option value="">-- Pilih Kategori --</option>
-                            @foreach($categories ?? [] as $category)
-                                <option value="{{ $category->id }}" data-type="{{ $category->type }}">{{ $category->icon }}
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="label">Tanggal</label>
-                        <input type="date" name="date" required value="{{ now()->format('Y-m-d') }}"
-                            class="input-field">
-                    </div>
-
-                    <div>
-                        <label class="label">Keterangan</label>
-                        <input type="text" name="description" required
-                            placeholder="Beli apa atau pendapatan dari mana..." class="input-field">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 pt-2">
-                        <button type="button" onclick="closeGlobalTransactionModal()"
-                            class="btn-ghost w-full justify-center">Batal</button>
-                        <button type="submit" class="btn-primary w-full justify-center">Simpan</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script>
         const Toast = Swal.mixin({
@@ -1050,31 +979,47 @@
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMoreMenu');
+            if (!menu) return;
             menu.classList.toggle('hidden');
         }
 
-        function openGlobalTransactionModal() {
-            document.getElementById('mobileMoreMenu').classList.add('hidden');
+        document.addEventListener('DOMContentLoaded', function () {
+            const rupiahInputs = document.querySelectorAll('.rupiah');
+            const normalize = value => value.replace(/[^\d]/g, '');
+            const formatRupiah = value => {
+                const digits = normalize(value);
+                if (!digits) return '';
+                return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            };
 
-            if (typeof window.openModal === 'function') {
-                window.openModal('modalTransaction');
-            } else {
-                document.getElementById('modalTransaction').classList.add('active');
-            }
-        }
+            rupiahInputs.forEach(input => {
+                input.addEventListener('focus', function () {
+                    this.value = normalize(this.value);
+                });
+                input.addEventListener('input', function () {
+                    const cursorPos = this.selectionStart || 0;
+                    const prevLength = this.value.length;
+                    this.value = formatRupiah(this.value);
+                    const newLength = this.value.length;
+                    const diff = newLength - prevLength;
+                    this.setSelectionRange(cursorPos + diff, cursorPos + diff);
+                });
+                input.addEventListener('blur', function () {
+                    this.value = formatRupiah(this.value);
+                });
+                if (input.value) {
+                    input.value = formatRupiah(input.value);
+                }
+            });
 
-        function closeGlobalTransactionModal() {
-            if (typeof window.closeModal === 'function') {
-                window.closeModal('modalTransaction');
-            } else {
-                document.getElementById('modalTransaction').classList.remove('active');
-            }
-        }
-
-        if (window.location.href.includes('banks') || window.location.href.includes('targets') || window.location.href.includes('reports')) {
-            const btnMore = document.getElementById('btnMoreMenu');
-            if (btnMore) btnMore.classList.add('active');
-        }
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function () {
+                    this.querySelectorAll('.rupiah').forEach(input => {
+                        input.value = normalize(input.value);
+                    });
+                });
+            });
+        });
 
         async function deleteConfirm(url, callback) {
             const result = await Swal.fire({
@@ -1092,7 +1037,7 @@
                 headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') }
             });
             handleAjaxResponse(res, callback);
-        }
+    }
     </script>
 
     @stack('scripts')

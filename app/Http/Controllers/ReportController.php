@@ -33,6 +33,10 @@ class ReportController extends Controller
         $totalIncome = $transactions->where('type', 'income')->sum('amount');
         $totalExpense = $transactions->where('type', 'expense')->sum('amount');
         $balance = $totalIncome - $totalExpense;
+        $totalWealth = $couple->banks()->where('is_active', true)->sum('current_balance');
+        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $debts = $couple->debts()->latest('due_date')->get();
 
         $userSummary = $couple->users->map(function ($u) use ($transactions) {
             return [
@@ -80,6 +84,10 @@ class ReportController extends Controller
             'totalIncome',
             'totalExpense',
             'balance',
+            'totalWealth',
+            'outstandingHutang',
+            'outstandingPiutang',
+            'debts',
             'userSummary',
             'expenseByCategory',
             'monthlyTrend',

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Debt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -41,6 +42,11 @@ class Couple extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function debts(): HasMany
+    {
+        return $this->hasMany(Debt::class);
     }
 
     public function targets(): HasMany

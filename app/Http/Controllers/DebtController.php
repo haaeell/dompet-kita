@@ -1,0 +1,172 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Bank;
+use App\Models\Category;
+use App\Models\Debt;
+use App\Models\Transaction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+
+class DebtController extends Controller
+{
+    public function index(Request $request)
+    {
+        $couple = Auth::user()->couple;
+        $type = $request->get('type', 'hutang');
+
+        $debts = $couple->debts()
+            ->with(['bank', 'settlementBank', 'user'])
+            ->where('type', $type)
+            ->latest('due_date')
+            ->get();
+
+        $banks = $couple->banks()->where('is_active', true)->get();
+        $totalWealth = $banks->sum('current_balance');
+        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+
+        return view('debts.index', compact('debts', 'banks', 'type', 'totalWealth', 'outstandingHutang', 'outstandingPiutang'));
+    }
+
+    public function store(Request $request)
+    {
+        $couple = Auth::user()->couple;
+
+        $request->validate([
+            'type' => 'required|in:hutang,piutang',
+            'amount' => 'required|numeric|min:1',
+            'counterparty' => 'required|string|max:255',
+            'purpose' => 'required|string|max:255',
+            'due_date' => 'required|date',
+            'bank_id' => 'required|exists:banks,id',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $bank = $couple->banks()->findOrFail($request->bank_id);
+
+        $debt = Debt::create([
+            'couple_id' => $couple->id,
+            'user_id' => Auth::id(),
+            'type' => $request->type,
+            'amount' => $request->amount,
+            'counterparty' => $request->counterparty,
+            'purpose' => $request->purpose,
+            'due_date' => $request->due_date,
+            'bank_id' => $request->bank_id,
+            'notes' => $request->notes,
+            'status' => 'pending',
+        ]);
+
+        $category = $this->getDebtCategory($couple, $request->type);
+        $transactionType = $request->type === 'hutang' ? 'income' : 'expense';
+        $description = $request->type === 'hutang'
+            ? 'Dana hutang dari ' . $request->counterparty
+            : 'Piutang ke ' . $request->counterparty;
+
+        $transaction = Transaction::create([
+            'couple_id' => $couple->id,
+            'user_id' => Auth::id(),
+            'category_id' => $category->id,
+            'bank_id' => $bank->id,
+            'type' => $transactionType,
+            'amount' => $request->amount,
+            'description' => $description,
+            'notes' => $request->notes,
+            'date' => $request->due_date,
+        ]);
+
+        $debt->initial_transaction_id = $transaction->id;
+        $debt->save();
+
+        return redirect()
+            ->route('debts.index', ['type' => $request->type])
+            ->with('success', 'Catatan ' . ($request->type === 'hutang' ? 'hutang' : 'piutang') . ' berhasil disimpan.');
+    }
+
+    public function pay(Request $request, Debt $debt)
+    {
+        $this->authorizeDebt($debt);
+
+        $request->validate([
+            'settlement_bank_id' => 'required|exists:banks,id',
+            'paid_at' => 'required|date',
+        ]);
+
+        if ($debt->status === 'paid') {
+            return back()->with('error', 'Catatan sudah dibayar atau dikembalikan.');
+        }
+
+        $settlementBank = $debt->couple->banks()->findOrFail($request->settlement_bank_id);
+
+        $debt->update([
+            'settlement_bank_id' => $settlementBank->id,
+            'paid_at' => $request->paid_at,
+            'status' => 'paid',
+        ]);
+
+        $category = $this->getDebtCategory($debt->couple, $debt->type);
+        $transactionType = $debt->type === 'hutang' ? 'expense' : 'income';
+        $description = $debt->type === 'hutang'
+            ? 'Bayar hutang ke ' . $debt->counterparty
+            : 'Piutang kembali dari ' . $debt->counterparty;
+
+        Transaction::create([
+            'couple_id' => $debt->couple_id,
+            'user_id' => Auth::id(),
+            'category_id' => $category->id,
+            'bank_id' => $settlementBank->id,
+            'type' => $transactionType,
+            'amount' => $debt->amount,
+            'description' => $description,
+            'notes' => 'Penyelesaian ' . $debt->type,
+            'date' => $request->paid_at,
+        ]);
+
+        return back()->with('success', 'Pembayaran hutang/piutang berhasil dicatat.');
+    }
+
+    public function destroy(Debt $debt)
+    {
+        $this->authorizeDebt($debt);
+
+        if ($debt->status === 'paid') {
+            return back()->with('error', 'Catatan yang sudah selesai tidak bisa dihapus.');
+        }
+
+        if ($debt->initial_transaction_id) {
+            Transaction::find($debt->initial_transaction_id)?->delete();
+        }
+
+        $debt->delete();
+
+        return back()->with('success', 'Catatan hutang/piutang berhasil dihapus.');
+    }
+
+    protected function getDebtCategory($couple, string $type): Category
+    {
+        $name = $type === 'hutang' ? 'Hutang' : 'Piutang';
+        $categoryType = $type === 'hutang' ? 'income' : 'expense';
+        $icon = '💸';
+        $color = $type === 'hutang' ? '#10b981' : '#ef4444';
+
+        return Category::firstOrCreate([
+            'couple_id' => $couple->id,
+            'name' => $name,
+            'type' => $categoryType,
+        ], [
+            'icon' => $icon,
+            'color' => $color,
+            'is_default' => false,
+        ]);
+    }
+
+    protected function authorizeDebt(Debt $debt): void
+    {
+        if ($debt->couple_id !== Auth::user()->couple_id) {
+            abort(403);
+        }
+    }
+}

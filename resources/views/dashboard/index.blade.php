@@ -41,36 +41,53 @@
                 Rp {{ number_format($balance, 0, ',', '.') }}
             </div>
             <div class="text-xs text-[var(--text-secondary)]">{{ $balance >= 0 ? '+' : '-' }} Bulan
-                {{ now()->isoFormat('MMMM Y') }}</div>
+                {{ now()->isoFormat('MMMM Y') }}
+            </div>
         </div>
 
-        <div class="card border-l-4 border-green-500 p-4">
+        <div class="card border-l-4 border-blue-500 p-4">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Pemasukan</span>
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Total
+                    Kekayaan</span>
                 <span
-                    class="w-[34px] h-[34px] rounded-[10px] bg-green-50 flex items-center justify-center text-green-700 shrink-0">
-                    <i class="fa-solid fa-arrow-trend-up text-sm"></i>
+                    class="w-[34px] h-[34px] rounded-[10px] bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
+                    <i class="fa-solid fa-coins text-sm"></i>
                 </span>
             </div>
-            <div class="text-2xl font-bold text-green-700 mb-1 break-all">
-                Rp {{ number_format($monthlyIncome, 0, ',', '.') }}
+            <div class="text-2xl font-bold text-blue-700 mb-1 break-all">
+                Rp {{ number_format($totalWealth, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-[var(--text-secondary)]">Total pemasukan bulan ini</div>
+            <div class="text-xs text-[var(--text-secondary)]">Saldo seluruh rekening aktif</div>
         </div>
 
         <div class="card border-l-4 border-rose-500 p-4">
             <div class="flex items-center justify-between mb-3">
-                <span
-                    class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Pengeluaran</span>
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Hutang
+                    Belum Dibayar</span>
                 <span
                     class="w-[34px] h-[34px] rounded-[10px] bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
-                    <i class="fa-solid fa-arrow-trend-down text-sm"></i>
+                    <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
                 </span>
             </div>
             <div class="text-2xl font-bold text-rose-600 mb-1 break-all">
-                Rp {{ number_format($monthlyExpense, 0, ',', '.') }}
+                Rp {{ number_format($outstandingHutang, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-[var(--text-secondary)]">Total pengeluaran bulan ini</div>
+            <div class="text-xs text-[var(--text-secondary)]">Total hutang yang harus dibayar</div>
+        </div>
+
+        <div class="card border-l-4 border-green-500 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Piutang
+                    Belum Kembali</span>
+                <span
+                    class="w-[34px] h-[34px] rounded-[10px] bg-green-50 flex items-center justify-center text-green-700 shrink-0">
+                    <i class="fa-solid fa-hand-holding-hand text-sm"></i>
+                </span>
+            </div>
+            <div class="text-2xl font-bold text-green-700 mb-1 break-all">
+                Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}
+            </div>
+            <div class="text-xs text-[var(--text-secondary)]">Total piutang yang belum kembali</div>
         </div>
     </div>
 
@@ -87,7 +104,7 @@
             <div class="flex flex-col gap-1">
                 @forelse($transactions as $tx)
                     <div class="flex items-center gap-3.5 px-2.5 py-2.5 rounded-xl transition-colors hover:bg-gray-50
-                                    max-[576px]:flex-wrap max-[576px]:gap-2.5">
+                                                            max-[576px]:flex-wrap max-[576px]:gap-2.5">
                         <div class="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-lg shrink-0"
                             style="background:{{ $tx->category->color }}18;">
                             {{ $tx->category->icon }}
@@ -107,7 +124,7 @@
                         </div>
                         <div
                             class="text-right shrink-0 flex flex-col items-end gap-1
-                                        max-[576px]:w-full max-[576px]:flex-row max-[576px]:justify-between max-[576px]:items-center max-[576px]:border-t max-[576px]:border-dashed max-[576px]:border-gray-100 max-[576px]:pt-2 max-[576px]:mt-1">
+                                                                max-[576px]:w-full max-[576px]:flex-row max-[576px]:justify-between max-[576px]:items-center max-[576px]:border-t max-[576px]:border-dashed max-[576px]:border-gray-100 max-[576px]:pt-2 max-[576px]:mt-1">
                             <div
                                 class="text-sm font-bold whitespace-nowrap {{ $tx->type === 'income' ? 'text-green-700' : 'text-rose-600' }}">
                                 {{ $tx->type === 'income' ? '+' : '-' }} Rp {{ number_format($tx->amount, 0, ',', '.') }}

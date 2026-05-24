@@ -11,7 +11,7 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $fillable = ['couple_id', 'name', 'email', 'password', 'avatar', 'role'];
+    protected $fillable = ['couple_id', 'name', 'email', 'password', 'avatar', 'profile_photo', 'role'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -28,6 +28,11 @@ class User extends Authenticatable
     public function targetSavings(): HasMany
     {
         return $this->hasMany(TargetSaving::class);
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return $this->profile_photo ? asset('uploads/profiles/' . $this->profile_photo) : null;
     }
 
     public function getAvatarDisplayAttribute(): string

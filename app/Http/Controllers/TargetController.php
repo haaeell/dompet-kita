@@ -57,6 +57,10 @@ class TargetController extends Controller
 
     public function addSaving(Request $request, Target $target)
     {
+        $request->merge([
+            'amount' => str_replace(['.', ','], '', $request->amount),
+        ]);
+
         $request->validate([
             'amount' => 'required|numeric|min:1',
             'source_bank_id' => 'required|exists:banks,id',
@@ -70,22 +74,18 @@ class TargetController extends Controller
         }
 
         DB::beginTransaction();
-
         try {
             $couple = Auth::user()->couple;
             $sourceBank = $couple->banks()->findOrFail($request->source_bank_id);
             $targetBank = $couple->banks()->findOrFail($request->target_bank_id);
 
-            // Validasi kecukupan saldo di rekening asal
             if ($sourceBank->current_balance < $request->amount) {
                 return response()->json(['success' => false, 'message' => 'Saldo rekening asal tidak mencukupi!'], 422);
             }
 
-            // 1. Amankan Saldo Bank (Pindah Buku)
             $sourceBank->decrement('current_balance', $request->amount);
             $targetBank->increment('current_balance', $request->amount);
 
-            // 2. Catat Riwayat Tabungan Target
             $saving = TargetSaving::create([
                 'target_id' => $target->id,
                 'user_id' => Auth::id(),
@@ -94,7 +94,6 @@ class TargetController extends Controller
                 'date' => $request->date,
             ]);
 
-            // 3. Catat Transaksi Sisi Pengeluaran (Bank Asal)
             $couple->transactions()->create([
                 'user_id' => Auth::id(),
                 'bank_id' => $sourceBank->id,
@@ -105,7 +104,6 @@ class TargetController extends Controller
                 'date' => $request->date,
             ]);
 
-            // 4. Catat Transaksi Sisi Pemasukan (Bank Tujuan)
             $couple->transactions()->create([
                 'user_id' => Auth::id(),
                 'bank_id' => $targetBank->id,
@@ -119,6 +117,7 @@ class TargetController extends Controller
             DB::commit();
 
             $target->refresh();
+
             if ($target->current_amount >= $target->target_amount) {
                 $target->update(['status' => 'completed']);
                 return response()->json([
@@ -135,7 +134,6 @@ class TargetController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal memproses transfer tabungan: ' . $e->getMessage()], 500);
         }
     }
-
     private function getOrCreateSavingCategory($couple, $type)
     {
         $category = $couple->categories()->where('name', 'Tabungan')->where('type', $type)->first();

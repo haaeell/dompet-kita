@@ -277,7 +277,7 @@
                             <option value="">-- Pilih Sumber --</option>
                             @foreach($banks as $bank)
                                 <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_name }}) (Rp
-                                    {{ number_format($bank->balance ?? 0, 0, ',', '.') }})
+                                    {{ number_format($bank->current_balance ?? 0, 0, ',', '.') }})
                                 </option>
                             @endforeach
                         </select>
@@ -289,7 +289,7 @@
                             <option value="">-- Pilih Tujuan --</option>
                             @foreach($banks as $bank)
                                 <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_name }}) (Rp
-                                    {{ number_format($bank->balance ?? 0, 0, ',', '.') }})
+                                    {{ number_format($bank->current_balance ?? 0, 0, ',', '.') }})
                                 </option>
                             @endforeach
                         </select>

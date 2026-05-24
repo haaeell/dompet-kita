@@ -94,11 +94,12 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
-            'avatar' => 'nullable|string|max:3',
+            'avatar' => 'nullable',
             'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'profile_photo.max' => 'Ukuran foto profil maksimal 2MB.',
             'profile_photo.mimes' => 'Format foto profil harus JPG, JPEG, atau PNG.',
+            'email.unique' => 'Email sudah digunakan.',
         ]);
 
         $user = Auth::user();

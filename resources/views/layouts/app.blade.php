@@ -203,6 +203,14 @@
             font-size: 16px;
             border: 1px solid var(--pink-mid);
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .partner-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .partner-name {
@@ -749,8 +757,13 @@
             <div style="display:flex; align-items:center;">
                 @foreach(auth()->user()->couple->users ?? [] as $i => $member)
                     <div
-                        style="width:30px; height:30px; border-radius:50%; background:var(--pink-light); border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:15px; position:relative; {{ $i > 0 ? 'margin-left:-8px;' : '' }}">
-                        {{ $member->avatar }}
+                        style="width:30px; height:30px; border-radius:50%; background:var(--pink-light); border:2px solid white; display:flex; align-items:center; justify-content:center; font-size:15px; position:relative; overflow:hidden; {{ $i > 0 ? 'margin-left:-8px;' : '' }}">
+                        @if($member->profile_photo_url)
+                            <img src="{{ $member->profile_photo_url }}" alt="{{ $member->name }}"
+                                style="width:100%; height:100%; object-fit:cover; display:block;" />
+                        @else
+                            {{ $member->avatar }}
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -812,7 +825,13 @@
                 <div class="partner-label">Pasangan</div>
                 @foreach(auth()->user()->couple->users ?? [] as $member)
                     <div class="partner-item">
-                        <div class="partner-avatar">{{ $member->avatar }}</div>
+                        <div class="partner-avatar">
+                            @if($member->profile_photo_url)
+                                <img src="{{ $member->profile_photo_url }}" alt="{{ $member->name }}" />
+                            @else
+                                {{ $member->avatar }}
+                            @endif
+                        </div>
                         <div>
                             <div class="partner-name">{{ $member->name }}</div>
                             <div class="partner-role">{{ $member->role === 'owner' ? '👑 Pemilik' : '💝 Pasangan' }}</div>
@@ -1037,7 +1056,7 @@
                 headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') }
             });
             handleAjaxResponse(res, callback);
-    }
+        }
     </script>
 
     @stack('scripts')

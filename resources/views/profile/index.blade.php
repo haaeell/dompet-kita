@@ -100,9 +100,10 @@
                             <label class="label" for="profile_photo">Unggah Foto Profil</label>
                             <input type="file" id="profile_photo" name="profile_photo" accept="image/jpeg,image/png"
                                 class="input-field">
-                            <p class="text-xs text-[var(--text-secondary)] mt-2">Unggah foto untuk tampilan profil yang
-                                lebih
-                                personal.</p>
+                            <p class="text-xs text-[var(--text-secondary)] mt-2">
+                                Ukuran maksimal 2MB. Hanya JPG, JPEG, atau PNG.
+                            </p>
+                            <p id="photoWarning" class="text-xs text-rose-600 mt-2 hidden"></p>
                         </div>
                         <button type="submit" class="btn-primary">Simpan Perubahan</button>
                     </div>
@@ -135,4 +136,38 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            const profilePhotoInput = document.getElementById('profile_photo');
+            const photoWarning = document.getElementById('photoWarning');
+            const profileForm = document.querySelector('form[action="{{ route('profile.update') }}"]');
+
+            if (profilePhotoInput && photoWarning && profileForm) {
+                const maxSizeBytes = 2 * 1024 * 1024;
+
+                profilePhotoInput.addEventListener('change', function () {
+                    photoWarning.classList.add('hidden');
+                    photoWarning.textContent = '';
+
+                    if (!this.files || !this.files[0]) {
+                        return;
+                    }
+
+                    if (this.files[0].size > maxSizeBytes) {
+                        photoWarning.textContent = 'Ukuran file terlalu besar. Maksimal 2MB.';
+                        photoWarning.classList.remove('hidden');
+                    }
+                });
+
+                profileForm.addEventListener('submit', function (event) {
+                    if (profilePhotoInput.files && profilePhotoInput.files[0] && profilePhotoInput.files[0].size > maxSizeBytes) {
+                        event.preventDefault();
+                        photoWarning.textContent = 'Ukuran file terlalu besar. Maksimal 2MB.';
+                        photoWarning.classList.remove('hidden');
+                    }
+                });
+            }
+        </script>
+    @endpush
 @endsection

@@ -77,13 +77,13 @@ class TargetController extends Controller
             $targetBank = $couple->banks()->findOrFail($request->target_bank_id);
 
             // Validasi kecukupan saldo di rekening asal
-            if ($sourceBank->balance < $request->amount) {
+            if ($sourceBank->current_balance < $request->amount) {
                 return response()->json(['success' => false, 'message' => 'Saldo rekening asal tidak mencukupi!'], 422);
             }
 
             // 1. Amankan Saldo Bank (Pindah Buku)
-            $sourceBank->decrement('balance', $request->amount);
-            $targetBank->increment('balance', $request->amount);
+            $sourceBank->decrement('current_balance', $request->amount);
+            $targetBank->increment('current_balance', $request->amount);
 
             // 2. Catat Riwayat Tabungan Target
             $saving = TargetSaving::create([
@@ -115,9 +115,6 @@ class TargetController extends Controller
                 'description' => "Terima dana dari " . $sourceBank->name . " untuk target: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
                 'date' => $request->date,
             ]);
-
-            // 5. Tambah akumulasi pencapaian target
-            $target->increment('current_amount', $request->amount);
 
             DB::commit();
 

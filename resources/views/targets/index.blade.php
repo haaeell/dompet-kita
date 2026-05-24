@@ -102,8 +102,17 @@
                                 style="padding:10px 12px; background:#f8fafc; border: 1px solid #e2e8f0; border-radius:10px; margin-bottom:10px; display:flex; flex-direction:column; gap:5px;">
                                 @foreach($target->savings->groupBy('user_id') as $userId => $savings)
                                     <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px;">
-                                        <span style="color:var(--text-secondary);">{{ $savings->first()->user->avatar ?? '👤' }}
-                                            {{ $savings->first()->user->name }}</span>
+                                        <span style="display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary);">
+                                            @if($savings->first()->user->profile_photo_url)
+                                                <img src="{{ $savings->first()->user->profile_photo_url }}"
+                                                    alt="{{ $savings->first()->user->name }}"
+                                                    style="width:18px; height:18px; border-radius:50%; object-fit:cover;" />
+                                            @else
+                                                <span
+                                                    style="display:inline-flex; width:18px; height:18px; border-radius:50%; background:#f3f4f6; color:#475569; align-items:center; justify-content:center; font-size:10px;">{{ $savings->first()->user->avatar ?? '👤' }}</span>
+                                            @endif
+                                            {{ $savings->first()->user->name }}
+                                        </span>
                                         <span style="font-weight:600; color:var(--text-primary);">Rp
                                             {{ number_format($savings->sum('amount'), 0, ',', '.') }}</span>
                                     </div>

@@ -115,7 +115,14 @@
                                 {{ $tx->description }}
                             </div>
                             <div class="text-xs text-[var(--text-secondary)] mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                <span class="whitespace-nowrap">{{ $tx->user->avatar }} {{ $tx->user->name }}</span>
+                                <span class="whitespace-nowrap inline-flex items-center gap-2">
+                                    @if($tx->user->profile_photo_url)
+                                        <img src="{{ $tx->user->profile_photo_url }}" alt="{{ $tx->user->name }}" style="width:20px; height:20px; border-radius:50%; object-fit:cover;" />
+                                    @else
+                                        <span style="display:inline-flex; width:20px; height:20px; border-radius:50%; background:#f3f4f6; color:#374151; align-items:center; justify-content:center; font-size:12px;">{{ $tx->user->avatar }}</span>
+                                    @endif
+                                    {{ $tx->user->name }}
+                                </span>
                                 <span class="opacity-40">•</span>
                                 <span class="whitespace-nowrap">{{ $tx->date->format('d M') }}</span>
                                 <span class="opacity-40">•</span>

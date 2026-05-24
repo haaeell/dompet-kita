@@ -96,6 +96,9 @@ class AuthController extends Controller
             'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
             'avatar' => 'nullable|string|max:3',
             'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'profile_photo.max' => 'Ukuran foto profil maksimal 2MB.',
+            'profile_photo.mimes' => 'Format foto profil harus JPG, JPEG, atau PNG.',
         ]);
 
         $user = Auth::user();

@@ -139,7 +139,13 @@
         @foreach($userSummary as $summary)
             <div class="card p-6" style="background: #fff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="text-3xl">{{ $summary['user']->avatar ?? '👤' }}</div>
+                    @if($summary['user']->profile_photo_url)
+                        <img src="{{ $summary['user']->profile_photo_url }}" alt="{{ $summary['user']->name }}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                    @else
+                        <div style="width:48px; height:48px; border-radius:50%; background:#f8fafc; color:#475569; display:flex; align-items:center; justify-content:center; font-size:22px;">
+                            {{ $summary['user']->avatar ?? '👤' }}
+                        </div>
+                    @endif
                     <div>
                         <h3 class="font-display font-bold text-gray-800">{{ $summary['user']->name }}</h3>
                         <p class="text-xs text-pink-500 font-semibold">
@@ -184,7 +190,14 @@
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-semibold text-gray-800 truncate">{{ $tx->description }}</div>
                         <div class="text-xs text-gray-400 flex items-center gap-1.5 mt-0.5">
-                            <span>{{ $tx->user->avatar ?? '👤' }} {{ $tx->user->name }}</span>
+                            <span class="inline-flex items-center gap-2">
+                                @if($tx->user->profile_photo_url)
+                                    <img src="{{ $tx->user->profile_photo_url }}" alt="{{ $tx->user->name }}" style="width:18px; height:18px; border-radius:50%; object-fit:cover;" />
+                                @else
+                                    <span style="display:inline-flex; width:18px; height:18px; border-radius:50%; background:#f3f4f6; color:#475569; align-items:center; justify-content:center; font-size:10px;">{{ $tx->user->avatar ?? '👤' }}</span>
+                                @endif
+                                {{ $tx->user->name }}
+                            </span>
                             <span class="text-gray-200">•</span>
                             <span>{{ $tx->date->format('d M Y') }}</span>
                         </div>

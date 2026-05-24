@@ -22,12 +22,13 @@ class DashboardController extends Controller
         $coupleMembers = $couple->users;
 
         $selectedUserId = $request->get('user_id');
+        $selectedUser = $selectedUserId ? $couple->users()->find($selectedUserId) : null;
 
         $transactionQuery = $couple->transactions();
         $incomeQuery = $couple->transactions()->where('type', 'income');
         $expenseQuery = $couple->transactions()->where('type', 'expense');
 
-        if ($selectedUserId) {
+        if ($selectedUser) {
             $transactionQuery->where('user_id', $selectedUserId);
             $incomeQuery->where('user_id', $selectedUserId);
             $expenseQuery->where('user_id', $selectedUserId);
@@ -49,7 +50,12 @@ class DashboardController extends Controller
             ->whereMonth('date', $month)->whereYear('date', $year)
             ->sum('amount');
 
-        $banks = $couple->banks()->where('is_active', true)->get();
+        $banksQuery = $couple->banks()->where('is_active', true);
+        if ($selectedUser) {
+            $banksQuery->where('account_name', $selectedUser->name);
+        }
+
+        $banks = $banksQuery->get();
         $totalWealth = $banks->sum('current_balance');
         $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
         $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');

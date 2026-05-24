@@ -47,8 +47,9 @@
 
         <div class="card border-l-4 border-blue-500 p-4">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">Total
-                    Kekayaan</span>
+                <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">
+                    {{ $selectedUserId ? 'Total Kekayaan Anggota' : 'Total Kekayaan' }}
+                </span>
                 <span
                     class="w-[34px] h-[34px] rounded-[10px] bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
                     <i class="fa-solid fa-coins text-sm"></i>
@@ -57,7 +58,13 @@
             <div class="text-2xl font-bold text-blue-700 mb-1 break-all">
                 Rp {{ number_format($totalWealth, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-[var(--text-secondary)]">Saldo seluruh rekening aktif</div>
+            <div class="text-xs text-[var(--text-secondary)]">
+                @if($selectedUserId)
+                    Saldo rekening aktif milik {{ $coupleMembers->firstWhere('id', $selectedUserId)->name ?? 'anggota' }}
+                @else
+                    Saldo seluruh rekening aktif
+                @endif
+            </div>
         </div>
 
         <div class="card border-l-4 border-rose-500 p-4">

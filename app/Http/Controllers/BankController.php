@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bank;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,7 +116,7 @@ class BankController extends Controller
         }
     }
 
-    protected function buildMutationQuery(Request $request, Bank $bank): Builder
+    protected function buildMutationQuery(Request $request, Bank $bank): HasMany
     {
         $query = $bank->transactions()->with(['user', 'category']);
 

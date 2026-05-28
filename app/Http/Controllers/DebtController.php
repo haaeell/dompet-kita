@@ -14,21 +14,48 @@ class DebtController extends Controller
 {
     public function index(Request $request)
     {
-        $couple = Auth::user()->couple;
+        $user = Auth::user();
+        $couple = $user->couple;
         $type = $request->get('type', 'hutang');
+        $selectedUserId = $request->get('user_id');
+        $selectedUser = $selectedUserId ? $couple->users()->find($selectedUserId) : null;
 
-        $debts = $couple->debts()
+        $debtsQuery = $couple->debts()
             ->with(['bank', 'settlementBank', 'user'])
-            ->where('type', $type)
-            ->latest('due_date')
-            ->get();
+            ->where('type', $type);
 
-        $banks = $couple->banks()->where('is_active', true)->get();
+        if ($selectedUser) {
+            $debtsQuery->where('user_id', $selectedUser->id);
+        }
+
+        $debts = $debtsQuery->latest('due_date')->get();
+
+        $banksQuery = $couple->banks()->where('is_active', true);
+        if ($selectedUser) {
+            $banksQuery->where('account_name', $selectedUser->name);
+        }
+
+        $banks = $banksQuery->get();
+        $coupleMembers = $couple->users;
         $totalWealth = $banks->sum('current_balance');
-        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $debtSummaryQuery = $couple->debts();
+        if ($selectedUser) {
+            $debtSummaryQuery->where('user_id', $selectedUser->id);
+        }
 
-        return view('debts.index', compact('debts', 'banks', 'type', 'totalWealth', 'outstandingHutang', 'outstandingPiutang'));
+        $outstandingHutang = (clone $debtSummaryQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = (clone $debtSummaryQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+
+        return view('debts.index', compact(
+            'debts',
+            'banks',
+            'type',
+            'totalWealth',
+            'outstandingHutang',
+            'outstandingPiutang',
+            'coupleMembers',
+            'selectedUserId'
+        ));
     }
 
     public function store(Request $request)
@@ -115,7 +142,7 @@ class DebtController extends Controller
 
         Transaction::create([
             'couple_id' => $debt->couple_id,
-            'user_id' => Auth::id(),
+            'user_id' => $debt->user_id,
             'category_id' => $category->id,
             'bank_id' => $settlementBank->id,
             'type' => $transactionType,

@@ -17,96 +17,74 @@
         $expense = $categories->where('type', 'expense');
     @endphp
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="cat-grid">
+    <div class="card p-3 sm:p-4 mb-5">
+        <div class="category-tabs">
+            <a href="{{ route('categories.index', ['tab' => 'expense']) }}"
+                class="category-tab {{ $activeTab === 'expense' ? 'active expense' : '' }}">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+                <span>Pengeluaran</span>
+                <span class="category-tab-count">{{ $expense->count() }}</span>
+            </a>
+            <a href="{{ route('categories.index', ['tab' => 'income']) }}"
+                class="category-tab {{ $activeTab === 'income' ? 'active income' : '' }}">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                <span>Pemasukan</span>
+                <span class="category-tab-count">{{ $income->count() }}</span>
+            </a>
+        </div>
+    </div>
 
-        <div>
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-                <span
-                    style="width:28px; height:28px; border-radius:8px; background:#fff1f2; display:flex; align-items:center; justify-content:center; color:#e11d48;">
-                    <i class="fa-solid fa-arrow-trend-down" style="font-size:13px;"></i>
-                </span>
-                <span
-                    style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#e11d48;">Pengeluaran</span>
-                <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">{{ $expense->count() }}
-                    kategori</span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                @foreach($expense as $cat)
-                    <div class="card cat-item" id="cat-{{ $cat->id }}"
-                        style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px; cursor:pointer;"
-                        onclick="window.location='{{ route('transactions.index', ['category_id' => $cat->id]) }}'">
-                        <div
-                            style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:{{ $cat->color }}18; border:1px solid {{ $cat->color }}30;">
-                            {{ $cat->icon }}
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-size:14px; font-weight:600; color:var(--text-primary);">{{ $cat->name }}</div>
-                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                                {{ $cat->transactions_count }} transaksi</div>
-                        </div>
-                        <div style="width:10px; height:10px; border-radius:50%; background:{{ $cat->color }}; flex-shrink:0;">
-                        </div>
-                        @if(!$cat->is_default || $cat->transactions_count === 0)
-                            <button onclick="event.stopPropagation(); deleteCategory({{ $cat->id }})" class="cat-del-btn"
-                                style="background:none; border:none; cursor:pointer; color:#cbd5e1; padding:6px; border-radius:8px; font-size:13px; line-height:1; transition:all 0.15s; opacity:0;"
-                                onmouseover="this.style.color='#e11d48';this.style.background='#fff1f2'"
-                                onmouseout="this.style.color='#cbd5e1';this.style.background='none'">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        @endif
-                    </div>
-                @endforeach
-                @if($expense->isEmpty())
-                    <div style="text-align:center; padding:32px 0; color:var(--text-secondary); font-size:13px;">Belum ada
-                        kategori pengeluaran</div>
-                @endif
-            </div>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+        @php
+            $activeCategories = $activeTab === 'income' ? $income : $expense;
+            $activeColor = $activeTab === 'income' ? '#16a34a' : '#e11d48';
+            $activeBg = $activeTab === 'income' ? '#f0fdf4' : '#fff1f2';
+            $activeIcon = $activeTab === 'income' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+            $activeLabel = $activeTab === 'income' ? 'Pemasukan' : 'Pengeluaran';
+        @endphp
+
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+            <span
+                style="width:28px; height:28px; border-radius:8px; background:{{ $activeBg }}; display:flex; align-items:center; justify-content:center; color:{{ $activeColor }};">
+                <i class="fa-solid {{ $activeIcon }}" style="font-size:13px;"></i>
+            </span>
+            <span
+                style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:{{ $activeColor }};">{{ $activeLabel }}</span>
+            <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">{{ $activeCategories->count() }}
+                kategori</span>
         </div>
 
-        <div>
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-                <span
-                    style="width:28px; height:28px; border-radius:8px; background:#f0fdf4; display:flex; align-items:center; justify-content:center; color:#16a34a;">
-                    <i class="fa-solid fa-arrow-trend-up" style="font-size:13px;"></i>
-                </span>
-                <span
-                    style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#16a34a;">Pemasukan</span>
-                <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">{{ $income->count() }}
-                    kategori</span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                @foreach($income as $cat)
-                    <div class="card cat-item" id="cat-{{ $cat->id }}"
-                        style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px; cursor:pointer;"
-                        onclick="window.location='{{ route('transactions.index', ['category_id' => $cat->id]) }}'">
-                        <div
-                            style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:{{ $cat->color }}18; border:1px solid {{ $cat->color }}30;">
-                            {{ $cat->icon }}
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-size:14px; font-weight:600; color:var(--text-primary);">{{ $cat->name }}</div>
-                            <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                                {{ $cat->transactions_count }} transaksi</div>
-                        </div>
-                        <div style="width:10px; height:10px; border-radius:50%; background:{{ $cat->color }}; flex-shrink:0;">
-                        </div>
-                        @if(!$cat->is_default || $cat->transactions_count === 0)
-                            <button onclick="event.stopPropagation(); deleteCategory({{ $cat->id }})" class="cat-del-btn"
-                                style="background:none; border:none; cursor:pointer; color:#cbd5e1; padding:6px; border-radius:8px; font-size:13px; line-height:1; transition:all 0.15s; opacity:0;"
-                                onmouseover="this.style.color='#e11d48';this.style.background='#fff1f2'"
-                                onmouseout="this.style.color='#cbd5e1';this.style.background='none'">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        @endif
-                    </div>
-                @endforeach
-                @if($income->isEmpty())
-                    <div style="text-align:center; padding:32px 0; color:var(--text-secondary); font-size:13px;">Belum ada
-                        kategori pemasukan</div>
+        @foreach($activeCategories as $cat)
+            <div class="card cat-item" id="cat-{{ $cat->id }}"
+                style="display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px; cursor:pointer;"
+                onclick="window.location='{{ route('transactions.index', ['category_id' => $cat->id]) }}'">
+                <div
+                    style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:{{ $cat->color }}18; border:1px solid {{ $cat->color }}30;">
+                    {{ $cat->icon }}
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:14px; font-weight:600; color:var(--text-primary);">{{ $cat->name }}</div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                        {{ $cat->transactions_count }} transaksi</div>
+                </div>
+                <div style="width:10px; height:10px; border-radius:50%; background:{{ $cat->color }}; flex-shrink:0;">
+                </div>
+                @if(!$cat->is_default || $cat->transactions_count === 0)
+                    <button onclick="event.stopPropagation(); deleteCategory({{ $cat->id }})" class="cat-del-btn"
+                        style="background:none; border:none; cursor:pointer; color:#cbd5e1; padding:6px; border-radius:8px; font-size:13px; line-height:1; transition:all 0.15s; opacity:0;"
+                        onmouseover="this.style.color='#e11d48';this.style.background='#fff1f2'"
+                        onmouseout="this.style.color='#cbd5e1';this.style.background='none'">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 @endif
             </div>
-        </div>
+        @endforeach
 
+        @if($activeCategories->isEmpty())
+            <div style="text-align:center; padding:32px 0; color:var(--text-secondary); font-size:13px;">
+                Belum ada kategori {{ strtolower($activeLabel) }}
+            </div>
+        @endif
     </div>
 
     <div id="modalCat" class="modal-overlay">
@@ -172,9 +150,74 @@
             opacity: 1 !important;
         }
 
-        @media (max-width: 768px) {
-            .cat-grid {
-                grid-template-columns: 1fr !important;
+        .category-tabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .category-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+
+        .category-tab:hover {
+            transform: translateY(-1px);
+            border-color: #fbcfe8;
+        }
+
+        .category-tab.active.expense {
+            background: #fff1f2;
+            border-color: #fecdd3;
+            color: #e11d48;
+        }
+
+        .category-tab.active.income {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #16a34a;
+        }
+
+        .category-tab-count {
+            min-width: 26px;
+            height: 26px;
+            padding: 0 8px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            background: #f8fafc;
+            color: var(--text-secondary);
+        }
+
+        .category-tab.active.expense .category-tab-count {
+            background: #ffe4e6;
+            color: #e11d48;
+        }
+
+        .category-tab.active.income .category-tab-count {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        @media (max-width: 640px) {
+            .category-tab {
+                padding: 11px 10px;
+                gap: 8px;
+                font-size: 13px;
             }
         }
     </style>

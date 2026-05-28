@@ -12,20 +12,18 @@
         </div>
 
         {{-- Ganti form filter lama kamu di bagian atas dengan ini --}}
-        <form method="GET" id="reportFilterForm" class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <form method="GET" id="reportFilterForm" class="flex items-center gap-2 flex-wrap">
             {{-- Filter Berdua / Individu --}}
             <select name="user_filter" class="input-field"
-                style="width:150px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;"
-                onchange="document.getElementById('reportFilterForm').submit();">
+                style="width:150px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
                 <option value="all" {{ $userFilter == 'all' ? 'selected' : '' }}>👥 Berdua (Gabungan)</option>
                 <option value="me" {{ $userFilter == 'me' ? 'selected' : '' }}>👤 Saya Sendiri</option>
                 <option value="partner" {{ $userFilter == 'partner' ? 'selected' : '' }}>💝 Pasangan</option>
             </select>
 
             {{-- Filter Bulan --}}
-            <select name="month" class="input-field"
-                style="width:130px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;"
-                onchange="document.getElementById('reportFilterForm').submit();">
+            <select name="month" id="reportMonth" class="input-field"
+                style="width:130px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
                 @foreach(range(1, 12) as $m)
                     <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
                         {{ \Carbon\Carbon::create(null, $m)->isoFormat('MMMM') }}
@@ -34,14 +32,28 @@
             </select>
 
             {{-- Filter Tahun --}}
-            <select name="year" class="input-field"
-                style="width:100px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;"
-                onchange="document.getElementById('reportFilterForm').submit();">
+            <select name="year" id="reportYear" class="input-field"
+                style="width:100px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
                 @foreach([now()->year, now()->year - 1, now()->year - 2] as $y)
                     <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
                 @endforeach
             </select>
+
+            <input type="text" id="reportStartDate" name="start_date" value="{{ $startDate->toDateString() }}"
+                class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y"
+                style="width:160px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+
+            <input type="text" id="reportEndDate" name="end_date" value="{{ $endDate->toDateString() }}"
+                class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y"
+                style="width:160px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
+
+            <button type="submit" class="btn-primary">Terapkan</button>
         </form>
+    </div>
+
+    <div class="mb-6 text-sm text-gray-500">
+        Periode laporan: <span class="font-semibold text-gray-700">{{ $startDate->isoFormat('D MMMM Y') }}</span> sampai
+        <span class="font-semibold text-gray-700">{{ $endDate->isoFormat('D MMMM Y') }}</span>
     </div>
 
     {{-- Ringkasan / Summary Cards --}}
@@ -52,7 +64,9 @@
             <div class="font-display text-3xl font-bold text-sky-700">
                 Rp {{ number_format($totalWealth, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-gray-500 mt-2">Saldo semua rekening aktif</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {{ $userFilter === 'all' ? 'Saldo semua rekening aktif' : 'Saldo rekening aktif sesuai filter orang yang dipilih' }}
+            </div>
         </div>
         <div class="card p-6"
             style="background: #fff; border-left: 4px solid #22c55e; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
@@ -82,12 +96,16 @@
         <div class="card p-6" style="background:#fff; border-left:4px solid #ef4444; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
             <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Hutang Belum Dibayar</div>
             <div class="font-display text-3xl font-bold text-rose-600">Rp {{ number_format($outstandingHutang, 0, ',', '.') }}</div>
-            <div class="text-xs text-gray-500 mt-2">Semua hutang yang belum diselesaikan</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {{ $userFilter === 'all' ? 'Semua hutang yang belum diselesaikan' : 'Hutang sesuai orang yang sedang dipilih' }}
+            </div>
         </div>
         <div class="card p-6" style="background:#fff; border-left:4px solid #16a34a; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
             <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Piutang Belum Kembali</div>
             <div class="font-display text-3xl font-bold text-emerald-600">Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}</div>
-            <div class="text-xs text-gray-500 mt-2">Piutang yang masih harus dikembalikan</div>
+            <div class="text-xs text-gray-500 mt-2">
+                {{ $userFilter === 'all' ? 'Piutang yang masih harus dikembalikan' : 'Piutang sesuai orang yang sedang dipilih' }}
+            </div>
         </div>
         <div class="card p-6" style="background:#fff; border-left:4px solid #8b5cf6; border-radius:16px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
             <div class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">Total Catatan Hutang/Piutang</div>
@@ -98,10 +116,12 @@
 
     {{-- Seksi Grafik & Visualisasi --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {{-- Tren 12 Bulan --}}
+        {{-- Tren Periode --}}
         <div class="card p-6 lg:col-span-2 flex flex-col justify-between"
             style="background: #fff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <h3 class="font-display font-bold text-gray-800 mb-4 text-lg">Tren 12 Bulan Terakhir</h3>
+            <h3 class="font-display font-bold text-gray-800 mb-4 text-lg">
+                {{ $startDate->diffInDays($endDate) <= 30 ? 'Tren Harian' : 'Tren per Bulan' }}
+            </h3>
             <div class="relative w-full flex-1" style="min-height: 250px;">
                 <canvas id="trendChart"></canvas>
             </div>
@@ -175,7 +195,7 @@
     <div class="card overflow-hidden"
         style="background: #fff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
         <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="font-display font-bold text-gray-800 text-lg">Semua Transaksi Periode Ini</h3>
+            <h3 class="font-display font-bold text-gray-800 text-lg">Semua Transaksi di Rentang Ini</h3>
             <span class="text-xs bg-pink-50 px-2.5 py-1 rounded-full text-pink-600 font-bold">
                 {{ $transactions->count() }} Transaksi
             </span>
@@ -199,7 +219,7 @@
                                 {{ $tx->user->name }}
                             </span>
                             <span class="text-gray-200">•</span>
-                            <span>{{ $tx->date->format('d M Y') }}</span>
+                            <span>{{ $tx->date->isoFormat('D MMM Y') }}</span>
                         </div>
                     </div>
                     <div
@@ -226,6 +246,7 @@
                 <thead>
                     <tr class="text-[12px] uppercase text-[var(--text-secondary)] tracking-[0.12em] border-b border-slate-200">
                         <th class="px-4 py-3">Tipe</th>
+                        <th class="px-4 py-3">Pemilik</th>
                         <th class="px-4 py-3">Pihak</th>
                         <th class="px-4 py-3">Jumlah</th>
                         <th class="px-4 py-3">Rekening</th>
@@ -242,6 +263,12 @@
                                 </span>
                             </td>
                             <td class="px-4 py-4">
+                                <div class="font-semibold">{{ $debt->user->name }}</div>
+                                <div class="text-xs text-[var(--text-secondary)]">
+                                    {{ $debt->user->id === auth()->id() ? 'Saya' : 'Pasangan' }}
+                                </div>
+                            </td>
+                            <td class="px-4 py-4">
                                 <div class="font-semibold">{{ $debt->counterparty }}</div>
                                 <div class="text-xs text-[var(--text-secondary)]">{{ $debt->purpose }}</div>
                             </td>
@@ -252,9 +279,9 @@
                                 {{ $debt->bank->name }}
                             </td>
                             <td class="px-4 py-4">
-                                {{ $debt->due_date->format('d M Y') }}
+                                {{ $debt->due_date->isoFormat('D MMM Y') }}
                                 @if($debt->paid_at)
-                                    <div class="text-xs text-[var(--text-secondary)]">Lunas {{ $debt->paid_at->format('d M Y') }}</div>
+                                    <div class="text-xs text-[var(--text-secondary)]">Lunas {{ $debt->paid_at->isoFormat('D MMM Y') }}</div>
                                 @endif
                             </td>
                             <td class="px-4 py-4">
@@ -265,7 +292,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Belum ada catatan hutang/piutang.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Belum ada catatan hutang/piutang.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -276,6 +303,37 @@
 
 @push('scripts')
     <script>
+        const reportMonth = document.getElementById('reportMonth');
+        const reportYear = document.getElementById('reportYear');
+        const reportStartDate = document.getElementById('reportStartDate');
+        const reportEndDate = document.getElementById('reportEndDate');
+
+        function syncReportDateRange() {
+            if (!reportMonth || !reportYear || !reportStartDate || !reportEndDate) return;
+
+            const year = Number(reportYear.value);
+            const month = Number(reportMonth.value);
+            const lastDay = new Date(year, month, 0).getDate();
+            const paddedMonth = String(month).padStart(2, '0');
+            const startValue = `${year}-${paddedMonth}-01`;
+            const endValue = `${year}-${paddedMonth}-${String(lastDay).padStart(2, '0')}`;
+
+            if (reportStartDate._flatpickr) {
+                reportStartDate._flatpickr.setDate(startValue, true);
+            } else {
+                reportStartDate.value = startValue;
+            }
+
+            if (reportEndDate._flatpickr) {
+                reportEndDate._flatpickr.setDate(endValue, true);
+            } else {
+                reportEndDate.value = endValue;
+            }
+        }
+
+        reportMonth?.addEventListener('change', syncReportDateRange);
+        reportYear?.addEventListener('change', syncReportDateRange);
+
         // 1. Inisialisasi Tren Chart 12 Bulan (Light Mode)
         const trendCanvas = document.getElementById('trendChart');
         if (trendCanvas) {

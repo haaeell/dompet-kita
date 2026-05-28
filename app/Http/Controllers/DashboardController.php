@@ -57,8 +57,13 @@ class DashboardController extends Controller
 
         $banks = $banksQuery->get();
         $totalWealth = $banks->sum('current_balance');
-        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $debtQuery = $couple->debts();
+        if ($selectedUser) {
+            $debtQuery->where('user_id', $selectedUserId);
+        }
+
+        $outstandingHutang = (clone $debtQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = (clone $debtQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
         $targets = $couple->targets()->where('status', 'active')->latest()->take(3)->get();
 
         $chartData = [];

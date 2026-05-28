@@ -68,10 +68,13 @@
 
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/id.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 
     <style>
@@ -99,6 +102,11 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
+        }
+
+        .flatpickr-input[readonly] {
+            background: #fff;
+            cursor: pointer;
         }
 
         ::-webkit-scrollbar {
@@ -1003,6 +1011,22 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (window.flatpickr) {
+                flatpickr.localize(flatpickr.l10ns.id);
+
+                document.querySelectorAll('.js-date-picker').forEach(input => {
+                    flatpickr(input, {
+                        altInput: true,
+                        altFormat: input.dataset.altFormat || 'j F Y',
+                        dateFormat: input.dataset.format || 'Y-m-d',
+                        locale: 'id',
+                        disableMobile: true,
+                        allowInput: false,
+                        defaultDate: input.value || null,
+                    });
+                });
+            }
+
             const rupiahInputs = document.querySelectorAll('.rupiah');
             const normalize = value => value.replace(/[^\d]/g, '');
             const formatRupiah = value => {

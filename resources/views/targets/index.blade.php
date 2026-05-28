@@ -228,7 +228,7 @@
                 <div>
                     <label class="label">Deadline <span
                             style="font-weight:400; text-transform:none; letter-spacing:0;">(opsional)</span></label>
-                    <input type="date" id="tDeadline" class="input-field">
+                    <input type="text" id="tDeadline" class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y">
                 </div>
 
                 <div>
@@ -303,7 +303,7 @@
                 </div>
                 <div>
                     <label class="label">Tanggal</label>
-                    <input type="date" id="savingDate" class="input-field" value="{{ now()->format('Y-m-d') }}">
+                    <input type="text" id="savingDate" class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y" value="{{ now()->format('Y-m-d') }}">
                 </div>
                 <div>
                     <label class="label">Catatan</label>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,16 +16,26 @@ class ReportController extends Controller
         $month = $request->month ?? now()->month;
         $year = $request->year ?? now()->year;
         $userFilter = $request->user_filter ?? 'all';
+        $startDate = $request->filled('start_date')
+            ? Carbon::parse($request->start_date)->startOfDay()
+            : Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $endDate = $request->filled('end_date')
+            ? Carbon::parse($request->end_date)->endOfDay()
+            : Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+        }
+
+        $partnerIds = $couple->users->where('id', '!=', $user->id)->pluck('id');
 
         $transactionQuery = $couple->transactions()
             ->with(['user', 'category', 'bank'])
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year);
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
 
         if ($userFilter === 'me') {
             $transactionQuery->where('user_id', $user->id);
         } elseif ($userFilter === 'partner') {
-            $partnerIds = $couple->users->where('id', '!=', $user->id)->pluck('id');
             $transactionQuery->whereIn('user_id', $partnerIds);
         }
 
@@ -33,10 +44,24 @@ class ReportController extends Controller
         $totalIncome = $transactions->where('type', 'income')->sum('amount');
         $totalExpense = $transactions->where('type', 'expense')->sum('amount');
         $balance = $totalIncome - $totalExpense;
-        $totalWealth = $couple->banks()->where('is_active', true)->sum('current_balance');
-        $outstandingHutang = $couple->debts()->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = $couple->debts()->where('type', 'piutang')->where('status', 'pending')->sum('amount');
-        $debts = $couple->debts()->latest('due_date')->get();
+        $banksQuery = $couple->banks()->where('is_active', true);
+        $debtsQuery = $couple->debts()
+            ->with(['bank', 'user'])
+            ->whereBetween('due_date', [$startDate->toDateString(), $endDate->toDateString()]);
+
+        if ($userFilter === 'me') {
+            $banksQuery->where('account_name', $user->name);
+            $debtsQuery->where('user_id', $user->id);
+        } elseif ($userFilter === 'partner') {
+            $partnerNames = $couple->users->where('id', '!=', $user->id)->pluck('name');
+            $banksQuery->whereIn('account_name', $partnerNames);
+            $debtsQuery->whereIn('user_id', $partnerIds);
+        }
+
+        $totalWealth = $banksQuery->sum('current_balance');
+        $outstandingHutang = (clone $debtsQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
+        $outstandingPiutang = (clone $debtsQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $debts = $debtsQuery->latest('due_date')->get();
 
         $userSummary = $couple->users->map(function ($u) use ($transactions) {
             return [
@@ -57,26 +82,61 @@ class ReportController extends Controller
             ])->values()->sortByDesc('amount');
 
         $monthlyTrend = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
+        $dayCount = $startDate->diffInDays($endDate) + 1;
 
-            $trendIncomeQuery = $couple->transactions()->where('type', 'income')->whereMonth('date', $date->month)->whereYear('date', $date->year);
-            $trendExpenseQuery = $couple->transactions()->where('type', 'expense')->whereMonth('date', $date->month)->whereYear('date', $date->year);
+        if ($dayCount <= 31) {
+            for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+                $trendIncomeQuery = $couple->transactions()
+                    ->where('type', 'income')
+                    ->whereDate('date', $date->toDateString());
+                $trendExpenseQuery = $couple->transactions()
+                    ->where('type', 'expense')
+                    ->whereDate('date', $date->toDateString());
 
-            if ($userFilter === 'me') {
-                $trendIncomeQuery->where('user_id', $user->id);
-                $trendExpenseQuery->where('user_id', $user->id);
-            } elseif ($userFilter === 'partner') {
-                $partnerIds = $couple->users->where('id', '!=', $user->id)->pluck('id');
-                $trendIncomeQuery->whereIn('user_id', $partnerIds);
-                $trendExpenseQuery->whereIn('user_id', $partnerIds);
+                if ($userFilter === 'me') {
+                    $trendIncomeQuery->where('user_id', $user->id);
+                    $trendExpenseQuery->where('user_id', $user->id);
+                } elseif ($userFilter === 'partner') {
+                    $trendIncomeQuery->whereIn('user_id', $partnerIds);
+                    $trendExpenseQuery->whereIn('user_id', $partnerIds);
+                }
+
+                $monthlyTrend[] = [
+                    'label' => $date->isoFormat('D MMM'),
+                    'income' => $trendIncomeQuery->sum('amount'),
+                    'expense' => $trendExpenseQuery->sum('amount'),
+                ];
             }
+        } else {
+            $trendStart = $startDate->copy()->startOfMonth();
+            $trendEnd = $endDate->copy()->startOfMonth();
 
-            $monthlyTrend[] = [
-                'label' => $date->format('M Y'),
-                'income' => $trendIncomeQuery->sum('amount'),
-                'expense' => $trendExpenseQuery->sum('amount'),
-            ];
+            while ($trendStart->lte($trendEnd)) {
+                $trendIncomeQuery = $couple->transactions()
+                    ->where('type', 'income')
+                    ->whereMonth('date', $trendStart->month)
+                    ->whereYear('date', $trendStart->year);
+                $trendExpenseQuery = $couple->transactions()
+                    ->where('type', 'expense')
+                    ->whereMonth('date', $trendStart->month)
+                    ->whereYear('date', $trendStart->year);
+
+                if ($userFilter === 'me') {
+                    $trendIncomeQuery->where('user_id', $user->id);
+                    $trendExpenseQuery->where('user_id', $user->id);
+                } elseif ($userFilter === 'partner') {
+                    $trendIncomeQuery->whereIn('user_id', $partnerIds);
+                    $trendExpenseQuery->whereIn('user_id', $partnerIds);
+                }
+
+                $monthlyTrend[] = [
+                    'label' => $trendStart->isoFormat('MMM Y'),
+                    'income' => $trendIncomeQuery->sum('amount'),
+                    'expense' => $trendExpenseQuery->sum('amount'),
+                ];
+
+                $trendStart->addMonth();
+            }
         }
 
         return view('reports.index', compact(
@@ -93,7 +153,9 @@ class ReportController extends Controller
             'monthlyTrend',
             'month',
             'year',
-            'userFilter'
+            'userFilter',
+            'startDate',
+            'endDate'
         ));
     }
 }

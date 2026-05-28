@@ -7,12 +7,24 @@
             <h1 class="page-title mb-1">Hutang & Piutang</h1>
             <p class="page-subtitle m-0">Catat hutang dan piutang, bayar atau tandai kembali dengan mudah.</p>
         </div>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('debts.index', ['type' => 'hutang']) }}"
+        <div class="flex flex-wrap gap-2 items-center">
+            <form action="{{ route('debts.index') }}" method="GET" id="debtFilterForm" class="m-0">
+                <input type="hidden" name="type" value="{{ $type }}">
+                <select name="user_id" onchange="document.getElementById('debtFilterForm').submit();"
+                    class="input-field py-2 px-3 rounded-xl min-w-[180px] cursor-pointer h-auto text-[13px] font-semibold">
+                    <option value="">Saya & pasangan</option>
+                    @foreach($coupleMembers as $member)
+                        <option value="{{ $member->id }}" {{ (string) $selectedUserId === (string) $member->id ? 'selected' : '' }}>
+                            {{ $member->id === auth()->id() ? 'Saya (' . $member->name . ')' : $member->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+            <a href="{{ route('debts.index', ['type' => 'hutang', 'user_id' => $selectedUserId]) }}"
                 class="btn-ghost {{ $type === 'hutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
                 Hutang
             </a>
-            <a href="{{ route('debts.index', ['type' => 'piutang']) }}"
+            <a href="{{ route('debts.index', ['type' => 'piutang', 'user_id' => $selectedUserId]) }}"
                 class="btn-ghost {{ $type === 'piutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
                 Piutang
             </a>
@@ -34,17 +46,23 @@
         <div class="card p-4">
             <div class="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] mb-3">Total Kekayaan</div>
             <div class="text-3xl font-bold">Rp {{ number_format($totalWealth, 0, ',', '.') }}</div>
-            <div class="text-xs text-[var(--text-secondary)] mt-2">Saldo total semua rekening</div>
+            <div class="text-xs text-[var(--text-secondary)] mt-2">
+                {{ $selectedUserId ? 'Saldo rekening aktif orang yang dipilih' : 'Saldo total semua rekening' }}
+            </div>
         </div>
         <div class="card p-4">
             <div class="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] mb-3">Hutang Belum Dibayar</div>
             <div class="text-3xl font-bold text-rose-600">Rp {{ number_format($outstandingHutang, 0, ',', '.') }}</div>
-            <div class="text-xs text-[var(--text-secondary)] mt-2">Jumlah hutang yang belum dibayar</div>
+            <div class="text-xs text-[var(--text-secondary)] mt-2">
+                {{ $selectedUserId ? 'Jumlah hutang orang yang dipilih yang belum dibayar' : 'Jumlah hutang yang belum dibayar' }}
+            </div>
         </div>
         <div class="card p-4">
             <div class="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] mb-3">Piutang Belum Kembali</div>
             <div class="text-3xl font-bold text-green-700">Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}</div>
-            <div class="text-xs text-[var(--text-secondary)] mt-2">Jumlah piutang yang belum dikembalikan</div>
+            <div class="text-xs text-[var(--text-secondary)] mt-2">
+                {{ $selectedUserId ? 'Jumlah piutang orang yang dipilih yang belum dikembalikan' : 'Jumlah piutang yang belum dikembalikan' }}
+            </div>
         </div>
         <div class="card p-4">
             <div class="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] mb-3">Tipe Aktif</div>
@@ -77,8 +95,8 @@
                     </div>
                     <div>
                         <label class="label" for="due_date">Tanggal Jatuh Tempo</label>
-                        <input type="date" id="due_date" name="due_date" value="{{ old('due_date', now()->toDateString()) }}"
-                            class="input-field" required>
+                        <input type="text" id="due_date" name="due_date" value="{{ old('due_date', now()->toDateString()) }}"
+                            class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y" required>
                     </div>
                     <div>
                         <label class="label" for="bank_id">Rekening {{ $type === 'hutang' ? 'Masuk' : 'Ambil Dari' }}</label>
@@ -131,6 +149,7 @@
                 <thead>
                     <tr class="text-[12px] uppercase text-[var(--text-secondary)] tracking-[0.12em] border-b border-slate-200">
                         <th class="px-4 py-3">Tipe</th>
+                        <th class="px-4 py-3">Pemilik</th>
                         <th class="px-4 py-3">Keterangan</th>
                         <th class="px-4 py-3">Rekening</th>
                         <th class="px-4 py-3">Jatuh Tempo</th>
@@ -149,6 +168,12 @@
                                     Rp {{ number_format($debt->amount, 0, ',', '.') }}
                                 </div>
                             </td>
+                            <td class="px-4 py-4 align-top">
+                                <div class="font-semibold">{{ $debt->user->name }}</div>
+                                <div class="text-xs text-[var(--text-secondary)]">
+                                    {{ $debt->user->id === auth()->id() ? 'Catatan saya' : 'Catatan pasangan' }}
+                                </div>
+                            </td>
                             <td class="px-4 py-4 align-top max-w-[280px]">
                                 <div class="font-semibold">{{ $debt->counterparty }}</div>
                                 <div class="text-[13px] text-[var(--text-secondary)]">{{ $debt->purpose }}</div>
@@ -161,9 +186,9 @@
                                 <div class="text-xs text-[var(--text-secondary)]">{{ $debt->bank->account_name }}</div>
                             </td>
                             <td class="px-4 py-4 align-top">
-                                <div>{{ $debt->due_date->format('d M Y') }}</div>
+                                <div>{{ $debt->due_date->isoFormat('D MMM Y') }}</div>
                                 @if($debt->paid_at)
-                                    <div class="text-xs text-[var(--text-secondary)]">Lunas: {{ $debt->paid_at->format('d M Y') }}</div>
+                                    <div class="text-xs text-[var(--text-secondary)]">Lunas: {{ $debt->paid_at->isoFormat('D MMM Y') }}</div>
                                 @endif
                             </td>
                             <td class="px-4 py-4 align-top">
@@ -192,7 +217,7 @@
                                             </div>
                                             <div>
                                                 <label class="label" for="paid_at_{{ $debt->id }}">Tanggal Bayar</label>
-                                                <input type="date" id="paid_at_{{ $debt->id }}" name="paid_at" class="input-field" value="{{ now()->toDateString() }}" required>
+                                                <input type="text" id="paid_at_{{ $debt->id }}" name="paid_at" class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y" value="{{ now()->toDateString() }}" required>
                                             </div>
                                             <button type="submit" class="btn-primary">Catat Pembayaran</button>
                                         </form>
@@ -209,7 +234,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Belum ada catatan {{ $type }}.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Belum ada catatan {{ $type }}.</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -8,11 +8,17 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $couple = Auth::user()->couple;
         $categories = $couple->categories()->withCount('transactions')->orderBy('type')->orderBy('name')->get();
-        return view('categories.index', compact('categories'));
+        $activeTab = $request->get('tab', 'expense');
+
+        if (!in_array($activeTab, ['income', 'expense'], true)) {
+            $activeTab = 'expense';
+        }
+
+        return view('categories.index', compact('categories', 'activeTab'));
     }
 
     public function store(Request $request)

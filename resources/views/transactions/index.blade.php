@@ -5,6 +5,7 @@
 
     @php
         $currentCategory = request('category_id') ? $categories->firstWhere('id', request('category_id')) : null;
+        $hasFilters = request()->hasAny(['type', 'user_id', 'category_id', 'bank_id', 'month', 'year']);
     @endphp
 
     <div class="flex items-center justify-between gap-3 mb-6 flex-wrap">
@@ -22,7 +23,19 @@
         </a>
     </div>
 
-    <div class="card mb-5 p-4">
+    <div class="md:hidden flex items-center gap-3 mb-5">
+        <button type="button" onclick="openTransactionFilters()"
+            class="btn-ghost flex-1 justify-center {{ $hasFilters ? 'border-pink-200 bg-pink-50 text-pink-700' : '' }}">
+            <i class="fa-solid fa-sliders"></i> Filter Transaksi
+        </button>
+        @if($hasFilters)
+            <a href="{{ route('transactions.index') }}" class="btn-ghost justify-center px-4">
+                <i class="fa-solid fa-rotate-left"></i>
+            </a>
+        @endif
+    </div>
+
+    <div class="card mb-5 p-4 hidden md:block">
         <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 <div class="flex flex-col gap-1.5">
                     <label class="label">Tipe</label>
@@ -34,7 +47,7 @@
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="label">Oleh Anggota</label>
+                    <label class="label">Oleh Siapa</label>
                     <select name="user_id" class="input-field">
                         <option value="">Semua Orang</option>
                         @foreach($coupleUsers as $cUser)
@@ -95,13 +108,122 @@
                     <button type="submit" class="btn-primary flex-1 justify-center">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
-                    @if(request()->hasAny(['type', 'user_id', 'category_id', 'bank_id', 'month', 'year']))
+                    @if($hasFilters)
                         <a href="{{ route('transactions.index') }}" class="btn-ghost flex-1 justify-center">
                             <i class="fa-solid fa-xmark"></i> Reset
                         </a>
                     @endif
                 </div>
             </form>
+        </div>
+
+        <div id="transactionFilterCanvas"
+            class="fixed inset-0 z-[1101] hidden md:hidden"
+            aria-hidden="true">
+            <button type="button" onclick="closeTransactionFilters()"
+                class="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px]"></button>
+            <div id="transactionFilterPanel"
+                class="absolute right-0 top-0 h-full w-[min(92vw,380px)] bg-white shadow-2xl border-l border-slate-200 translate-x-full transition-transform duration-300 ease-out flex flex-col">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                    <div>
+                        <div class="text-base font-bold text-slate-900">Filter Transaksi</div>
+                        <div class="text-xs text-slate-500">Atur dulu, lalu lihat riwayatnya</div>
+                    </div>
+                    <button type="button" onclick="closeTransactionFilters()"
+                        class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form method="GET" class="flex-1 flex flex-col min-h-0">
+                    <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-24">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="label">Tipe</label>
+                            <select name="type" class="input-field">
+                                <option value="">Semua Tipe</option>
+                                <option value="income" {{ request('type') === 'income' ? 'selected' : '' }}>↑ Pemasukan</option>
+                                <option value="expense" {{ request('type') === 'expense' ? 'selected' : '' }}>↓ Pengeluaran</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="label">Oleh Siapa</label>
+                            <select name="user_id" class="input-field">
+                                <option value="">Semua Orang</option>
+                                @foreach($coupleUsers as $cUser)
+                                    <option value="{{ $cUser->id }}" {{ request('user_id') == $cUser->id ? 'selected' : '' }}>
+                                        {{ $cUser->avatar ?? '👤' }}
+                                        {{ $cUser->id == auth()->id() ? 'Saya (' . $cUser->name . ')' : $cUser->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="label">Kategori</label>
+                            <select name="category_id" class="input-field">
+                                <option value="">Semua Kategori</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                                        {{ $cat->icon }} {{ $cat->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="label">Rekening</label>
+                            <select name="bank_id" class="input-field">
+                                <option value="">Semua Rekening</option>
+                                @foreach($banks as $bank)
+                                    <option value="{{ $bank->id }}" {{ request('bank_id') == $bank->id ? 'selected' : '' }}>
+                                        {{ $bank->icon }} {{ $bank->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="label">Bulan</label>
+                                <select name="month" class="input-field">
+                                    <option value="">Semua Bulan</option>
+                                    @foreach(range(1, 12) as $m)
+                                        <option value="{{ $m }}" {{ request('month', now()->month) == $m ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::create(null, $m)->isoFormat('MMMM') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label class="label">Tahun</label>
+                                <select name="year" class="input-field">
+                                    @foreach(range(now()->year, now()->year - 3) as $y)
+                                        <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 p-5 border-t border-slate-100 bg-white"
+                        style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);">
+                        @if($hasFilters)
+                            <a href="{{ route('transactions.index') }}" class="btn-ghost w-full justify-center">
+                                <i class="fa-solid fa-xmark"></i> Reset
+                            </a>
+                        @else
+                            <button type="button" onclick="closeTransactionFilters()" class="btn-ghost w-full justify-center">
+                                Tutup
+                            </button>
+                        @endif
+                        <button type="submit" class="btn-primary w-full justify-center">
+                            <i class="fa-solid fa-filter"></i> Terapkan
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card overflow-hidden">
@@ -247,6 +369,32 @@
 
 @push('scripts')
     <script>
+        function openTransactionFilters() {
+            const canvas = document.getElementById('transactionFilterCanvas');
+            const panel = document.getElementById('transactionFilterPanel');
+            if (!canvas || !panel) return;
+
+            canvas.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                panel.classList.remove('translate-x-full');
+            });
+        }
+
+        function closeTransactionFilters() {
+            const canvas = document.getElementById('transactionFilterCanvas');
+            const panel = document.getElementById('transactionFilterPanel');
+            if (!canvas || !panel) return;
+
+            panel.classList.add('translate-x-full');
+            document.body.style.overflow = '';
+
+            window.setTimeout(() => {
+                canvas.classList.add('hidden');
+            }, 300);
+        }
+
         $(function () {
             if ($(window).width() > 768) {
                 $('#txTable').DataTable({
@@ -272,7 +420,7 @@
             @if(session('success'))
                 Toast.fire({ icon: 'success', title: '{{ session('success') }}' });
             @endif
-                    });
+        });
 
         function deleteTransaction(id) {
             deleteConfirm(`/transactions/${id}`, () => {

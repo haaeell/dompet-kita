@@ -9,7 +9,7 @@
             <p class="page-subtitle m-0">{{ now()->isoFormat('dddd, D MMMM Y') }}</p>
         </div>
 
-        {{-- Filter Anggota --}}
+        {{-- Filter Pasangan --}}
         <form action="{{ url()->current() }}" method="GET" id="filterForm" class="m-0">
             <select name="user_id" onchange="document.getElementById('filterForm').submit();"
                 class="input-field py-2 px-3 rounded-xl min-w-[160px] cursor-pointer h-auto text-[13px] font-semibold">
@@ -48,7 +48,7 @@
         <div class="card border-l-4 border-blue-500 p-4">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">
-                    {{ $selectedUserId ? 'Total Kekayaan Anggota' : 'Total Kekayaan' }}
+                    {{ $selectedUserId ? 'Total Kekayaan Pribadi' : 'Total Kekayaan' }}
                 </span>
                 <span
                     class="w-[34px] h-[34px] rounded-[10px] bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
@@ -60,7 +60,7 @@
             </div>
             <div class="text-xs text-[var(--text-secondary)]">
                 @if($selectedUserId)
-                    Saldo rekening aktif milik {{ $coupleMembers->firstWhere('id', $selectedUserId)->name ?? 'anggota' }}
+                    Saldo rekening aktif milik {{ $coupleMembers->firstWhere('id', $selectedUserId)->name ?? 'pasangan' }}
                 @else
                     Saldo seluruh rekening aktif
                 @endif
@@ -79,7 +79,9 @@
             <div class="text-2xl font-bold text-rose-600 mb-1 break-all">
                 Rp {{ number_format($outstandingHutang, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-[var(--text-secondary)]">Total hutang yang harus dibayar</div>
+            <div class="text-xs text-[var(--text-secondary)]">
+                {{ $selectedUserId ? 'Total hutang orang yang dipilih yang harus dibayar' : 'Total hutang yang harus dibayar' }}
+            </div>
         </div>
 
         <div class="card border-l-4 border-green-500 p-4">
@@ -94,7 +96,9 @@
             <div class="text-2xl font-bold text-green-700 mb-1 break-all">
                 Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}
             </div>
-            <div class="text-xs text-[var(--text-secondary)]">Total piutang yang belum kembali</div>
+            <div class="text-xs text-[var(--text-secondary)]">
+                {{ $selectedUserId ? 'Total piutang orang yang dipilih yang belum kembali' : 'Total piutang yang belum kembali' }}
+            </div>
         </div>
     </div>
 
@@ -131,7 +135,7 @@
                                     {{ $tx->user->name }}
                                 </span>
                                 <span class="opacity-40">•</span>
-                                <span class="whitespace-nowrap">{{ $tx->date->format('d M') }}</span>
+                                <span class="whitespace-nowrap">{{ $tx->date->isoFormat('D MMM') }}</span>
                                 <span class="opacity-40">•</span>
                                 <span class="whitespace-nowrap">{{ $tx->bank->icon }} {{ $tx->bank->name }}</span>
                             </div>

@@ -64,6 +64,7 @@ class DashboardController extends Controller
 
         $outstandingHutang = (clone $debtQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
         $outstandingPiutang = (clone $debtQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
         $targets = $couple->targets()->where('status', 'active')->latest()->take(3)->get();
 
         $chartData = [];
@@ -113,6 +114,7 @@ class DashboardController extends Controller
             'monthlyExpense',
             'banks',
             'totalWealth',
+            'totalWealthIncludingPiutang',
             'outstandingHutang',
             'outstandingPiutang',
             'targets',

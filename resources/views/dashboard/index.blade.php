@@ -65,6 +65,9 @@
                     Saldo seluruh rekening aktif
                 @endif
             </div>
+            <div class="text-xs text-blue-700 mt-2 font-medium">
+                Jika ditambah piutang: Rp {{ number_format($totalWealthIncludingPiutang, 0, ',', '.') }}
+            </div>
         </div>
 
         <div class="card border-l-4 border-rose-500 p-4">

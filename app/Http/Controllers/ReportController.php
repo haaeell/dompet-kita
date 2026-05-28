@@ -61,6 +61,7 @@ class ReportController extends Controller
         $totalWealth = $banksQuery->sum('current_balance');
         $outstandingHutang = (clone $debtsQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
         $outstandingPiutang = (clone $debtsQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
         $debts = $debtsQuery->latest('due_date')->get();
 
         $userSummary = $couple->users->map(function ($u) use ($transactions) {
@@ -145,6 +146,7 @@ class ReportController extends Controller
             'totalExpense',
             'balance',
             'totalWealth',
+            'totalWealthIncludingPiutang',
             'outstandingHutang',
             'outstandingPiutang',
             'debts',

@@ -67,6 +67,9 @@
             <div class="text-xs text-gray-500 mt-2">
                 {{ $userFilter === 'all' ? 'Saldo semua rekening aktif' : 'Saldo rekening aktif sesuai filter orang yang dipilih' }}
             </div>
+            <div class="text-xs text-sky-700 mt-2 font-semibold">
+                Jika ditambah piutang: Rp {{ number_format($totalWealthIncludingPiutang, 0, ',', '.') }}
+            </div>
         </div>
         <div class="card p-6"
             style="background: #fff; border-left: 4px solid #22c55e; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">

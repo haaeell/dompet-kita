@@ -29,6 +29,10 @@
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     @endif
+                    <a href="{{ route('banks.mutations', $bank) }}"
+                        class="text-xs font-semibold text-[var(--pink-dark)] hover:text-[var(--pink-deep)] no-underline whitespace-nowrap">
+                        Lihat Mutasi →
+                    </a>
                 </div>
 
                 <div class="my-4">
@@ -194,5 +198,32 @@
                 $('#bank-' + id).css('transform', 'scale(0.9)').fadeOut(300, function () { $(this).remove(); });
             });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[id^="bank-"]').forEach(card => {
+                const bankId = card.id.replace('bank-', '');
+                const footer = card.querySelector('.border-t.border-slate-100');
+                const strayLink = card.querySelector('a[href$="/mutations"]');
+
+                if (strayLink) {
+                    strayLink.remove();
+                }
+
+                if (!footer || footer.querySelector('.bank-mutation-link')) {
+                    return;
+                }
+
+                const linkWrap = document.createElement('div');
+                linkWrap.className = 'text-right';
+
+                const link = document.createElement('a');
+                link.href = `/banks/${bankId}/mutations`;
+                link.className = 'bank-mutation-link text-xs font-semibold text-[var(--pink-dark)] hover:text-[var(--pink-deep)] no-underline whitespace-nowrap';
+                link.textContent = 'Lihat Mutasi';
+
+                linkWrap.appendChild(link);
+                footer.appendChild(linkWrap);
+            });
+        });
     </script>
 @endpush

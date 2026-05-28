@@ -45,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     // Bank / Rekening
     Route::prefix('banks')->name('banks.')->group(function () {
         Route::get('/', [BankController::class, 'index'])->name('index');
+        Route::get('/{bank}/mutations', [BankController::class, 'mutations'])->name('mutations');
+        Route::get('/{bank}/mutations/pdf', [BankController::class, 'mutationsPdf'])->name('mutations.pdf');
         Route::post('/', [BankController::class, 'store'])->name('store');
         Route::put('/{bank}', [BankController::class, 'update'])->name('update');
         Route::delete('/{bank}', [BankController::class, 'destroy'])->name('destroy');

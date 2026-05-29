@@ -527,20 +527,20 @@
             margin-right: 4px;
         }
 
-        /* PERBAIKAN TOTAL: Fixed Bottom Nav Bar Styling */
         .bottom-nav {
             display: none;
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 68px;
-            background: white;
-            border-top: 1px solid var(--border);
+            left: 14px;
+            right: 14px;
+            bottom: 12px;
+            min-height: 70px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(251, 207, 232, 0.8);
+            border-radius: 26px;
             z-index: 999;
-            padding: 0 8px;
-            padding-bottom: env(safe-area-inset-bottom);
-            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+            padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 18px 42px rgba(157, 23, 77, 0.18);
+            backdrop-filter: blur(16px);
         }
 
         .bottom-nav-inner {
@@ -549,6 +549,7 @@
             justify-content: space-between;
             width: 100%;
             height: 100%;
+            gap: 4px;
         }
 
         .bottom-nav-item {
@@ -561,41 +562,57 @@
             text-decoration: none;
             color: #94a3b8;
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             letter-spacing: 0.02em;
-            height: 100%;
+            min-width: 0;
+            height: 54px;
             position: relative;
-            transition: color 0.15s;
+            transition: color 0.18s ease, transform 0.18s ease;
+            border-radius: 18px;
         }
 
         .bottom-nav-item i {
             font-size: 18px;
             line-height: 1;
-            transition: transform 0.15s;
+            transition: transform 0.18s ease;
+        }
+
+        .bottom-nav-item span {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bottom-nav-item:active {
+            transform: translateY(1px) scale(0.96);
         }
 
         .bottom-nav-item.active {
             color: var(--pink-dark);
+            background: linear-gradient(180deg, #fdf2f8, #ffffff);
+            box-shadow: inset 0 0 0 1px rgba(251, 207, 232, 0.75);
         }
 
         .bottom-nav-item.active::before {
             content: '';
             position: absolute;
-            top: 0;
+            top: 7px;
             left: 50%;
             transform: translateX(-50%);
-            width: 24px;
-            height: 3px;
-            border-radius: 0 0 4px 4px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
             background: var(--pink);
+            box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.12);
         }
 
         .bottom-nav-item.active i {
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.06);
         }
 
         .bottom-nav-center {
-            width: 60px;
+            width: 66px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -603,24 +620,55 @@
         }
 
         .bottom-nav-fab {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
+            position: relative;
+            width: 58px;
+            height: 58px;
+            border-radius: 22px;
             background: linear-gradient(135deg, var(--pink), var(--pink-dark));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 18px;
+            font-size: 20px;
             text-decoration: none;
-            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.3);
+            box-shadow: 0 12px 26px rgba(219, 39, 119, 0.34);
             transition: all 0.2s;
-            transform: translateY(-4px);
-            /* Efek melayang sedikit */
+            transform: translateY(-14px);
+            border: 4px solid white;
+        }
+
+        .bottom-nav-fab::after {
+            content: '';
+            position: absolute;
+            top: 7px;
+            right: 8px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #fff7ed;
+            box-shadow: -18px 26px 0 -2px rgba(255, 255, 255, 0.75);
+        }
+
+        .bottom-nav-fab .fab-heart {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: var(--pink-dark);
+            border: 1px solid var(--pink-mid);
+            font-size: 10px;
+            box-shadow: 0 8px 16px rgba(219, 39, 119, 0.18);
+            animation: lovePulse 1.35s ease-in-out infinite;
         }
 
         .bottom-nav-fab:active {
-            transform: scale(0.92) translateY(-4px);
+            transform: scale(0.94) translateY(-14px);
         }
 
         .page-header {
@@ -1086,7 +1134,7 @@
                 height: auto;
                 overflow: visible;
                 padding: 24px 16px;
-                padding-bottom: 120px;
+                padding-bottom: 132px;
                 min-height: calc(100vh - 68px);
                 padding-top: 84px;
             }
@@ -1333,6 +1381,7 @@
 
             <div class="bottom-nav-center">
                 <a href="{{ route('transactions.create') }}" class="bottom-nav-fab">
+                    <span class="fab-heart"><i class="fa-solid fa-heart"></i></span>
                     <i class="fa-solid fa-plus"></i>
                 </a>
             </div>
@@ -1343,7 +1392,7 @@
                 <span>Kategori</span>
             </a>
             <a href="javascript:void(0)" onclick="toggleMobileMenu()" id="btnMoreMenu" class="bottom-nav-item">
-                <i class="fa-solid fa-bars"></i>
+                <i class="fa-solid fa-grip"></i>
                 <span>Lainnya</span>
             </a>
         </div>

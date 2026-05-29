@@ -67,6 +67,20 @@ class DashboardController extends Controller
         $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
         $targets = $couple->targets()->where('status', 'active')->latest()->take(3)->get();
 
+        $debtReminderQuery = $couple->debts()
+            ->with('user')
+            ->where('status', 'pending')
+            ->whereDate('due_date', '<=', now()->addDays(3)->toDateString());
+
+        if ($selectedUser) {
+            $debtReminderQuery->where('user_id', $selectedUserId);
+        }
+
+        $debtReminders = $debtReminderQuery
+            ->orderBy('due_date')
+            ->take(6)
+            ->get();
+
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
@@ -118,6 +132,7 @@ class DashboardController extends Controller
             'outstandingHutang',
             'outstandingPiutang',
             'targets',
+            'debtReminders',
             'chartData',
             'expenseByCategory'
         ));

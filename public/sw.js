@@ -1,10 +1,10 @@
-const CACHE_NAME = 'dompetkita-pwa-v3';
+const CACHE_NAME = 'dompetkita-pwa-v6';
 const APP_SHELL = [
     '/favicon.ico',
-    '/images/app-logo.png',
-    '/images/pwa-icon-192.png',
-    '/images/pwa-icon-512.png',
-    '/images/pwa-icon-maskable-512.png',
+    '/images/app-logo-dompetkita.png',
+    '/images/pwa-icon-dompetkita-192.png',
+    '/images/pwa-icon-dompetkita-512.png',
+    '/images/pwa-icon-dompetkita-maskable-512.png',
     '/manifest.webmanifest'
 ];
 

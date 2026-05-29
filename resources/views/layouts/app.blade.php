@@ -42,8 +42,8 @@
     <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
 
     {{-- Favicon & Icons --}}
-    <link rel="icon" type="image/png" href="{{ asset('images/app-logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/pwa-icon-192.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/app-logo-dompetkita.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/pwa-icon-dompetkita-192.png') }}">
 
     <title>@yield('title', 'DompetKita') – Keuangan Bersama</title>
 

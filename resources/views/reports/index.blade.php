@@ -3,6 +3,453 @@
 @section('title', 'Laporan')
 
 @section('content')
+    <style>
+        .report-mobile-view {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .report-desktop-view {
+                display: none;
+            }
+
+            .report-mobile-view {
+                display: block;
+                margin: -8px -4px 0;
+            }
+
+            .report-hero {
+                position: relative;
+                overflow: hidden;
+                border-radius: 28px;
+                padding: 20px;
+                color: white;
+                background:
+                    radial-gradient(circle at 82% 16%, rgba(255, 255, 255, 0.24) 0 14%, transparent 28%),
+                    linear-gradient(135deg, #0ea5e9 0%, #db2777 62%, #9d174d 100%);
+                box-shadow: 0 18px 38px rgba(219, 39, 119, 0.2);
+            }
+
+            .report-hero::after {
+                content: '';
+                position: absolute;
+                width: 150px;
+                height: 150px;
+                right: -60px;
+                bottom: -72px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.14);
+            }
+
+            .report-hero-inner {
+                position: relative;
+                z-index: 1;
+            }
+
+            .report-hero-label {
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                opacity: 0.78;
+            }
+
+            .report-hero-value {
+                margin-top: 8px;
+                font-size: clamp(26px, 8vw, 34px);
+                font-weight: 900;
+                line-height: 1.05;
+                word-break: break-word;
+            }
+
+            .report-hero-meta {
+                margin-top: 8px;
+                font-size: 12px;
+                font-weight: 700;
+                opacity: 0.82;
+            }
+
+            .report-filter-card,
+            .report-mobile-card {
+                border-radius: 24px;
+                background: white;
+                border: 1px solid var(--border);
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+            }
+
+            .report-filter-card {
+                margin-top: 16px;
+                padding: 14px;
+            }
+
+            .report-filter-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .report-filter-grid .full {
+                grid-column: 1 / -1;
+            }
+
+            .report-mobile-label {
+                display: block;
+                margin-bottom: 6px;
+                color: var(--text-secondary);
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+
+            .report-mobile-input {
+                width: 100%;
+                min-height: 44px;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                background: #fff;
+                color: var(--text-primary);
+                padding: 10px 12px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 13px;
+                font-weight: 700;
+                outline: none;
+            }
+
+            .report-mobile-section {
+                margin-top: 20px;
+            }
+
+            .report-section-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 10px;
+            }
+
+            .report-section-title {
+                margin: 0;
+                color: var(--text-primary);
+                font-size: 16px;
+                font-weight: 900;
+            }
+
+            .report-metric-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .report-metric {
+                min-height: 118px;
+                border-radius: 22px;
+                padding: 14px;
+                background: white;
+                border: 1px solid var(--border);
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+            }
+
+            .report-metric-icon {
+                width: 38px;
+                height: 38px;
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 10px;
+                font-size: 15px;
+            }
+
+            .report-metric-label {
+                color: var(--text-secondary);
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+
+            .report-metric-value {
+                margin-top: 6px;
+                color: var(--text-primary);
+                font-size: 16px;
+                font-weight: 900;
+                line-height: 1.16;
+                word-break: break-word;
+            }
+
+            .report-mobile-card {
+                padding: 16px;
+            }
+
+            .report-chart-box {
+                position: relative;
+                width: 100%;
+                height: 230px;
+            }
+
+            .report-category-item,
+            .report-person-item,
+            .report-tx-item,
+            .report-debt-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .report-category-item:last-child,
+            .report-person-item:last-child,
+            .report-tx-item:last-child,
+            .report-debt-item:last-child {
+                border-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .report-dot,
+            .report-tx-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .report-small-title {
+                color: var(--text-primary);
+                font-size: 13px;
+                font-weight: 900;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .report-small-meta {
+                margin-top: 3px;
+                color: var(--text-secondary);
+                font-size: 11px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .report-amount {
+                margin-left: auto;
+                flex-shrink: 0;
+                text-align: right;
+                font-size: 12px;
+                font-weight: 900;
+                white-space: nowrap;
+            }
+        }
+    </style>
+
+    <div class="report-mobile-view">
+        <section class="report-hero">
+            <div class="report-hero-inner">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="report-hero-label">Saldo Bersih</div>
+                        <div class="report-hero-value">
+                            {{ $balance >= 0 ? '+' : '-' }}Rp {{ number_format(abs($balance), 0, ',', '.') }}
+                        </div>
+                        <div class="report-hero-meta">
+                            {{ $startDate->isoFormat('D MMM') }} - {{ $endDate->isoFormat('D MMM Y') }}
+                        </div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 border border-white/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-5">
+                    <div class="rounded-2xl bg-white/15 border border-white/20 p-3">
+                        <div class="text-[10px] font-extrabold opacity-75 uppercase">Pemasukan</div>
+                        <div class="text-[13px] font-black mt-1 break-words">Rp {{ number_format($totalIncome, 0, ',', '.') }}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/15 border border-white/20 p-3">
+                        <div class="text-[10px] font-extrabold opacity-75 uppercase">Pengeluaran</div>
+                        <div class="text-[13px] font-black mt-1 break-words">Rp {{ number_format($totalExpense, 0, ',', '.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <form method="GET" class="report-filter-card">
+            <div class="report-filter-grid">
+                <div class="full">
+                    <label class="report-mobile-label">Lihat laporan</label>
+                    <select name="user_filter" class="report-mobile-input">
+                        <option value="all" {{ $userFilter == 'all' ? 'selected' : '' }}>Berdua (Gabungan)</option>
+                        <option value="me" {{ $userFilter == 'me' ? 'selected' : '' }}>Saya Sendiri</option>
+                        <option value="partner" {{ $userFilter == 'partner' ? 'selected' : '' }}>Pasangan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="report-mobile-label">Bulan</label>
+                    <select name="month" id="mobileReportMonth" class="report-mobile-input">
+                        @foreach(range(1, 12) as $m)
+                            <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
+                                {{ \Carbon\Carbon::create(null, $m)->isoFormat('MMMM') }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="report-mobile-label">Tahun</label>
+                    <select name="year" id="mobileReportYear" class="report-mobile-input">
+                        @foreach([now()->year, now()->year - 1, now()->year - 2] as $y)
+                            <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="report-mobile-label">Dari</label>
+                    <input type="date" id="mobileReportStartDate" name="start_date"
+                        value="{{ $startDate->toDateString() }}" class="report-mobile-input">
+                </div>
+                <div>
+                    <label class="report-mobile-label">Sampai</label>
+                    <input type="date" id="mobileReportEndDate" name="end_date"
+                        value="{{ $endDate->toDateString() }}" class="report-mobile-input">
+                </div>
+                <button type="submit" class="btn-primary justify-center full">
+                    <i class="fa-solid fa-filter"></i> Terapkan Filter
+                </button>
+            </div>
+        </form>
+
+        <section class="report-mobile-section">
+            <div class="report-section-head">
+                <h2 class="report-section-title">Ringkasan</h2>
+                <span class="text-[11px] font-bold text-[var(--text-secondary)]">{{ $transactions->count() }} transaksi</span>
+            </div>
+            <div class="report-metric-grid">
+                <div class="report-metric">
+                    <div class="report-metric-icon bg-blue-50 text-blue-700">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div class="report-metric-label">Total Kekayaan</div>
+                    <div class="report-metric-value text-blue-700">Rp {{ number_format($totalWealth, 0, ',', '.') }}</div>
+                </div>
+                <div class="report-metric">
+                    <div class="report-metric-icon bg-violet-50 text-violet-700">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="report-metric-label">Hutang/Piutang</div>
+                    <div class="report-metric-value text-violet-700">{{ $debts->count() }} Catatan</div>
+                </div>
+                <div class="report-metric">
+                    <div class="report-metric-icon bg-rose-50 text-rose-600">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <div class="report-metric-label">Hutang</div>
+                    <div class="report-metric-value text-rose-600">Rp {{ number_format($outstandingHutang, 0, ',', '.') }}</div>
+                </div>
+                <div class="report-metric">
+                    <div class="report-metric-icon bg-emerald-50 text-emerald-700">
+                        <i class="fa-solid fa-hand-holding-hand"></i>
+                    </div>
+                    <div class="report-metric-label">Piutang</div>
+                    <div class="report-metric-value text-emerald-700">Rp {{ number_format($outstandingPiutang, 0, ',', '.') }}</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="report-mobile-section">
+            <div class="report-section-head">
+                <h2 class="report-section-title">{{ $startDate->diffInDays($endDate) <= 30 ? 'Tren Harian' : 'Tren Bulanan' }}</h2>
+            </div>
+            <div class="report-mobile-card">
+                <div class="report-chart-box">
+                    <canvas id="mobileTrendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="report-mobile-section">
+            <div class="report-section-head">
+                <h2 class="report-section-title">Kategori Boros</h2>
+            </div>
+            <div class="report-mobile-card">
+                <div class="report-chart-box" style="height: 180px;">
+                    <canvas id="mobilePieChart"></canvas>
+                </div>
+                <div class="mt-3">
+                    @forelse($expenseByCategory->take(5) as $cat)
+                        <div class="report-category-item">
+                            <div class="report-dot" style="background: {{ $cat['color'] }}18; color: {{ $cat['color'] }};">
+                                {{ $cat['icon'] }}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="report-small-title">{{ $cat['name'] }}</div>
+                                <div class="report-small-meta">{{ $cat['count'] }} transaksi</div>
+                            </div>
+                            <div class="report-amount">Rp {{ number_format($cat['amount'], 0, ',', '.') }}</div>
+                        </div>
+                    @empty
+                        <p class="text-center text-[13px] text-[var(--text-secondary)] py-5 m-0">Tidak ada pengeluaran.</p>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="report-mobile-section">
+            <div class="report-section-head">
+                <h2 class="report-section-title">Per Orang</h2>
+            </div>
+            <div class="report-mobile-card">
+                @foreach($userSummary as $summary)
+                    <div class="report-person-item">
+                        @if($summary['user']->profile_photo_url)
+                            <img src="{{ $summary['user']->profile_photo_url }}" alt="{{ $summary['user']->name }}"
+                                class="w-10 h-10 rounded-2xl object-cover shrink-0">
+                        @else
+                            <div class="report-dot bg-pink-50 text-pink-700">{{ $summary['user']->avatar ?? '👤' }}</div>
+                        @endif
+                        <div class="min-w-0 flex-1">
+                            <div class="report-small-title">{{ $summary['user']->name }}</div>
+                            <div class="report-small-meta">
+                                Masuk Rp {{ number_format($summary['income'], 0, ',', '.') }}
+                            </div>
+                        </div>
+                        <div class="report-amount text-rose-600">
+                            Rp {{ number_format($summary['expense'], 0, ',', '.') }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+
+        <section class="report-mobile-section">
+            <div class="report-section-head">
+                <h2 class="report-section-title">Transaksi</h2>
+            </div>
+            <div class="report-mobile-card">
+                @forelse($transactions->take(8) as $tx)
+                    <div class="report-tx-item">
+                        <div class="report-tx-icon" style="background: {{ $tx->category->color }}18;">
+                            {{ $tx->category->icon }}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="report-small-title">{{ $tx->description }}</div>
+                            <div class="report-small-meta">{{ $tx->user->name }} - {{ $tx->date->isoFormat('D MMM Y') }}</div>
+                        </div>
+                        <div class="report-amount {{ $tx->type === 'income' ? 'text-emerald-600' : 'text-rose-600' }}">
+                            {{ $tx->type === 'income' ? '+' : '-' }} Rp {{ number_format($tx->amount, 0, ',', '.') }}
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-center text-[13px] text-[var(--text-secondary)] py-5 m-0">Tidak ada transaksi.</p>
+                @endforelse
+            </div>
+        </section>
+    </div>
+
+    <div class="report-desktop-view">
     {{-- Header Laporan --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
@@ -302,6 +749,7 @@
             </table>
         </div>
     </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -310,6 +758,10 @@
         const reportYear = document.getElementById('reportYear');
         const reportStartDate = document.getElementById('reportStartDate');
         const reportEndDate = document.getElementById('reportEndDate');
+        const mobileReportMonth = document.getElementById('mobileReportMonth');
+        const mobileReportYear = document.getElementById('mobileReportYear');
+        const mobileReportStartDate = document.getElementById('mobileReportStartDate');
+        const mobileReportEndDate = document.getElementById('mobileReportEndDate');
 
         function syncReportDateRange() {
             if (!reportMonth || !reportYear || !reportStartDate || !reportEndDate) return;
@@ -334,8 +786,22 @@
             }
         }
 
+        function syncMobileReportDateRange() {
+            if (!mobileReportMonth || !mobileReportYear || !mobileReportStartDate || !mobileReportEndDate) return;
+
+            const year = Number(mobileReportYear.value);
+            const month = Number(mobileReportMonth.value);
+            const lastDay = new Date(year, month, 0).getDate();
+            const paddedMonth = String(month).padStart(2, '0');
+
+            mobileReportStartDate.value = `${year}-${paddedMonth}-01`;
+            mobileReportEndDate.value = `${year}-${paddedMonth}-${String(lastDay).padStart(2, '0')}`;
+        }
+
         reportMonth?.addEventListener('change', syncReportDateRange);
         reportYear?.addEventListener('change', syncReportDateRange);
+        mobileReportMonth?.addEventListener('change', syncMobileReportDateRange);
+        mobileReportYear?.addEventListener('change', syncMobileReportDateRange);
 
         // 1. Inisialisasi Tren Chart 12 Bulan (Light Mode)
         const trendCanvas = document.getElementById('trendChart');
@@ -388,6 +854,66 @@
             }
         }
 
+        const mobileTrendCanvas = document.getElementById('mobileTrendChart');
+        if (mobileTrendCanvas) {
+            const mobileTrendCtx = mobileTrendCanvas.getContext('2d');
+            const trendData = @json($monthlyTrend ?? []);
+
+            if (trendData && trendData.length > 0) {
+                new Chart(mobileTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendData.map(t => t.label),
+                        datasets: [
+                            {
+                                label: 'Masuk',
+                                data: trendData.map(t => t.income),
+                                borderColor: '#16a34a',
+                                backgroundColor: 'rgba(22,163,74,0.08)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 2
+                            },
+                            {
+                                label: 'Keluar',
+                                data: trendData.map(t => t.expense),
+                                borderColor: '#e11d48',
+                                backgroundColor: 'rgba(225,29,72,0.08)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                                pointRadius: 2
+                            },
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#64748b', font: { size: 11, weight: '700' }, boxWidth: 10 }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 0 }, grid: { display: false } },
+                            y: {
+                                ticks: {
+                                    color: '#94a3b8',
+                                    font: { size: 10 },
+                                    callback: v => v >= 1000000 ? 'Rp ' + (v / 1000000).toFixed(1) + 'jt' : 'Rp ' + (v / 1000).toFixed(0) + 'rb'
+                                },
+                                grid: { color: '#f1f5f9' }
+                            },
+                        }
+                    }
+                });
+            } else {
+                mobileTrendCanvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">Belum ada data tren</div>';
+            }
+        }
+
         // 2. Inisialisasi Pie Chart Kategori (Light Mode)
         const pieCanvas = document.getElementById('pieChart');
         if (pieCanvas) {
@@ -416,6 +942,41 @@
                 });
             } else {
                 pieCanvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">Tidak ada data</div>';
+            }
+        }
+
+        const mobilePieCanvas = document.getElementById('mobilePieChart');
+        if (mobilePieCanvas) {
+            const mobilePieCtx = mobilePieCanvas.getContext('2d');
+            const cats = @json($expenseByCategory->values() ?? []);
+
+            if (cats && cats.length > 0) {
+                new Chart(mobilePieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: cats.map(c => c.name),
+                        datasets: [{
+                            data: cats.map(c => c.amount),
+                            backgroundColor: cats.map(c => c.color),
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        cutout: '68%',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#64748b', font: { size: 11, weight: '700' }, boxWidth: 10 }
+                            }
+                        },
+                    }
+                });
+            } else {
+                mobilePieCanvas.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-sm">Tidak ada data</div>';
             }
         }
     </script>

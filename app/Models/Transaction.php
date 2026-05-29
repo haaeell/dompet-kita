@@ -19,7 +19,8 @@ class Transaction extends Model
         'description',
         'notes',
         'date',
-        'receipt_image'
+        'receipt_image',
+        'client_uuid'
     ];
 
     protected $casts = ['date' => 'date', 'amount' => 'float'];

@@ -56,9 +56,25 @@ class TransactionController extends Controller
             'bank_id' => 'required|exists:banks,id',
             'date' => 'required|date',
             'notes' => 'nullable|string|max:500',
+            'client_uuid' => 'nullable|string|max:80',
         ]);
 
         $couple = Auth::user()->couple;
+
+        if ($request->filled('client_uuid')) {
+            $existingTransaction = $couple->transactions()
+                ->where('client_uuid', $request->client_uuid)
+                ->with(['user', 'category', 'bank'])
+                ->first();
+
+            if ($existingTransaction) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Transaksi offline sudah tersinkron.',
+                    'transaction' => $existingTransaction,
+                ]);
+            }
+        }
 
         // Validasi category & bank milik couple ini
         $category = $couple->categories()->findOrFail($request->category_id);
@@ -74,6 +90,7 @@ class TransactionController extends Controller
             'description' => $request->description,
             'notes' => $request->notes,
             'date' => $request->date,
+            'client_uuid' => $request->client_uuid,
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {

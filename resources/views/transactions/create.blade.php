@@ -29,6 +29,12 @@
     @endif
 
     <div class="card p-6 max-w-3xl pb-40 sm:pb-6">
+        <div id="offline-transaction-notice"
+            class="hidden mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div class="font-semibold">Mode offline aktif</div>
+            <div>Transaksi yang kamu simpan akan masuk antrean dan otomatis sinkron saat internet kembali.</div>
+        </div>
+
         <form action="{{ route('transactions.store') }}" method="POST" id="transaction-form">
             @csrf
 
@@ -129,6 +135,7 @@
     const desktopSubmitButton = document.getElementById('desktop-submit-button');
     const mobileSubmitButton = document.getElementById('mobile-submit-button');
     const mobileTransactionActions = document.getElementById('mobile-transaction-actions');
+    const offlineTransactionNotice = document.getElementById('offline-transaction-notice');
 
     const allCategories = [];
     document.querySelectorAll('#category_id option[data-type]').forEach(option => {
@@ -207,24 +214,49 @@
         transactionErrorBox.classList.add('hidden');
     }
 
+    function buildTransactionPayload() {
+        const payload = {};
+
+        $(transactionForm).serializeArray().forEach(item => {
+            payload[item.name] = item.name === 'amount'
+                ? item.value.replace(/\./g, '').replace(/,/g, '')
+                : item.value;
+        });
+
+        return payload;
+    }
+
+    function queueOfflineTransaction(payload) {
+        window.DompetKitaOffline.queueTransaction(payload);
+        transactionForm.reset();
+        setTxType('{{ old('type', 'expense') }}');
+        setSubmittingState(false);
+        clearTransactionErrors();
+    }
+
+    function updateOfflineNotice() {
+        if (!offlineTransactionNotice) return;
+        offlineTransactionNotice.classList.toggle('hidden', navigator.onLine);
+    }
+
     transactionForm.addEventListener('submit', function (event) {
         event.preventDefault();
+        event.stopImmediatePropagation();
 
         clearTransactionErrors();
         setSubmittingState(true);
 
-        const formData = $(transactionForm).serializeArray().map(item => {
-            if (item.name === 'amount') {
-                item.value = item.value.replace(/\./g, '').replace(/,/g, '');
-            }
+        const payload = buildTransactionPayload();
 
-            return item;
-        });
+        if (!navigator.onLine) {
+            queueOfflineTransaction(payload);
+            return;
+        }
 
         $.ajax({
             url: transactionForm.action,
             method: 'POST',
-            data: $.param(formData),
+            data: $.param(payload),
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -236,6 +268,11 @@
                 }, 500);
             },
             error: function (xhr) {
+                if (xhr.status === 0) {
+                    queueOfflineTransaction(payload);
+                    return;
+                }
+
                 if (xhr.status === 422 && xhr.responseJSON?.errors) {
                     showTransactionErrors(Object.values(xhr.responseJSON.errors).flat());
                     return;
@@ -258,6 +295,11 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         setTxType('{{ old('type', 'expense') }}');
+        updateOfflineNotice();
+        window.DompetKitaOffline.syncTransactions();
+
+        window.addEventListener('online', updateOfflineNotice);
+        window.addEventListener('offline', updateOfflineNotice);
 
         if (window.visualViewport && mobileTransactionActions) {
             const updateMobileActionPosition = () => {

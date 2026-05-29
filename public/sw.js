@@ -1,5 +1,8 @@
-const CACHE_NAME = 'dompetkita-pwa-v7';
+const CACHE_NAME = 'dompetkita-pwa-v8';
 const APP_SHELL = [
+    '/',
+    '/transactions',
+    '/transactions/create',
     '/favicon.ico',
     '/images/app-logo-dompetkita.png',
     '/images/pwa-icon-dompetkita-192.png',
@@ -39,7 +42,19 @@ self.addEventListener('fetch', event => {
     const isDocument = request.mode === 'navigate' || request.destination === 'document';
 
     if (isDocument) {
-        event.respondWith(fetch(request));
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    const copy = response.clone();
+
+                    if (response.ok) {
+                        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+                    }
+
+                    return response;
+                })
+                .catch(() => caches.match(request).then(cached => cached || caches.match('/')))
+        );
         return;
     }
 

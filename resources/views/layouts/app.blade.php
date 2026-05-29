@@ -1460,6 +1460,147 @@
             iconColor: '#db2777',
         });
 
+        window.DompetKitaOffline = (function () {
+            const queueKey = 'dompetkita.offline.transactions.v1';
+            const syncUrl = '{{ route('transactions.store') }}';
+            let isSyncing = false;
+
+            function readQueue() {
+                try {
+                    return JSON.parse(localStorage.getItem(queueKey) || '[]');
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function writeQueue(queue) {
+                localStorage.setItem(queueKey, JSON.stringify(queue));
+                window.dispatchEvent(new CustomEvent('dompetkita:offline-queue', {
+                    detail: { count: queue.length }
+                }));
+            }
+
+            function makeUuid() {
+                if (window.crypto && window.crypto.randomUUID) {
+                    return window.crypto.randomUUID();
+                }
+
+                return 'offline-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+            }
+
+            function toFormBody(payload) {
+                const params = new URLSearchParams();
+                Object.entries(payload).forEach(([key, value]) => {
+                    params.append(key, value ?? '');
+                });
+                return params.toString();
+            }
+
+            function queueTransaction(payload) {
+                const queue = readQueue();
+                const clientUuid = payload.client_uuid || makeUuid();
+                const item = {
+                    client_uuid: clientUuid,
+                    payload: {
+                        ...payload,
+                        client_uuid: clientUuid,
+                    },
+                    created_at: new Date().toISOString(),
+                };
+
+                item.payload.client_uuid = item.client_uuid;
+                queue.push(item);
+                writeQueue(queue);
+
+                Toast.fire({
+                    icon: 'info',
+                    title: 'Disimpan offline. Akan disinkronkan saat internet aktif.'
+                });
+
+                if (navigator.onLine) {
+                    syncTransactions();
+                }
+
+                return item;
+            }
+
+            async function sendItem(item) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+                const response = await fetch(syncUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: toFormBody(item.payload),
+                });
+
+                if (!response.ok) {
+                    const error = new Error('Sync failed');
+                    error.status = response.status;
+                    try {
+                        error.response = await response.json();
+                    } catch (jsonError) {
+                        error.response = null;
+                    }
+                    throw error;
+                }
+
+                return response.json();
+            }
+
+            async function syncTransactions() {
+                if (isSyncing || !navigator.onLine) return;
+
+                let queue = readQueue();
+                if (queue.length === 0) return;
+
+                isSyncing = true;
+                let syncedCount = 0;
+                const failedItems = [];
+
+                for (const item of queue) {
+                    try {
+                        await sendItem(item);
+                        syncedCount++;
+                    } catch (error) {
+                        if (error.status && error.status !== 0 && error.status < 500) {
+                            failedItems.push({
+                                ...item,
+                                last_error: error.response?.message || 'Data tidak bisa disinkronkan.',
+                            });
+                            continue;
+                        }
+
+                        failedItems.push(item);
+                    }
+                }
+
+                writeQueue(failedItems);
+                isSyncing = false;
+
+                if (syncedCount > 0) {
+                    Toast.fire({
+                        icon: 'success',
+                        title: `${syncedCount} transaksi offline tersinkron.`
+                    });
+                }
+            }
+
+            window.addEventListener('online', syncTransactions);
+            window.addEventListener('load', syncTransactions);
+
+            return {
+                queueTransaction,
+                syncTransactions,
+                pendingCount: () => readQueue().length,
+            };
+        })();
+
         function copyInvite() {
             const code = '{{ auth()->user()->couple->invite_code ?? '' }}';
             navigator.clipboard.writeText(code);

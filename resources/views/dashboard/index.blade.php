@@ -579,9 +579,9 @@
                     <i class="fa-solid fa-building-columns"></i>
                     <span>Rekening</span>
                 </a>
-                <a href="{{ route('targets.index') }}" class="quick-action">
-                    <i class="fa-solid fa-bullseye"></i>
-                    <span>Target</span>
+                <a href="{{ route('banks.transfer') }}" class="quick-action">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    <span>Transfer</span>
                 </a>
             </div>
         </section>

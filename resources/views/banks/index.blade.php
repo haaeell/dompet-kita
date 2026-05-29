@@ -8,9 +8,14 @@
             <h1 class="text-3xl font-bold text-slate-900 mb-1">Rekening & Dompet</h1>
             <p class="text-sm text-slate-500">Kelola semua pos dan tempat penyimpanan uang kalian</p>
         </div>
-        <button onclick="openModal('modalBank')" class="btn-primary whitespace-nowrap">
-            <i class="fa-solid fa-plus"></i> Tambah Rekening
-        </button>
+        <div class="flex gap-2 flex-wrap">
+            <a href="{{ route('banks.transfer') }}" class="btn-ghost whitespace-nowrap">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer
+            </a>
+            <button onclick="openModal('modalBank')" class="btn-primary whitespace-nowrap">
+                <i class="fa-solid fa-plus"></i> Tambah Rekening
+            </button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

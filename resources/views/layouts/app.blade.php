@@ -1411,6 +1411,12 @@
                             class="fa-solid fa-building-columns"></i></div>
                     <span class="text-xs font-medium">Rekening</span>
                 </a>
+                <a href="{{ route('banks.transfer') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('banks.transfer') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                    <span class="text-xs font-medium">Transfer</span>
+                </a>
                 <a href="{{ route('targets.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('targets.*') ? 'text-pink-600 bg-pink-50' : '' }}">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i

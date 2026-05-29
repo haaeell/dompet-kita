@@ -25,8 +25,8 @@ class DashboardController extends Controller
         $selectedUser = $selectedUserId ? $couple->users()->find($selectedUserId) : null;
 
         $transactionQuery = $couple->transactions();
-        $incomeQuery = $couple->transactions()->where('type', 'income');
-        $expenseQuery = $couple->transactions()->where('type', 'expense');
+        $incomeQuery = $couple->transactions()->nonTransfer()->where('type', 'income');
+        $expenseQuery = $couple->transactions()->nonTransfer()->where('type', 'expense');
 
         if ($selectedUser) {
             $transactionQuery->where('user_id', $selectedUserId);
@@ -85,8 +85,8 @@ class DashboardController extends Controller
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
 
-            $dayIncome = $couple->transactions()->where('type', 'income')->whereDate('date', $date->toDateString());
-            $dayExpense = $couple->transactions()->where('type', 'expense')->whereDate('date', $date->toDateString());
+            $dayIncome = $couple->transactions()->nonTransfer()->where('type', 'income')->whereDate('date', $date->toDateString());
+            $dayExpense = $couple->transactions()->nonTransfer()->where('type', 'expense')->whereDate('date', $date->toDateString());
 
             if ($selectedUserId) {
                 $dayIncome->where('user_id', $selectedUserId);
@@ -101,6 +101,7 @@ class DashboardController extends Controller
         }
 
         $expenseByCategoryQuery = $couple->transactions()
+            ->nonTransfer()
             ->where('type', 'expense')
             ->whereMonth('date', $month)->whereYear('date', $year);
 

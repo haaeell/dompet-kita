@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    public const TRANSFER_CATEGORY = 'Transfer Antar Bank';
+
     protected $fillable = [
         'couple_id',
         'user_id',
@@ -37,6 +39,13 @@ class Transaction extends Model
     public function bank(): BelongsTo
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    public function scopeNonTransfer($query)
+    {
+        return $query->whereDoesntHave('category', function ($categoryQuery) {
+            $categoryQuery->where('name', self::TRANSFER_CATEGORY);
+        });
     }
 
     protected static function boot()

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bank;
+use App\Models\Category;
+use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BankController extends Controller
 {
@@ -16,6 +19,74 @@ class BankController extends Controller
         $couple = Auth::user()->couple;
         $banks = $couple->banks()->withCount('transactions')->get();
         return view('banks.index', compact('banks'));
+    }
+
+    public function transfer()
+    {
+        $banks = Auth::user()->couple
+            ->banks()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('banks.transfer', compact('banks'));
+    }
+
+    public function storeTransfer(Request $request)
+    {
+        $request->validate([
+            'from_bank_id' => 'required|exists:banks,id',
+            'to_bank_id' => 'required|exists:banks,id|different:from_bank_id',
+            'amount' => 'required|numeric|min:1',
+            'date' => 'required|date',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $couple = Auth::user()->couple;
+        $fromBank = $couple->banks()->where('is_active', true)->findOrFail($request->from_bank_id);
+        $toBank = $couple->banks()->where('is_active', true)->findOrFail($request->to_bank_id);
+        $amount = (float) $request->amount;
+
+        if ($fromBank->current_balance < $amount) {
+            return back()
+                ->withInput()
+                ->with('error', 'Saldo rekening asal tidak cukup untuk transfer.');
+        }
+
+        DB::transaction(function () use ($request, $couple, $fromBank, $toBank, $amount) {
+            $expenseCategory = $this->getTransferCategory($couple, 'expense');
+            $incomeCategory = $this->getTransferCategory($couple, 'income');
+            $transferCode = 'TRF-' . now()->format('YmdHis') . '-' . Auth::id();
+            $notes = trim((string) $request->notes);
+
+            Transaction::create([
+                'couple_id' => $couple->id,
+                'user_id' => Auth::id(),
+                'category_id' => $expenseCategory->id,
+                'bank_id' => $fromBank->id,
+                'type' => 'expense',
+                'amount' => $amount,
+                'description' => 'Transfer ke ' . $toBank->name,
+                'notes' => trim($transferCode . ($notes ? ' - ' . $notes : '')),
+                'date' => $request->date,
+            ]);
+
+            Transaction::create([
+                'couple_id' => $couple->id,
+                'user_id' => Auth::id(),
+                'category_id' => $incomeCategory->id,
+                'bank_id' => $toBank->id,
+                'type' => 'income',
+                'amount' => $amount,
+                'description' => 'Transfer dari ' . $fromBank->name,
+                'notes' => trim($transferCode . ($notes ? ' - ' . $notes : '')),
+                'date' => $request->date,
+            ]);
+        });
+
+        return redirect()
+            ->route('banks.index')
+            ->with('success', 'Transfer antar bank berhasil dicatat.');
     }
 
     public function mutations(Request $request, Bank $bank)
@@ -114,6 +185,19 @@ class BankController extends Controller
         if ($bank->couple_id !== Auth::user()->couple_id) {
             abort(403);
         }
+    }
+
+    protected function getTransferCategory($couple, string $type): Category
+    {
+        return Category::firstOrCreate([
+            'couple_id' => $couple->id,
+            'name' => Transaction::TRANSFER_CATEGORY,
+            'type' => $type,
+        ], [
+            'icon' => '🔁',
+            'color' => '#3b82f6',
+            'is_default' => false,
+        ]);
     }
 
     protected function buildMutationQuery(Request $request, Bank $bank): HasMany

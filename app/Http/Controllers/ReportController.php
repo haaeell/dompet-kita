@@ -40,9 +40,12 @@ class ReportController extends Controller
         }
 
         $transactions = $transactionQuery->latest('date')->get();
+        $summaryTransactions = $transactions->reject(
+            fn($transaction) => $transaction->category?->name === \App\Models\Transaction::TRANSFER_CATEGORY
+        );
 
-        $totalIncome = $transactions->where('type', 'income')->sum('amount');
-        $totalExpense = $transactions->where('type', 'expense')->sum('amount');
+        $totalIncome = $summaryTransactions->where('type', 'income')->sum('amount');
+        $totalExpense = $summaryTransactions->where('type', 'expense')->sum('amount');
         $balance = $totalIncome - $totalExpense;
         $banksQuery = $couple->banks()->where('is_active', true);
         $debtsQuery = $couple->debts()
@@ -64,15 +67,15 @@ class ReportController extends Controller
         $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
         $debts = $debtsQuery->latest('due_date')->get();
 
-        $userSummary = $couple->users->map(function ($u) use ($transactions) {
+        $userSummary = $couple->users->map(function ($u) use ($summaryTransactions) {
             return [
                 'user' => $u,
-                'income' => $transactions->where('user_id', $u->id)->where('type', 'income')->sum('amount'),
-                'expense' => $transactions->where('user_id', $u->id)->where('type', 'expense')->sum('amount'),
+                'income' => $summaryTransactions->where('user_id', $u->id)->where('type', 'income')->sum('amount'),
+                'expense' => $summaryTransactions->where('user_id', $u->id)->where('type', 'expense')->sum('amount'),
             ];
         });
 
-        $expenseByCategory = $transactions->where('type', 'expense')
+        $expenseByCategory = $summaryTransactions->where('type', 'expense')
             ->groupBy('category_id')
             ->map(fn($group) => [
                 'name' => $group->first()->category->name,
@@ -88,9 +91,11 @@ class ReportController extends Controller
         if ($dayCount <= 31) {
             for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
                 $trendIncomeQuery = $couple->transactions()
+                    ->nonTransfer()
                     ->where('type', 'income')
                     ->whereDate('date', $date->toDateString());
                 $trendExpenseQuery = $couple->transactions()
+                    ->nonTransfer()
                     ->where('type', 'expense')
                     ->whereDate('date', $date->toDateString());
 
@@ -114,10 +119,12 @@ class ReportController extends Controller
 
             while ($trendStart->lte($trendEnd)) {
                 $trendIncomeQuery = $couple->transactions()
+                    ->nonTransfer()
                     ->where('type', 'income')
                     ->whereMonth('date', $trendStart->month)
                     ->whereYear('date', $trendStart->year);
                 $trendExpenseQuery = $couple->transactions()
+                    ->nonTransfer()
                     ->where('type', 'expense')
                     ->whereMonth('date', $trendStart->month)
                     ->whereYear('date', $trendStart->year);

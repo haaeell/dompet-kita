@@ -39,12 +39,11 @@
     <meta name="msapplication-TileColor" content="#db2777">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
 
     {{-- Favicon & Icons --}}
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
-    <link rel="apple-touch-icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+    <link rel="icon" type="image/png" href="{{ asset('images/app-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/pwa-icon-192.png') }}">
 
     <title>@yield('title', 'DompetKita') – Keuangan Bersama</title>
 
@@ -1080,6 +1079,14 @@
                 headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content') }
             });
             handleAjaxResponse(res, callback);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('{{ asset('sw.js') }}').catch(function (error) {
+                    console.warn('Service worker registration failed:', error);
+                });
+            });
         }
     </script>
 

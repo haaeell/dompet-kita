@@ -971,6 +971,12 @@
                             class="fa-solid fa-user"></i></div>
                     <span class="text-xs font-medium">Profil</span>
                 </a>
+                <button type="button" data-install-app
+                    class="hidden flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-download"></i></div>
+                    <span class="text-xs font-medium">Install</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1009,7 +1015,62 @@
             menu.classList.toggle('hidden');
         }
 
+        let deferredInstallPrompt = null;
+
+        function isAppInstalled() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+
+        function isIosDevice() {
+            return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        }
+
+        function showInstallButtons() {
+            if (isAppInstalled()) return;
+            document.querySelectorAll('[data-install-app]').forEach(button => {
+                button.classList.remove('hidden');
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', function (event) {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            showInstallButtons();
+        });
+
+        window.addEventListener('appinstalled', function () {
+            deferredInstallPrompt = null;
+            document.querySelectorAll('[data-install-app]').forEach(button => {
+                button.classList.add('hidden');
+            });
+            Toast.fire({ icon: 'success', title: 'Aplikasi berhasil diinstall!' });
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
+            if (isIosDevice() && !isAppInstalled()) {
+                showInstallButtons();
+            }
+
+            document.querySelectorAll('[data-install-app]').forEach(button => {
+                button.addEventListener('click', async function () {
+                    if (deferredInstallPrompt) {
+                        deferredInstallPrompt.prompt();
+                        await deferredInstallPrompt.userChoice;
+                        deferredInstallPrompt = null;
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Install DompetKita',
+                        html: 'Di Safari, tekan tombol <b>Share</b>, lalu pilih <b>Add to Home Screen</b>.',
+                        confirmButtonColor: '#db2777',
+                        background: '#fff',
+                        color: '#1a1a2e',
+                    });
+                });
+            });
+
             if (window.flatpickr) {
                 flatpickr.localize(flatpickr.l10ns.id);
 

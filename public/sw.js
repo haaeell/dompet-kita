@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dompetkita-pwa-v6';
+const CACHE_NAME = 'dompetkita-pwa-v7';
 const APP_SHELL = [
     '/favicon.ico',
     '/images/app-logo-dompetkita.png',

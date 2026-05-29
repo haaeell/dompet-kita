@@ -640,6 +640,150 @@
             margin-top: 4px;
         }
 
+        .app-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at 28% 18%, rgba(252, 231, 243, 0.95) 0 18%, transparent 32%),
+                radial-gradient(circle at 78% 78%, rgba(251, 207, 232, 0.85) 0 16%, transparent 32%),
+                linear-gradient(145deg, #fff7fb 0%, #ffffff 48%, #fdf2f8 100%);
+            transition: opacity 0.36s ease, visibility 0.36s ease;
+        }
+
+        .app-splash.is-hiding {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-card {
+            width: min(320px, 100%);
+            text-align: center;
+            transform: translateY(0);
+            animation: splashFloat 1.8s ease-in-out infinite;
+        }
+
+        .splash-icon-wrap {
+            position: relative;
+            width: 118px;
+            height: 118px;
+            margin: 0 auto 22px;
+        }
+
+        .splash-icon {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+            color: white;
+            box-shadow: 0 18px 42px rgba(219, 39, 119, 0.28);
+            font-size: 44px;
+        }
+
+        .splash-bubble {
+            position: absolute;
+            z-index: 3;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: var(--pink-dark);
+            border: 1px solid var(--pink-mid);
+            box-shadow: 0 10px 22px rgba(219, 39, 119, 0.16);
+            font-size: 16px;
+        }
+
+        .splash-bubble.one {
+            top: -8px;
+            right: -8px;
+            animation: splashPop 1.5s ease-in-out infinite;
+        }
+
+        .splash-bubble.two {
+            bottom: 4px;
+            left: -12px;
+            animation: splashPop 1.5s ease-in-out 0.24s infinite;
+        }
+
+        .splash-title {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .splash-subtitle {
+            margin: 8px 0 18px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .splash-loader {
+            position: relative;
+            width: 150px;
+            height: 8px;
+            margin: 0 auto;
+            border-radius: 99px;
+            overflow: hidden;
+            background: var(--pink-light);
+        }
+
+        .splash-loader::after {
+            content: '';
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 46%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--pink), var(--pink-dark));
+            animation: splashLoad 1s ease-in-out infinite;
+        }
+
+        @keyframes splashFloat {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes splashPop {
+            0%,
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: scale(1.08) rotate(8deg);
+            }
+        }
+
+        @keyframes splashLoad {
+            0% {
+                transform: translateX(-110%);
+            }
+
+            100% {
+                transform: translateX(230%);
+            }
+        }
+
         @media (max-width: 768px) {
 
             .modal-overlay {
@@ -749,6 +893,25 @@
 </head>
 
 <body>
+    <div id="appSplash" class="app-splash" aria-label="Memuat DompetKita">
+        <div class="splash-card" role="status" aria-live="polite">
+            <div class="splash-icon-wrap" aria-hidden="true">
+                <div class="splash-icon">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="splash-bubble one">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <div class="splash-bubble two">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+            </div>
+            <h1 class="splash-title">DompetKita</h1>
+            <p class="splash-subtitle">Nyiapin catatan keuangan berdua...</p>
+            <div class="splash-loader" aria-hidden="true"></div>
+        </div>
+    </div>
+
     <header id="mobileTopbar"
         style="display:none; position:fixed; top:0; left:0; right:0; height:60px; background:white; border-bottom:1px solid var(--border); z-index:990; padding:0 16px; align-items:center; justify-content:space-between; box-shadow:0 1px 8px rgba(0,0,0,0.04);">
 
@@ -1047,6 +1210,16 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
+            const splash = document.getElementById('appSplash');
+            if (splash) {
+                window.setTimeout(function () {
+                    splash.classList.add('is-hiding');
+                    window.setTimeout(function () {
+                        splash.remove();
+                    }, 420);
+                }, 850);
+            }
+
             if (isIosDevice() && !isAppInstalled()) {
                 showInstallButtons();
             }

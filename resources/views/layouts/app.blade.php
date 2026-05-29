@@ -1451,6 +1451,21 @@
         </div>
     </div>
 
+    <div id="offlineFloatingAlert"
+        class="fixed right-4 top-4 z-[1200] hidden max-w-[calc(100vw-2rem)] rounded-2xl border px-4 py-3 shadow-xl backdrop-blur md:right-6 md:top-6"
+        role="status" aria-live="polite">
+        <div class="flex items-start gap-3">
+            <div id="offlineFloatingIcon"
+                class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full">
+                <i class="fa-solid fa-wifi"></i>
+            </div>
+            <div class="min-w-0">
+                <div id="offlineFloatingTitle" class="text-sm font-bold"></div>
+                <div id="offlineFloatingMessage" class="text-xs leading-relaxed"></div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const Toast = Swal.mixin({
@@ -1621,6 +1636,41 @@
             }
         }
 
+        function updateOfflineFloatingAlert() {
+            const alert = document.getElementById('offlineFloatingAlert');
+            const icon = document.getElementById('offlineFloatingIcon');
+            const title = document.getElementById('offlineFloatingTitle');
+            const message = document.getElementById('offlineFloatingMessage');
+            if (!alert || !icon || !title || !message) return;
+
+            const pendingCount = window.DompetKitaOffline?.pendingCount?.() || 0;
+            const isOffline = !navigator.onLine;
+
+            if (!isOffline && pendingCount === 0) {
+                alert.classList.add('hidden');
+                return;
+            }
+
+            alert.classList.remove('hidden');
+            alert.className = 'fixed right-4 top-4 z-[1200] max-w-[calc(100vw-2rem)] rounded-2xl border px-4 py-3 shadow-xl backdrop-blur md:right-6 md:top-6';
+            icon.className = 'mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full';
+
+            if (isOffline) {
+                alert.classList.add('border-amber-200', 'bg-amber-50/95', 'text-amber-900');
+                icon.classList.add('bg-amber-100', 'text-amber-700');
+                title.textContent = 'Mode offline';
+                message.textContent = pendingCount > 0
+                    ? `${pendingCount} transaksi tersimpan di perangkat dan akan sinkron saat internet kembali.`
+                    : 'Kamu tetap bisa mencatat transaksi. Data akan disimpan dulu di perangkat ini.';
+                return;
+            }
+
+            alert.classList.add('border-pink-200', 'bg-white/95', 'text-slate-800');
+            icon.classList.add('bg-pink-50', 'text-pink-600');
+            title.textContent = 'Menunggu sinkronisasi';
+            message.textContent = `${pendingCount} transaksi offline masih dalam antrean.`;
+        }
+
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMoreMenu');
             if (!menu) return;
@@ -1679,6 +1729,11 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
+            updateOfflineFloatingAlert();
+            window.addEventListener('online', updateOfflineFloatingAlert);
+            window.addEventListener('offline', updateOfflineFloatingAlert);
+            window.addEventListener('dompetkita:offline-queue', updateOfflineFloatingAlert);
+
             const splash = document.getElementById('appSplash');
             if (splash) {
                 if (document.documentElement.classList.contains('splash-seen')) {

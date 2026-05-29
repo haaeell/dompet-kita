@@ -246,7 +246,7 @@
                             <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-slate-100">
+                    <tbody id="offline-transactions-table-body" class="bg-white divide-y divide-slate-100">
                         @forelse($transactions as $tx)
                             <tr id="tx-{{ $tx->id }}" class="hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3">
@@ -307,7 +307,7 @@
                 </table>
             </div>
 
-            <div class="md:hidden">
+            <div id="offline-transactions-mobile-list" class="md:hidden">
                 @forelse($transactions as $tx)
                     <div id="tx-mob-{{ $tx->id }}" class="p-4 border-b border-slate-100 last:border-0">
                         <div class="flex justify-between items-start gap-3 mb-2">
@@ -395,7 +395,120 @@
             }, 300);
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            }[char]));
+        }
+
+        function formatPendingDate(value) {
+            if (!value) return '-';
+
+            const date = new Date(`${value}T00:00:00`);
+            if (Number.isNaN(date.getTime())) return value;
+
+            return new Intl.DateTimeFormat('id-ID', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+            }).format(date);
+        }
+
+        function renderOfflineTransactions() {
+            const pendingItems = window.DompetKitaOffline?.pendingTransactions?.() || [];
+            const tableBody = document.getElementById('offline-transactions-table-body');
+            const mobileList = document.getElementById('offline-transactions-mobile-list');
+
+            document.querySelectorAll('[data-offline-transaction]').forEach(element => element.remove());
+
+            pendingItems.forEach(item => {
+                const payload = item.payload || {};
+                const isIncome = payload.type === 'income';
+                const amount = Number(payload.amount || 0);
+                const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
+                const statusText = item.last_error ? 'Gagal sync' : 'Belum sinkron';
+                const statusClass = item.last_error ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200';
+                const description = escapeHtml(payload.description || 'Transaksi offline');
+                const notes = escapeHtml(payload.notes || '');
+                const category = escapeHtml(payload.category_label || `Kategori #${payload.category_id || '-'}`);
+                const bank = escapeHtml(payload.bank_label || `Rekening #${payload.bank_id || '-'}`);
+                const user = escapeHtml(payload.user_label || 'Saya');
+                const dateText = escapeHtml(formatPendingDate(payload.date));
+
+                if (tableBody) {
+                    tableBody.insertAdjacentHTML('afterbegin', `
+                        <tr data-offline-transaction class="bg-amber-50/60 hover:bg-amber-50 transition-colors">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-amber-100 text-amber-700">
+                                        <i class="fa-solid fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-sm text-slate-900">${description}</div>
+                                        ${notes ? `<div class="text-xs text-slate-500 italic mt-0.5">${notes}</div>` : ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="${isIncome ? 'income-badge' : 'expense-badge'}">${isIncome ? 'Masuk' : 'Keluar'}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-600">${category}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">${bank}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">${user}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600">${dateText}</td>
+                            <td class="px-4 py-3">
+                                <span class="font-bold text-sm ${isIncome ? 'text-green-600' : 'text-rose-600'}">
+                                    ${isIncome ? '+' : '-'} Rp ${formattedAmount}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${statusClass}">${statusText}</span>
+                            </td>
+                        </tr>
+                    `);
+                }
+
+                if (mobileList) {
+                    mobileList.insertAdjacentHTML('afterbegin', `
+                        <div data-offline-transaction class="p-4 border-b border-amber-100 bg-amber-50/60">
+                            <div class="flex justify-between items-start gap-3 mb-2">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 bg-amber-100 text-amber-700">
+                                        <i class="fa-solid fa-clock"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-semibold text-sm text-slate-900 truncate">${description}</div>
+                                        <div class="text-xs text-slate-400 mt-0.5">${dateText} - ${bank}</div>
+                                    </div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="font-bold text-sm ${isIncome ? 'text-green-600' : 'text-rose-600'}">
+                                        ${isIncome ? '+' : '-'} Rp ${formattedAmount}
+                                    </div>
+                                    <span class="${isIncome ? 'income-badge' : 'expense-badge'} text-xs px-2 py-0.5 mt-1 inline-block">
+                                        ${isIncome ? 'Masuk' : 'Keluar'}
+                                    </span>
+                                </div>
+                            </div>
+                            ${notes ? `<div class="text-xs text-slate-600 bg-white/70 px-3 py-2 rounded-lg italic mb-2">${notes}</div>` : ''}
+                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-amber-100">
+                                <span class="text-xs text-slate-500">Oleh: ${user}</span>
+                                <span class="inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                    `);
+                }
+            });
+        }
+
         $(function () {
+            renderOfflineTransactions();
+            window.addEventListener('dompetkita:offline-queue', renderOfflineTransactions);
+
             if ($(window).width() > 768) {
                 $('#txTable').DataTable({
                     pageLength: 15,

@@ -1597,6 +1597,7 @@
             return {
                 queueTransaction,
                 syncTransactions,
+                pendingTransactions: readQueue,
                 pendingCount: () => readQueue().length,
             };
         })();

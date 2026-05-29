@@ -223,6 +223,12 @@
                 : item.value;
         });
 
+        const categoryOption = transactionForm.querySelector('[name="category_id"] option:checked');
+        const bankOption = transactionForm.querySelector('[name="bank_id"] option:checked');
+        payload.category_label = categoryOption ? categoryOption.textContent.trim() : '';
+        payload.bank_label = bankOption ? bankOption.textContent.trim() : '';
+        payload.user_label = 'Saya';
+
         return payload;
     }
 

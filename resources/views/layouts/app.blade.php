@@ -655,9 +655,97 @@
             transition: opacity 0.36s ease, visibility 0.36s ease;
         }
 
+        .splash-seen .app-splash {
+            display: none;
+        }
+
         .app-splash.is-hiding {
             opacity: 0;
             visibility: hidden;
+        }
+
+        .page-love-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(255, 247, 251, 0.76);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.18s ease, visibility 0.18s ease;
+        }
+
+        .page-love-loader.is-active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .love-loader-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            min-width: 170px;
+            padding: 18px 20px;
+            border-radius: 22px;
+            background: white;
+            border: 1px solid var(--pink-mid);
+            box-shadow: 0 18px 44px rgba(219, 39, 119, 0.18);
+            transform: translateY(8px) scale(0.96);
+            transition: transform 0.18s ease;
+        }
+
+        .page-love-loader.is-active .love-loader-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .love-loader-icon {
+            position: relative;
+            width: 58px;
+            height: 46px;
+        }
+
+        .love-loader-icon i {
+            position: absolute;
+            color: var(--pink-dark);
+            filter: drop-shadow(0 8px 12px rgba(219, 39, 119, 0.2));
+            animation: lovePulse 0.95s ease-in-out infinite;
+        }
+
+        .love-loader-icon i:nth-child(1) {
+            left: 16px;
+            top: 8px;
+            font-size: 28px;
+        }
+
+        .love-loader-icon i:nth-child(2) {
+            left: 0;
+            top: 18px;
+            color: #fb7185;
+            font-size: 18px;
+            animation-delay: 0.16s;
+        }
+
+        .love-loader-icon i:nth-child(3) {
+            right: 0;
+            top: 0;
+            color: #f9a8d4;
+            font-size: 16px;
+            animation-delay: 0.28s;
+        }
+
+        .love-loader-text {
+            margin: 0;
+            color: var(--pink-deep);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
         }
 
         .splash-card {
@@ -672,6 +760,7 @@
             width: 118px;
             height: 118px;
             margin: 0 auto 22px;
+            animation: splashWiggle 2.4s ease-in-out infinite;
         }
 
         .splash-icon {
@@ -683,10 +772,56 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--pink), var(--pink-dark));
-            color: white;
+            background: white;
             box-shadow: 0 18px 42px rgba(219, 39, 119, 0.28);
-            font-size: 44px;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        .splash-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .splash-orbit {
+            position: absolute;
+            inset: -18px;
+            z-index: 1;
+            border-radius: 50%;
+            animation: splashOrbit 5.5s linear infinite;
+        }
+
+        .splash-orbit i {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            color: #fb7185;
+            box-shadow: 0 8px 18px rgba(219, 39, 119, 0.14);
+            font-size: 12px;
+        }
+
+        .splash-orbit i:nth-child(1) {
+            top: 2px;
+            left: 22px;
+        }
+
+        .splash-orbit i:nth-child(2) {
+            right: 0;
+            top: 62px;
+            color: #f59e0b;
+        }
+
+        .splash-orbit i:nth-child(3) {
+            bottom: 6px;
+            left: 42px;
+            color: var(--pink-dark);
         }
 
         .splash-bubble {
@@ -708,13 +843,41 @@
         .splash-bubble.one {
             top: -8px;
             right: -8px;
-            animation: splashPop 1.5s ease-in-out infinite;
+            animation: splashPop 1.5s ease-in-out infinite, splashKiss 2.2s ease-in-out infinite;
         }
 
         .splash-bubble.two {
             bottom: 4px;
             left: -12px;
-            animation: splashPop 1.5s ease-in-out 0.24s infinite;
+            animation: splashPop 1.5s ease-in-out 0.24s infinite, splashKiss 2.2s ease-in-out 0.35s infinite;
+        }
+
+        .splash-sweet-row {
+            display: flex;
+            justify-content: center;
+            gap: 7px;
+            margin: 14px 0 6px;
+        }
+
+        .splash-sweet-row span {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--pink);
+            opacity: 0.52;
+            animation: splashBeat 1.1s ease-in-out infinite;
+        }
+
+        .splash-sweet-row span:nth-child(2) {
+            width: 11px;
+            height: 11px;
+            background: var(--pink-dark);
+            opacity: 0.8;
+            animation-delay: 0.15s;
+        }
+
+        .splash-sweet-row span:nth-child(3) {
+            animation-delay: 0.3s;
         }
 
         .splash-title {
@@ -763,6 +926,27 @@
             }
         }
 
+        @keyframes splashWiggle {
+            0%,
+            100% {
+                transform: rotate(-2deg) scale(1);
+            }
+
+            50% {
+                transform: rotate(2deg) scale(1.03);
+            }
+        }
+
+        @keyframes splashOrbit {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         @keyframes splashPop {
             0%,
             100% {
@@ -774,6 +958,28 @@
             }
         }
 
+        @keyframes splashKiss {
+            0%,
+            100% {
+                filter: drop-shadow(0 0 0 rgba(244, 114, 182, 0));
+            }
+
+            45% {
+                filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.42));
+            }
+        }
+
+        @keyframes splashBeat {
+            0%,
+            100% {
+                transform: translateY(0) scale(0.88);
+            }
+
+            50% {
+                transform: translateY(-5px) scale(1.18);
+            }
+        }
+
         @keyframes splashLoad {
             0% {
                 transform: translateX(-110%);
@@ -781,6 +987,19 @@
 
             100% {
                 transform: translateX(230%);
+            }
+        }
+
+        @keyframes lovePulse {
+            0%,
+            100% {
+                transform: translateY(0) scale(0.9);
+                opacity: 0.58;
+            }
+
+            50% {
+                transform: translateY(-6px) scale(1.12);
+                opacity: 1;
             }
         }
 
@@ -893,11 +1112,28 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            try {
+                if (sessionStorage.getItem('dompetkitaSplashSeen') === '1') {
+                    document.documentElement.classList.add('splash-seen');
+                }
+            } catch (error) {
+                document.documentElement.classList.add('splash-seen');
+            }
+        })();
+    </script>
+
     <div id="appSplash" class="app-splash" aria-label="Memuat DompetKita">
         <div class="splash-card" role="status" aria-live="polite">
             <div class="splash-icon-wrap" aria-hidden="true">
+                <div class="splash-orbit">
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-heart"></i>
+                </div>
                 <div class="splash-icon">
-                    <i class="fa-solid fa-wallet"></i>
+                    <img src="{{ asset('images/pwa-icon-dompetkita-192.png') }}" alt="DompetKita">
                 </div>
                 <div class="splash-bubble one">
                     <i class="fa-solid fa-heart"></i>
@@ -907,8 +1143,24 @@
                 </div>
             </div>
             <h1 class="splash-title">DompetKita</h1>
-            <p class="splash-subtitle">Nyiapin catatan keuangan berdua...</p>
+            <p class="splash-subtitle">Nyiapin dompet kecil buat cerita berdua...</p>
+            <div class="splash-sweet-row" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
             <div class="splash-loader" aria-hidden="true"></div>
+        </div>
+    </div>
+
+    <div id="pageLoveLoader" class="page-love-loader" aria-label="Memuat halaman">
+        <div class="love-loader-box" role="status" aria-live="polite">
+            <div class="love-loader-icon" aria-hidden="true">
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <p class="love-loader-text">Sebentar ya...</p>
         </div>
     </div>
 
@@ -1195,6 +1447,26 @@
             });
         }
 
+        function showPageLoveLoader() {
+            const loader = document.getElementById('pageLoveLoader');
+            if (!loader) return;
+            loader.classList.add('is-active');
+        }
+
+        function shouldShowLoveLoaderForLink(link, event) {
+            if (!link || !link.href) return false;
+            if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+            if (link.target && link.target !== '_self') return false;
+            if (link.hasAttribute('download')) return false;
+            if (link.getAttribute('href').startsWith('javascript:')) return false;
+
+            const url = new URL(link.href, window.location.href);
+            if (url.origin !== window.location.origin) return false;
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return false;
+
+            return true;
+        }
+
         window.addEventListener('beforeinstallprompt', function (event) {
             event.preventDefault();
             deferredInstallPrompt = event;
@@ -1212,12 +1484,22 @@
         document.addEventListener('DOMContentLoaded', function () {
             const splash = document.getElementById('appSplash');
             if (splash) {
-                window.setTimeout(function () {
-                    splash.classList.add('is-hiding');
+                if (document.documentElement.classList.contains('splash-seen')) {
+                    splash.remove();
+                } else {
+                    try {
+                        sessionStorage.setItem('dompetkitaSplashSeen', '1');
+                    } catch (error) {
+                        // Abaikan jika browser memblokir sessionStorage.
+                    }
+
                     window.setTimeout(function () {
-                        splash.remove();
-                    }, 420);
-                }, 850);
+                        splash.classList.add('is-hiding');
+                        window.setTimeout(function () {
+                            splash.remove();
+                        }, 420);
+                    }, 850);
+                }
             }
 
             if (isIosDevice() && !isAppInstalled()) {
@@ -1290,10 +1572,19 @@
 
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function () {
+                    showPageLoveLoader();
+
                     this.querySelectorAll('.rupiah').forEach(input => {
                         input.value = normalize(input.value);
                     });
                 });
+            });
+
+            document.addEventListener('click', function (event) {
+                const link = event.target.closest('a');
+                if (shouldShowLoveLoaderForLink(link, event)) {
+                    showPageLoveLoader();
+                }
             });
         });
 

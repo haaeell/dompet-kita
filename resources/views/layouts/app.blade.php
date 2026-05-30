@@ -1503,6 +1503,15 @@
                 return 'offline-' + Date.now() + '-' + Math.random().toString(16).slice(2);
             }
 
+            function withCurrentTime(dateValue, date = new Date()) {
+                if (!dateValue || /\d{1,2}:\d{2}/.test(String(dateValue))) {
+                    return dateValue;
+                }
+
+                const pad = value => String(value).padStart(2, '0');
+                return `${dateValue} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+            }
+
             function toFormBody(payload) {
                 const params = new URLSearchParams();
                 Object.entries(payload).forEach(([key, value]) => {
@@ -1514,13 +1523,15 @@
             function queueTransaction(payload) {
                 const queue = readQueue();
                 const clientUuid = payload.client_uuid || makeUuid();
+                const createdAt = new Date();
                 const item = {
                     client_uuid: clientUuid,
                     payload: {
                         ...payload,
+                        date: withCurrentTime(payload.date, createdAt),
                         client_uuid: clientUuid,
                     },
-                    created_at: new Date().toISOString(),
+                    created_at: createdAt.toISOString(),
                 };
 
                 item.payload.client_uuid = item.client_uuid;

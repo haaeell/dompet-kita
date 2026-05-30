@@ -86,7 +86,7 @@ return new class extends Migration
             $table->decimal('amount', 15, 2);
             $table->string('description');
             $table->text('notes')->nullable();
-            $table->date('date');
+            $table->dateTime('date');
             $table->string('receipt_image')->nullable();
             $table->timestamps();
         });

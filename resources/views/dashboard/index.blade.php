@@ -653,7 +653,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="mobile-tx-title">{{ $tx->description }}</div>
-                            <div class="mobile-tx-meta">{{ $tx->user->name }} - {{ $tx->date->isoFormat('D MMM') }} - {{ $tx->bank->name }}</div>
+                            <div class="mobile-tx-meta">{{ $tx->user->name }} - {{ $tx->date->isoFormat('D MMM, HH:mm:ss') }} - {{ $tx->bank->name }}</div>
                         </div>
                         <div class="mobile-tx-amount {{ $tx->type === 'income' ? 'text-green-700' : 'text-rose-600' }}">
                             {{ $tx->type === 'income' ? '+' : '-' }} Rp {{ number_format($tx->amount, 0, ',', '.') }}
@@ -854,7 +854,7 @@
                                     {{ $tx->user->name }}
                                 </span>
                                 <span class="opacity-40">•</span>
-                                <span class="whitespace-nowrap">{{ $tx->date->isoFormat('D MMM') }}</span>
+                                <span class="whitespace-nowrap">{{ $tx->date->isoFormat('D MMM, HH:mm:ss') }}</span>
                                 <span class="opacity-40">•</span>
                                 <span class="whitespace-nowrap">{{ $tx->bank->icon }} {{ $tx->bank->name }}</span>
                             </div>

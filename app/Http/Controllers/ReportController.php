@@ -31,7 +31,7 @@ class ReportController extends Controller
 
         $transactionQuery = $couple->transactions()
             ->with(['user', 'category', 'bank'])
-            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
+            ->whereBetween('date', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
 
         if ($userFilter === 'me') {
             $transactionQuery->where('user_id', $user->id);
@@ -39,7 +39,7 @@ class ReportController extends Controller
             $transactionQuery->whereIn('user_id', $partnerIds);
         }
 
-        $transactions = $transactionQuery->latest('date')->get();
+        $transactions = $transactionQuery->latest('date')->latest('id')->get();
         $summaryTransactions = $transactions->reject(
             fn($transaction) => $transaction->category?->name === \App\Models\Transaction::TRANSFER_CATEGORY
         );

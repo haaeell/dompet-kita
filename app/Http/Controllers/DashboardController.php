@@ -39,6 +39,7 @@ class DashboardController extends Controller
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
             ->latest('date')
+            ->latest('id')
             ->take(10)
             ->get();
 

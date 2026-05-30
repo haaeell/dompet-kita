@@ -436,7 +436,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="report-small-title">{{ $tx->description }}</div>
-                            <div class="report-small-meta">{{ $tx->user->name }} - {{ $tx->date->isoFormat('D MMM Y') }}</div>
+                            <div class="report-small-meta">{{ $tx->user->name }} - {{ $tx->date->isoFormat('D MMM Y, HH:mm:ss') }}</div>
                         </div>
                         <div class="report-amount {{ $tx->type === 'income' ? 'text-emerald-600' : 'text-rose-600' }}">
                             {{ $tx->type === 'income' ? '+' : '-' }} Rp {{ number_format($tx->amount, 0, ',', '.') }}
@@ -669,7 +669,7 @@
                                 {{ $tx->user->name }}
                             </span>
                             <span class="text-gray-200">•</span>
-                            <span>{{ $tx->date->isoFormat('D MMM Y') }}</span>
+                            <span>{{ $tx->date->isoFormat('D MMM Y, HH:mm:ss') }}</span>
                         </div>
                     </div>
                     <div

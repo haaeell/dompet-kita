@@ -272,8 +272,8 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-600">{{ $tx->bank->icon }} {{ $tx->bank->name }}</td>
                                 <td class="px-4 py-3 text-sm text-slate-600">{{ $tx->user->avatar }} {{ $tx->user->name }}</td>
-                                <td class="px-4 py-3 text-sm text-slate-600" data-order="{{ $tx->date->format('Y-m-d') }}">
-                                    {{ $tx->date->isoFormat('D MMM Y') }}
+                                <td class="px-4 py-3 text-sm text-slate-600" data-order="{{ $tx->date->format('Y-m-d H:i:s') }}">
+                                    {{ $tx->date->isoFormat('D MMM Y, HH:mm:ss') }}
                                 </td>
                                 <td class="px-4 py-3" data-order="{{ $tx->amount }}">
                                     <span
@@ -319,7 +319,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-sm text-slate-900 truncate">{{ $tx->description }}</div>
                                     <div class="text-xs text-slate-400 mt-0.5">
-                                        {{ $tx->date->isoFormat('D MMM Y') }} • {{ $tx->bank->icon }} {{ $tx->bank->name }}
+                                        {{ $tx->date->isoFormat('D MMM Y, HH:mm:ss') }} • {{ $tx->bank->icon }} {{ $tx->bank->name }}
                                     </div>
                                 </div>
                             </div>
@@ -408,13 +408,19 @@
         function formatPendingDate(value) {
             if (!value) return '-';
 
-            const date = new Date(`${value}T00:00:00`);
+            const normalizedValue = String(value).includes(' ')
+                ? String(value).replace(' ', 'T')
+                : `${value}T00:00:00`;
+            const date = new Date(normalizedValue);
             if (Number.isNaN(date.getTime())) return value;
 
             return new Intl.DateTimeFormat('id-ID', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
             }).format(date);
         }
 

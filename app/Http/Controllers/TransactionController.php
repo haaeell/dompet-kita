@@ -21,7 +21,7 @@ class TransactionController extends Controller
         if ($request->search) $query->where('description', 'like', "%{$request->search}%");
         if ($request->user_id) $query->where('user_id', $request->user_id);
 
-        $transactions = $query->latest('date')->paginate(15);
+        $transactions = $query->latest('date')->latest('id')->paginate(15);
         $categories = $couple->categories()->orderBy('name')->get();
         $banks = $couple->banks()->where('is_active', true)->get();
         $coupleUsers = $couple->users()->orderBy('name')->get();

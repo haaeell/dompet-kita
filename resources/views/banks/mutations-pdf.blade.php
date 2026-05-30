@@ -235,7 +235,7 @@
         <tbody>
             @forelse($transactions as $tx)
                 <tr>
-                    <td>{{ $tx->date->isoFormat('D MMM Y') }}</td>
+                    <td>{{ $tx->date->isoFormat('D MMM Y, HH:mm:ss') }}</td>
                     <td>
                         <div><strong>{{ $tx->description }}</strong></div>
                         @if($tx->notes)

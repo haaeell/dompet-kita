@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,7 +24,24 @@ class Transaction extends Model
         'client_uuid'
     ];
 
-    protected $casts = ['date' => 'date', 'amount' => 'float'];
+    protected $casts = ['date' => 'datetime', 'amount' => 'float'];
+
+    public function setDateAttribute($value): void
+    {
+        if (blank($value)) {
+            $this->attributes['date'] = $value;
+            return;
+        }
+
+        $date = $value instanceof Carbon ? $value->copy() : Carbon::parse($value);
+        $rawValue = (string) $value;
+
+        if (! preg_match('/\d{1,2}:\d{2}/', $rawValue)) {
+            $date->setTimeFromTimeString(now()->format('H:i:s'));
+        }
+
+        $this->attributes['date'] = $date->format('Y-m-d H:i:s');
+    }
 
     public function couple(): BelongsTo
     {

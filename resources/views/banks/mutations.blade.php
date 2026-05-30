@@ -147,7 +147,7 @@
                         @forelse($transactions as $tx)
                             <tr class="border-b border-slate-200/90 last:border-b-0 hover:bg-slate-50/70 transition">
                                 <td class="px-6 py-5 align-top whitespace-nowrap text-sm text-slate-600">
-                                    <div class="font-semibold text-slate-800">{{ $tx->date->isoFormat('D MMMM Y') }}</div>
+                                    <div class="font-semibold text-slate-800">{{ $tx->date->isoFormat('D MMMM Y, HH:mm:ss') }}</div>
                                 </td>
                                 <td class="px-6 py-5 align-top min-w-[300px]">
                                     <div class="font-semibold text-slate-900">{{ $tx->description }}</div>
@@ -204,7 +204,7 @@
                                     <span class="{{ $tx->type === 'income' ? 'income-badge' : 'expense-badge' }}">
                                         {{ $tx->type === 'income' ? 'Masuk' : 'Keluar' }}
                                     </span>
-                                    <span class="text-xs text-slate-400">{{ $tx->date->isoFormat('D MMMM Y') }}</span>
+                                    <span class="text-xs text-slate-400">{{ $tx->date->isoFormat('D MMMM Y, HH:mm:ss') }}</span>
                                 </div>
                                 <div class="mt-3 font-semibold text-slate-900">{{ $tx->description }}</div>
                                 <div class="mt-1 text-xs text-slate-500">

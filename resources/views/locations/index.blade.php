@@ -97,6 +97,33 @@
             backdrop-filter: blur(12px);
         }
 
+        .location-floating-update {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            z-index: 402;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(251, 207, 232, .95);
+            background: rgba(255, 255, 255, .94);
+            padding: 0 14px;
+            color: #be185d;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, .14);
+            backdrop-filter: blur(12px);
+            transition: .2s ease;
+        }
+
+        .location-floating-update:hover {
+            background: #fdf2f8;
+            transform: translateY(-1px);
+        }
+
         .location-pin {
             width: 44px;
             height: 44px;
@@ -160,20 +187,6 @@
             flex-direction: column;
             gap: 14px;
             min-width: 0;
-        }
-
-        .location-panel {
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            padding: 16px;
-            box-shadow: 0 16px 44px rgba(15, 23, 42, .06);
-        }
-
-        .location-action-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
         }
 
         .location-icon-button {
@@ -255,6 +268,13 @@
             #coupleMap {
                 min-height: 420px;
             }
+
+            .location-floating-update {
+                left: 16px;
+                right: 16px;
+                top: auto;
+                bottom: 16px;
+            }
         }
     </style>
 
@@ -275,6 +295,10 @@
                 <i class="fa-solid fa-location-dot text-pink-600"></i>
                 <span id="mapStatusText">Peta pasangan siap</span>
             </div>
+            <button id="shareLocationButton" type="button" class="location-floating-update" title="Update lokasi sekarang">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Update lokasi</span>
+            </button>
             <div id="locationMapFallback" class="location-map-fallback">
                 <div>
                     <div class="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-white text-pink-600 shadow-sm">
@@ -287,44 +311,6 @@
         </section>
 
         <aside class="location-side">
-            <div class="location-panel">
-                <div class="flex items-start justify-between gap-3 mb-4">
-                    <div>
-                        <div class="text-base font-bold text-slate-900">Lokasi Otomatis</div>
-                        <div class="text-xs text-slate-500 mt-1">Aplikasi akan update titik terakhir saat dibuka.</div>
-                    </div>
-                    <div class="grid h-11 w-11 place-items-center rounded-full bg-pink-50 text-pink-600">
-                        <i class="fa-solid fa-heart-pulse"></i>
-                    </div>
-                </div>
-
-                <label class="label" for="locationLabel">Status kecil</label>
-                <input id="locationLabel" type="text" class="input-field mb-3" maxlength="80"
-                    value="{{ optional($locations->get($currentUserId))->label ?? 'Lagi di sini' }}"
-                    placeholder="Contoh: Lagi otw pulang">
-
-                <div class="location-action-grid">
-                    <button id="shareLocationButton" type="button" class="btn-primary justify-center">
-                        <i class="fa-solid fa-location-crosshairs"></i> Update sekarang
-                    </button>
-                </div>
-
-                <div id="locationHint" class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-                    Browser akan meminta izin lokasi. Setelah diizinkan, titik akan diperbarui otomatis selama aplikasi dibuka.
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="location-mini-stat">
-                    <div class="text-xs font-semibold text-slate-500">Anggota</div>
-                    <div class="mt-1 text-xl font-extrabold text-slate-900">{{ $members->count() }}</div>
-                </div>
-                <div class="location-mini-stat">
-                    <div class="text-xs font-semibold text-slate-500">Aktif</div>
-                    <div id="activeLocationCount" class="mt-1 text-xl font-extrabold text-slate-900">0</div>
-                </div>
-            </div>
-
             <div class="location-love-card">
                 <div class="flex items-start gap-3">
                     <div class="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-white text-pink-600 shadow-sm">
@@ -337,6 +323,10 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div id="locationHint" class="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+                Lokasi diperbarui otomatis saat aplikasi dibuka.
             </div>
 
             <div id="locationMembers" class="space-y-3">
@@ -562,8 +552,6 @@
             const me = locationMembers.find(member => member.user_id === currentLocationUserId);
             const myLocation = me?.location?.is_active ? me.location : null;
 
-            document.getElementById('activeLocationCount').textContent = activeLocations().length;
-
             locationMembers.forEach(member => {
                 const card = document.querySelector(`[data-member-card="${member.user_id}"]`);
                 if (!card) return;
@@ -714,12 +702,11 @@
         }
 
         async function saveLocation(position) {
-            const label = document.getElementById('locationLabel').value.trim() || 'Lagi di sini';
             const payload = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
                 accuracy: position.coords.accuracy,
-                label,
+                label: 'Lagi di sini',
             };
 
             const response = await fetch(locationUpdateUrl, {
@@ -746,7 +733,7 @@
                 setHint('Sedang mengambil titik dan alamat detail terbaru...');
                 window.DompetKitaLocationTracker.requestNow({
                     force: true,
-                    label: document.getElementById('locationLabel').value.trim() || 'Lagi di sini',
+                    label: 'Lagi di sini',
                 });
                 return;
             }
@@ -759,7 +746,7 @@
             const button = document.getElementById('shareLocationButton');
             button.disabled = true;
             button.classList.add('opacity-70');
-            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengambil titik...';
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Mengambil...</span>';
             setHint('Sedang mengambil titik lokasi terbaru...');
 
             navigator.geolocation.getCurrentPosition(
@@ -767,13 +754,13 @@
                     saveLocation(position).catch(error => setHint(error.message, 'error')).finally(() => {
                         button.disabled = false;
                         button.classList.remove('opacity-70');
-                        button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Update sekarang';
+                        button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Update lokasi</span>';
                     });
                 },
                 error => {
                     button.disabled = false;
                     button.classList.remove('opacity-70');
-                    button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Update sekarang';
+                    button.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Update lokasi</span>';
                     setHint(error.message || 'Izin lokasi belum diberikan.', 'error');
                 },
                 { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }

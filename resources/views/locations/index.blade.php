@@ -19,6 +19,15 @@
                     'longitude' => $location->longitude,
                     'accuracy' => $location->accuracy,
                     'label' => $location->label,
+                    'address_text' => $location->address_text,
+                    'road' => $location->road,
+                    'neighbourhood' => $location->neighbourhood,
+                    'suburb' => $location->suburb,
+                    'village' => $location->village,
+                    'district' => $location->district,
+                    'city' => $location->city,
+                    'state' => $location->state,
+                    'postcode' => $location->postcode,
                     'is_active' => $location->is_active,
                     'last_seen_at' => optional($location->last_seen_at)->toIso8601String(),
                     'last_seen_human' => optional($location->last_seen_at)->diffForHumans(),
@@ -112,6 +121,38 @@
             height: 28px;
             border-radius: 999px;
             object-fit: cover;
+        }
+
+        .location-distance-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(251, 207, 232, .95);
+            background: rgba(255, 255, 255, .95);
+            padding: 7px 10px;
+            color: #be185d;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 14px 36px rgba(190, 24, 93, .16);
+            backdrop-filter: blur(10px);
+        }
+
+        .location-love-card {
+            border-radius: 8px;
+            border: 1px solid #fbcfe8;
+            background: linear-gradient(135deg, #fff 0%, #fdf2f8 52%, #ecfeff 100%);
+            padding: 14px;
+            box-shadow: 0 16px 44px rgba(219, 39, 119, .08);
+        }
+
+        .location-address-box {
+            margin-top: 12px;
+            border-radius: 8px;
+            border: 1px dashed #fbcfe8;
+            background: #fff7fb;
+            padding: 10px;
         }
 
         .location-side {
@@ -284,6 +325,20 @@
                 </div>
             </div>
 
+            <div class="location-love-card">
+                <div class="flex items-start gap-3">
+                    <div class="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-white text-pink-600 shadow-sm">
+                        <i class="fa-solid fa-heart"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div id="coupleDistanceTitle" class="text-sm font-extrabold text-slate-900">Menunggu dua titik aktif</div>
+                        <div id="coupleDistanceMessage" class="mt-1 text-xs leading-relaxed text-slate-500">
+                            Kalau dua lokasi sudah aktif, jarak kalian akan muncul di peta.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="locationMembers" class="space-y-3">
                 @foreach($members as $member)
                     @php
@@ -335,6 +390,23 @@
                                 <i class="fa-solid fa-magnifying-glass-location"></i>
                             </button>
                         </div>
+
+                        <div class="location-address-box">
+                            <div class="flex items-center gap-2 text-xs font-bold text-pink-700">
+                                <i class="fa-solid fa-map-pin"></i>
+                                <span>Catatan tempat</span>
+                            </div>
+                            <div class="mt-1 text-xs leading-relaxed text-slate-600" data-address-text>
+                                {{ $location?->address_text ?? 'Alamat detail akan tercatat setelah lokasi diperbarui.' }}
+                            </div>
+                            <div class="mt-2 text-[11px] leading-relaxed text-slate-400" data-address-parts>
+                                @if($location?->city || $location?->district || $location?->state)
+                                    {{ collect([$location->village, $location->district, $location->city, $location->state, $location->postcode])->filter()->join(' - ') }}
+                                @else
+                                    Menunggu detail wilayah.
+                                @endif
+                            </div>
+                        </div>
                     </article>
                 @endforeach
             </div>
@@ -351,6 +423,7 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const markerColors = ['#db2777', '#0891b2', '#16a34a', '#7c3aed'];
         const markers = new Map();
+        let distanceLayers = null;
         let map = null;
 
         function activeLocations() {
@@ -395,6 +468,21 @@
             return `${(meters / 1000).toFixed(meters < 10000 ? 1 : 0)} km`;
         }
 
+        function addressParts(location) {
+            if (!location) return 'Menunggu detail wilayah.';
+
+            return [
+                location.road,
+                location.neighbourhood,
+                location.suburb,
+                location.village,
+                location.district,
+                location.city,
+                location.state,
+                location.postcode,
+            ].filter(Boolean).join(' - ') || 'Menunggu detail wilayah.';
+        }
+
         function distanceBetween(a, b) {
             const toRad = value => value * Math.PI / 180;
             const earthRadius = 6371000;
@@ -405,6 +493,69 @@
             const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
             return earthRadius * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+        }
+
+        function midpoint(a, b) {
+            return [
+                (Number(a.latitude) + Number(b.latitude)) / 2,
+                (Number(a.longitude) + Number(b.longitude)) / 2,
+            ];
+        }
+
+        function coupleDistancePair() {
+            const active = activeLocations();
+            const me = active.find(member => member.user_id === currentLocationUserId);
+            const partner = active.find(member => member.user_id !== currentLocationUserId);
+
+            if (!me || !partner) return null;
+
+            const meters = distanceBetween(me.location, partner.location);
+            return { me, partner, meters };
+        }
+
+        function sweetDistanceMessage(meters) {
+            if (!Number.isFinite(meters)) {
+                return {
+                    title: 'Menunggu dua titik aktif',
+                    message: 'Kalau dua lokasi sudah aktif, jarak kalian akan muncul di peta.',
+                };
+            }
+
+            if (meters < 100) {
+                return {
+                    title: 'Sebelah-sebelahan banget',
+                    message: 'Jaraknya cuma selempar senyum. Cocok buat bilang, "aku udah dekat".',
+                };
+            }
+
+            if (meters < 1000) {
+                return {
+                    title: 'Masih satu pelukan kota',
+                    message: `Kalian berjarak ${formatDistance(meters)}. Dekat, tinggal cari alasan buat ketemu.`,
+                };
+            }
+
+            if (meters < 10000) {
+                return {
+                    title: 'Agak jauh, tapi masih manis',
+                    message: `${formatDistance(meters)} itu bukan jauh, cuma rute kecil menuju quality time.`,
+                };
+            }
+
+            return {
+                title: 'Jauh di peta, dekat di hati',
+                message: `Jaraknya ${formatDistance(meters)}. Titiknya boleh berjauhan, kabarnya tetap harus dekat.`,
+            };
+        }
+
+        function renderSweetDistance() {
+            const pair = coupleDistancePair();
+            const copy = sweetDistanceMessage(pair?.meters);
+            const title = document.getElementById('coupleDistanceTitle');
+            const message = document.getElementById('coupleDistanceMessage');
+
+            if (title) title.textContent = copy.title;
+            if (message) message.textContent = copy.message;
         }
 
         function renderCards() {
@@ -422,18 +573,24 @@
                 const state = card.querySelector('[data-location-state]');
                 const lastSeen = card.querySelector('[data-last-seen]');
                 const label = card.querySelector('[data-location-label]');
+                const addressText = card.querySelector('[data-address-text]');
+                const addressPartsText = card.querySelector('[data-address-parts]');
                 const distance = card.querySelector('[data-distance]');
 
                 dot?.classList.toggle('active', Boolean(isActive));
                 if (state) state.textContent = isActive ? 'Aktif dibagikan' : 'Belum aktif';
                 if (lastSeen) lastSeen.textContent = member.location?.last_seen_human || '-';
                 if (label) label.textContent = member.location?.label || 'Belum ada titik lokasi';
+                if (addressText) addressText.textContent = member.location?.address_text || 'Alamat detail akan tercatat setelah lokasi diperbarui.';
+                if (addressPartsText) addressPartsText.textContent = addressParts(member.location);
                 if (distance) {
                     distance.textContent = myLocation && member.location
                         ? (member.user_id === currentLocationUserId ? 'Kamu' : formatDistance(distanceBetween(myLocation, member.location)))
                         : '-';
                 }
             });
+
+            renderSweetDistance();
         }
 
         function renderMap() {
@@ -449,8 +606,42 @@
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap',
             }).addTo(map);
+            distanceLayers = L.layerGroup();
+            distanceLayers.addTo(map);
 
             syncMapMarkers();
+        }
+
+        function syncDistanceLine() {
+            if (!map || !distanceLayers) return;
+
+            distanceLayers.clearLayers();
+
+            const pair = coupleDistancePair();
+            if (!pair) return;
+
+            const from = [pair.me.location.latitude, pair.me.location.longitude];
+            const to = [pair.partner.location.latitude, pair.partner.location.longitude];
+            const mid = midpoint(pair.me.location, pair.partner.location);
+            const label = `${formatDistance(pair.meters)} jaraknya`;
+
+            L.polyline([from, to], {
+                color: '#db2777',
+                weight: 4,
+                opacity: .78,
+                dashArray: '10 12',
+                lineCap: 'round',
+            }).addTo(distanceLayers);
+
+            L.marker(mid, {
+                interactive: false,
+                icon: L.divIcon({
+                    className: '',
+                    html: `<div class="location-distance-label"><i class="fa-solid fa-heart"></i>${label}</div>`,
+                    iconSize: [120, 34],
+                    iconAnchor: [60, 17],
+                }),
+            }).addTo(distanceLayers);
         }
 
         function syncMapMarkers() {
@@ -464,6 +655,7 @@
                 const popup = `
                     <strong>${member.is_me ? 'Kamu' : member.name}</strong><br>
                     ${member.location.label || 'Lagi di sini'}<br>
+                    ${member.location.address_text || 'Alamat detail belum tercatat'}<br>
                     <span style="color:#64748b">${member.location.last_seen_human || ''}</span>
                 `;
 
@@ -488,9 +680,12 @@
                 map.setView(bounds[0], 16);
             }
 
-            document.getElementById('mapStatusText').textContent = bounds.length
-                ? `${bounds.length} titik aktif`
-                : 'Belum ada lokasi aktif';
+            syncDistanceLine();
+
+            const pair = coupleDistancePair();
+            document.getElementById('mapStatusText').textContent = pair
+                ? `Jarak kalian ${formatDistance(pair.meters)}`
+                : (bounds.length ? `${bounds.length} titik aktif` : 'Belum ada lokasi aktif');
         }
 
         function applyLocationResult(location) {
@@ -500,6 +695,15 @@
                 longitude: location.longitude,
                 accuracy: location.accuracy,
                 label: location.label,
+                address_text: location.address_text,
+                road: location.road,
+                neighbourhood: location.neighbourhood,
+                suburb: location.suburb,
+                village: location.village,
+                district: location.district,
+                city: location.city,
+                state: location.state,
+                postcode: location.postcode,
                 is_active: location.is_active,
                 last_seen_at: location.last_seen_at,
                 last_seen_human: 'baru saja',
@@ -538,6 +742,15 @@
         }
 
         function requestLocation() {
+            if (window.DompetKitaLocationTracker) {
+                setHint('Sedang mengambil titik dan alamat detail terbaru...');
+                window.DompetKitaLocationTracker.requestNow({
+                    force: true,
+                    label: document.getElementById('locationLabel').value.trim() || 'Lagi di sini',
+                });
+                return;
+            }
+
             if (!navigator.geolocation) {
                 setHint('Browser ini belum mendukung akses lokasi.', 'error');
                 return;

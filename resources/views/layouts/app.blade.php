@@ -1653,6 +1653,59 @@
                 return Boolean(navigator.geolocation);
             }
 
+            function cacheKey(latitude, longitude) {
+                return `dompetkita.location.address.${Number(latitude).toFixed(4)},${Number(longitude).toFixed(4)}`;
+            }
+
+            function simplifyAddress(data) {
+                const address = data?.address || {};
+                return {
+                    address_text: data?.display_name || null,
+                    road: address.road || address.pedestrian || address.footway || address.path || null,
+                    neighbourhood: address.neighbourhood || address.hamlet || null,
+                    suburb: address.suburb || null,
+                    village: address.village || address.town || null,
+                    district: address.city_district || address.district || address.county || null,
+                    city: address.city || address.municipality || address.regency || null,
+                    state: address.state || null,
+                    postcode: address.postcode || null,
+                };
+            }
+
+            async function reverseGeocode(latitude, longitude) {
+                const key = cacheKey(latitude, longitude);
+                const cached = sessionStorage.getItem(key);
+                if (cached) {
+                    try {
+                        return JSON.parse(cached);
+                    } catch (error) {
+                        sessionStorage.removeItem(key);
+                    }
+                }
+
+                try {
+                    const params = new URLSearchParams({
+                        format: 'jsonv2',
+                        lat: latitude,
+                        lon: longitude,
+                        zoom: 18,
+                        addressdetails: 1,
+                        'accept-language': 'id',
+                    });
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json' },
+                    });
+
+                    if (!response.ok) return {};
+
+                    const address = simplifyAddress(await response.json());
+                    sessionStorage.setItem(key, JSON.stringify(address));
+                    return address;
+                } catch (error) {
+                    return {};
+                }
+            }
+
             async function sendPosition(position, label = 'Otomatis dari aplikasi') {
                 if (isSending) return null;
 
@@ -1660,6 +1713,7 @@
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
                 try {
+                    const address = await reverseGeocode(position.coords.latitude, position.coords.longitude);
                     const response = await fetch(updateUrl, {
                         method: 'POST',
                         credentials: 'same-origin',
@@ -1673,6 +1727,7 @@
                             longitude: position.coords.longitude,
                             accuracy: position.coords.accuracy,
                             label,
+                            ...address,
                         }),
                     });
 

@@ -1340,6 +1340,10 @@
                     class="nav-link {{ request()->routeIs('locations.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-location-dot"></i> Lokasi
                 </a>
+                <a href="{{ route('chats.index') }}"
+                    class="nav-link {{ request()->routeIs('chats.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-comments"></i> Chat
+                </a>
                 <a href="{{ route('reports.index') }}"
                     class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-chart-column"></i> Laporan
@@ -1390,10 +1394,10 @@
                 </a>
             </div>
 
-            <a href="{{ route('categories.index') }}"
-                class="bottom-nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-tag"></i>
-                <span>Kategori</span>
+            <a href="{{ route('chats.index') }}"
+                class="bottom-nav-item {{ request()->routeIs('chats.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-comments"></i>
+                <span>Chat</span>
             </a>
             <a href="javascript:void(0)" onclick="toggleMobileMenu()" id="btnMoreMenu" class="bottom-nav-item">
                 <i class="fa-solid fa-grip"></i>
@@ -1438,6 +1442,12 @@
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
                             class="fa-solid fa-location-dot"></i></div>
                     <span class="text-xs font-medium">Lokasi</span>
+                </a>
+                <a href="{{ route('chats.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('chats.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-comments"></i></div>
+                    <span class="text-xs font-medium">Chat</span>
                 </a>
                 <a href="{{ route('reports.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('reports.*') ? 'text-pink-600 bg-pink-50' : '' }}">
@@ -1986,7 +1996,9 @@
 
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function () {
-                    showPageLoveLoader();
+                    if (!this.hasAttribute('data-skip-page-loader')) {
+                        showPageLoveLoader();
+                    }
 
                     this.querySelectorAll('.rupiah').forEach(input => {
                         input.value = normalize(input.value);

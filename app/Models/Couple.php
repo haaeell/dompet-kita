@@ -54,6 +54,11 @@ class Couple extends Model
         return $this->hasMany(Target::class);
     }
 
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
+    }
+
     public function getTotalIncomeAttribute(): float
     {
         return $this->transactions()->where('type', 'income')->sum('amount');

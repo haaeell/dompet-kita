@@ -9,6 +9,7 @@ use App\Http\Controllers\BankController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ChatController;
 
 // ─── Auth Routes ─────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -78,6 +79,16 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('locations')->name('locations.')->group(function () {
         Route::get('/', [LocationController::class, 'index'])->name('index');
         Route::post('/', [LocationController::class, 'update'])->name('update');
+    });
+
+    // Chat Pasangan
+    Route::prefix('chats')->name('chats.')->group(function () {
+        Route::get('/', [ChatController::class, 'index'])->name('index');
+        Route::get('/messages', [ChatController::class, 'messages'])->name('messages');
+        Route::get('/attachments/{chatMessage}', [ChatController::class, 'attachment'])->name('attachment');
+        Route::post('/messages', [ChatController::class, 'store'])->name('store');
+        Route::put('/messages/{chatMessage}', [ChatController::class, 'update'])->name('update');
+        Route::delete('/messages/{chatMessage}', [ChatController::class, 'destroy'])->name('destroy');
     });
 
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');

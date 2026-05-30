@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dompetkita-pwa-v8';
+const CACHE_NAME = 'dompetkita-pwa-v10';
 const APP_SHELL = [
     '/',
     '/transactions',
@@ -40,6 +40,12 @@ self.addEventListener('fetch', event => {
 
     const url = new URL(request.url);
     const isDocument = request.mode === 'navigate' || request.destination === 'document';
+    const isRealtimeApi = url.pathname.startsWith('/chats/messages');
+
+    if (isRealtimeApi) {
+        event.respondWith(fetch(request));
+        return;
+    }
 
     if (isDocument) {
         event.respondWith(

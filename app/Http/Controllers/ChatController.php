@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ChatController extends Controller
 {
@@ -63,7 +64,6 @@ class ChatController extends Controller
                 'nullable',
                 'file',
                 'max:12288',
-                'mimetypes:image/jpeg,image/png,image/webp,image/gif,audio/webm,video/webm,audio/ogg,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/x-wav,audio/x-m4a',
             ],
             'attachment_type' => ['nullable', Rule::in(['image', 'audio'])],
             'audio_duration' => 'nullable|integer|min:0|max:3600',
@@ -85,7 +85,7 @@ class ChatController extends Controller
 
     public function attachment(ChatMessage $chatMessage)
     {
-        abort_unless($chatMessage->couple_id === Auth::user()->couple_id, 403);
+        abort_unless((int) $chatMessage->couple_id === (int) Auth::user()->couple_id, 403);
         abort_unless($chatMessage->attachment_path, 404);
         abort_unless(Storage::disk('public')->exists($chatMessage->attachment_path), 404);
 
@@ -159,7 +159,7 @@ class ChatController extends Controller
             'attachment_mime' => $message->attachment_mime,
             'attachment_size' => $message->attachment_size,
             'audio_duration' => $message->audio_duration,
-            'is_me' => $message->user_id === Auth::id(),
+            'is_me' => (int) $message->user_id === (int) Auth::id(),
             'read_at' => optional($message->read_at)->toIso8601String(),
             'edited_at' => optional($message->edited_at)->toIso8601String(),
             'is_edited' => filled($message->edited_at),
@@ -176,11 +176,32 @@ class ChatController extends Controller
         }
 
         $file = $request->file('attachment');
-        $mime = $file->getMimeType();
-        $type = str_starts_with($mime, 'image/') ? 'image' : 'audio';
+        $mime = $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream';
+        $requestedType = $request->input('attachment_type');
+        $type = $requestedType ?: (str_starts_with($mime, 'image/') ? 'image' : 'audio');
 
-        if ($request->filled('attachment_type') && $request->attachment_type !== $type) {
-            abort(422, 'Tipe lampiran tidak sesuai.');
+        $imageMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $audioMimes = [
+            'audio/webm',
+            'video/webm',
+            'audio/ogg',
+            'application/ogg',
+            'audio/mpeg',
+            'audio/mp4',
+            'video/mp4',
+            'audio/aac',
+            'audio/wav',
+            'audio/x-wav',
+            'audio/x-m4a',
+            'application/octet-stream',
+        ];
+
+        if ($type === 'image' && ! in_array($mime, $imageMimes, true)) {
+            $this->unsupportedAttachment($mime);
+        }
+
+        if ($type === 'audio' && ! in_array($mime, $audioMimes, true) && ! str_starts_with($mime, 'audio/')) {
+            $this->unsupportedAttachment($mime);
         }
 
         return [
@@ -192,9 +213,16 @@ class ChatController extends Controller
         ];
     }
 
+    protected function unsupportedAttachment(string $mime): void
+    {
+        throw ValidationException::withMessages([
+            'attachment' => "Format lampiran belum didukung di server ini. MIME terdeteksi: {$mime}.",
+        ]);
+    }
+
     protected function authorizeOwnMessage(ChatMessage $chatMessage): void
     {
-        abort_unless($chatMessage->couple_id === Auth::user()->couple_id, 403);
-        abort_unless($chatMessage->user_id === Auth::id(), 403);
+        abort_unless((int) $chatMessage->couple_id === (int) Auth::user()->couple_id, 403);
+        abort_unless((int) $chatMessage->user_id === (int) Auth::id(), 403);
     }
 }

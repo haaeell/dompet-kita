@@ -620,6 +620,14 @@
             chatThread.scrollTop = chatThread.scrollHeight;
         }
 
+        function normalizeMessage(message) {
+            const normalized = { ...message };
+            normalized.is_me = Number(normalized.user_id) === Number(chatCurrentUserId);
+            normalized.is_pending = Boolean(normalized.is_pending);
+            normalized.is_edited = Boolean(normalized.is_edited);
+            return normalized;
+        }
+
         function avatarMarkup(message) {
             if (message.is_me) return '';
             if (message.photo) {
@@ -672,6 +680,7 @@
         }
 
         function renderMessage(message) {
+            message = normalizeMessage(message);
             if (renderedMessages.has(message.id)) return;
 
             const shouldScroll = isNearBottom();
@@ -698,11 +707,14 @@
             `);
 
             renderedMessages.set(message.id, message);
-            lastMessageId = Math.max(lastMessageId, Number(message.id));
+            const numericMessageId = Number(message.id);
+            if (Number.isFinite(numericMessageId)) {
+                lastMessageId = Math.max(lastMessageId, numericMessageId);
+            }
 
             if (shouldScroll || message.is_me) scrollToBottom();
 
-            if (!message.is_me && document.hidden) {
+            if (!message.is_me && (document.hidden || !document.hasFocus())) {
                 showIncomingNotification(message);
             }
         }
@@ -721,6 +733,15 @@
 
         function chatMessageUrl(template, id) {
             return template.replace('__ID__', encodeURIComponent(id));
+        }
+
+        async function readChatError(response, fallbackMessage) {
+            try {
+                const errorData = await response.json();
+                return errorData.message || Object.values(errorData.errors || {}).flat()[0] || fallbackMessage;
+            } catch (error) {
+                return fallbackMessage;
+            }
         }
 
         async function editMessage(id) {
@@ -744,18 +765,21 @@
             if (!result.isConfirmed) return;
 
             try {
+                const formData = new FormData();
+                formData.append('_method', 'PUT');
+                formData.append('body', result.value.trim());
+
                 const response = await fetch(chatMessageUrl(chatUpdateUrlTemplate, id), {
-                    method: 'PUT',
+                    method: 'POST',
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': chatCsrfToken,
                     },
-                    body: JSON.stringify({ body: result.value.trim() }),
+                    body: formData,
                 });
 
-                if (!response.ok) throw new Error('Pesan belum bisa diedit.');
+                if (!response.ok) throw new Error(await readChatError(response, 'Pesan belum bisa diedit.'));
 
                 const data = await response.json();
                 replaceRenderedMessage(id, data.message);
@@ -783,16 +807,20 @@
             if (!result.isConfirmed) return;
 
             try {
+                const formData = new FormData();
+                formData.append('_method', 'DELETE');
+
                 const response = await fetch(chatMessageUrl(chatDeleteUrlTemplate, id), {
-                    method: 'DELETE',
+                    method: 'POST',
                     credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': chatCsrfToken,
                     },
+                    body: formData,
                 });
 
-                if (!response.ok) throw new Error('Pesan belum bisa dihapus.');
+                if (!response.ok) throw new Error(await readChatError(response, 'Pesan belum bisa dihapus.'));
 
                 removeMessage(id);
                 await publishFirebaseMessage({ id, user_id: chatCurrentUserId, name: 'Kamu' }, 'deleted');
@@ -917,7 +945,7 @@
             return 'Notification' in window && Notification.permission === 'granted';
         }
 
-        function showIncomingNotification(message) {
+        async function showIncomingNotification(message) {
             if (!canNotify()) return;
 
             const preview = message.attachment_type === 'image'
@@ -926,12 +954,25 @@
                     ? 'Mengirim voice note'
                     : message.body;
 
-            new Notification(`Pesan dari ${message.name}`, {
+            const options = {
                 body: preview || 'Pesan baru',
                 icon: '/images/pwa-icon-dompetkita-192.png',
                 badge: '/images/pwa-icon-dompetkita-192.png',
                 tag: `chat-${message.id}`,
-            });
+                renotify: true,
+            };
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification(`Pesan dari ${message.name}`, options);
+                    return;
+                }
+            } catch (error) {
+                // Fallback to the page notification below.
+            }
+
+            new Notification(`Pesan dari ${message.name}`, options);
         }
 
         async function requestChatNotifications() {
@@ -1182,7 +1223,32 @@
             return Math.max(1, Math.round((Date.now() - recordingStartedAt) / 1000));
         }
 
+        function preferredAudioMimeType() {
+            const candidates = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',
+                'audio/aac',
+                'audio/ogg;codecs=opus',
+            ];
+
+            if (!window.MediaRecorder?.isTypeSupported) return '';
+            return candidates.find(type => MediaRecorder.isTypeSupported(type)) || '';
+        }
+
+        function audioExtensionFromMime(mimeType) {
+            if (mimeType.includes('mp4')) return 'm4a';
+            if (mimeType.includes('aac')) return 'aac';
+            if (mimeType.includes('ogg')) return 'ogg';
+            return 'webm';
+        }
+
         async function startRecording() {
+            if (!window.isSecureContext) {
+                Toast.fire({ icon: 'error', title: 'Voice note di production wajib pakai HTTPS.' });
+                return;
+            }
+
             if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
                 Toast.fire({ icon: 'error', title: 'Browser belum mendukung voice note.' });
                 return;
@@ -1190,8 +1256,9 @@
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mimeType = preferredAudioMimeType();
                 audioChunks = [];
-                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
                 recordingStartedAt = Date.now();
 
                 mediaRecorder.addEventListener('dataavailable', event => {
@@ -1200,9 +1267,18 @@
 
                 mediaRecorder.addEventListener('stop', () => {
                     stream.getTracks().forEach(track => track.stop());
-                    const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                    const file = new File([blob], `voice-note-${Date.now()}.webm`, { type: blob.type });
-                    setAttachment(file, 'audio', recordingSeconds());
+                    const recordedMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+                    const duration = recordingSeconds();
+                    const blob = new Blob(audioChunks, { type: recordedMimeType });
+
+                    if (!blob.size) {
+                        Toast.fire({ icon: 'error', title: 'Voice note kosong, coba rekam lagi.' });
+                    } else {
+                        const extension = audioExtensionFromMime(recordedMimeType);
+                        const file = new File([blob], `voice-note-${Date.now()}.${extension}`, { type: recordedMimeType });
+                        setAttachment(file, 'audio', duration);
+                    }
+
                     mediaRecorder = null;
                     chatVoiceButton.classList.remove('recording');
                     chatVoiceButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';

@@ -102,7 +102,7 @@ class DebtController extends Controller
             'amount' => $request->amount,
             'description' => $description,
             'notes' => $request->notes,
-            'date' => $request->due_date,
+            'date' => now(),
         ]);
 
         $debt->initial_transaction_id = $transaction->id;

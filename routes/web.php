@@ -8,6 +8,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\LocationController;
 
 // ─── Auth Routes ─────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -72,6 +73,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Laporan
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Lokasi Pasangan
+    Route::prefix('locations')->name('locations.')->group(function () {
+        Route::get('/', [LocationController::class, 'index'])->name('index');
+        Route::post('/', [LocationController::class, 'update'])->name('update');
+    });
 
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');

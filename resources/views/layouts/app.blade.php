@@ -1336,6 +1336,10 @@
                     class="nav-link {{ request()->routeIs('targets.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-bullseye"></i> Target
                 </a>
+                <a href="{{ route('locations.index') }}"
+                    class="nav-link {{ request()->routeIs('locations.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-location-dot"></i> Lokasi
+                </a>
                 <a href="{{ route('reports.index') }}"
                     class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-chart-column"></i> Laporan
@@ -1428,6 +1432,12 @@
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
                             class="fa-solid fa-hand-holding-dollar"></i></div>
                     <span class="text-xs font-medium">Hutang</span>
+                </a>
+                <a href="{{ route('locations.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('locations.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-location-dot"></i></div>
+                    <span class="text-xs font-medium">Lokasi</span>
                 </a>
                 <a href="{{ route('reports.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('reports.*') ? 'text-pink-600 bg-pink-50' : '' }}">
@@ -1626,6 +1636,92 @@
                 pendingTransactions: readQueue,
                 pendingCount: () => readQueue().length,
             };
+        })();
+
+        window.DompetKitaLocationTracker = (function () {
+            const updateUrl = '{{ route('locations.update') }}';
+            const intervalMs = 5 * 60 * 1000;
+            let timer = null;
+            let lastSentAt = 0;
+            let isSending = false;
+
+            function dispatch(name, detail = {}) {
+                window.dispatchEvent(new CustomEvent(name, { detail }));
+            }
+
+            function isAvailable() {
+                return Boolean(navigator.geolocation);
+            }
+
+            async function sendPosition(position, label = 'Otomatis dari aplikasi') {
+                if (isSending) return null;
+
+                isSending = true;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+                try {
+                    const response = await fetch(updateUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            label,
+                        }),
+                    });
+
+                    if (!response.ok) throw new Error('Lokasi otomatis belum bisa disimpan.');
+
+                    const result = await response.json();
+                    lastSentAt = Date.now();
+                    dispatch('dompetkita:location-updated', result);
+                    return result;
+                } catch (error) {
+                    dispatch('dompetkita:location-error', { message: error.message });
+                    return null;
+                } finally {
+                    isSending = false;
+                }
+            }
+
+            function requestNow(options = {}) {
+                if (!isAvailable()) {
+                    dispatch('dompetkita:location-error', { message: 'Browser ini belum mendukung akses lokasi.' });
+                    return;
+                }
+
+                const force = options.force ?? false;
+                const label = options.label || 'Otomatis dari aplikasi';
+                if (!force && Date.now() - lastSentAt < 30000) return;
+
+                navigator.geolocation.getCurrentPosition(
+                    position => sendPosition(position, label),
+                    error => dispatch('dompetkita:location-error', {
+                        message: error.message || 'Izin lokasi belum diberikan.',
+                    }),
+                    { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
+                );
+            }
+
+            function start() {
+                requestNow({ force: true });
+
+                if (timer) clearInterval(timer);
+                timer = window.setInterval(() => requestNow(), intervalMs);
+            }
+
+            window.addEventListener('load', start);
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) requestNow();
+            });
+
+            return { start, requestNow };
         })();
 
         function copyInvite() {

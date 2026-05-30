@@ -411,6 +411,77 @@
             opacity: .78;
         }
 
+        .chat-call-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 70;
+            display: none;
+            place-items: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, .42);
+            backdrop-filter: blur(12px);
+        }
+
+        .chat-call-overlay.active {
+            display: grid;
+        }
+
+        .chat-call-card {
+            width: min(360px, 100%);
+            border-radius: 28px;
+            border: 1px solid rgba(251, 207, 232, .8);
+            background: linear-gradient(145deg, rgba(255, 255, 255, .98), rgba(253, 242, 248, .96));
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 28px 80px rgba(15, 23, 42, .24);
+        }
+
+        .chat-call-avatar {
+            width: 82px;
+            height: 82px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 14px;
+            border-radius: 999px;
+            background: var(--chat-bubble-color);
+            color: #fff;
+            font-size: 30px;
+            box-shadow: 0 18px 42px rgba(219, 39, 119, .28);
+        }
+
+        .chat-call-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .chat-call-action {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            background: #fff;
+            color: #475569;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+        }
+
+        .chat-call-action.accept {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        .chat-call-action.end {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .chat-call-action.active {
+            background: #fdf2f8;
+            color: var(--chat-bubble-color);
+        }
+
         @media (max-width: 768px) {
             html.chat-page .layout-wrapper {
                 height: 100dvh;
@@ -481,6 +552,9 @@
                 </div>
             </div>
             <div class="chat-header-actions">
+                <button id="chatCallButton" type="button" class="chat-theme-button" title="Telfon pasangan">
+                    <i class="fa-solid fa-phone"></i>
+                </button>
                 <button id="chatNotifyButton" type="button" class="chat-theme-button" title="Aktifkan notifikasi">
                     <i class="fa-solid fa-bell"></i>
                 </button>
@@ -541,6 +615,28 @@
             </button>
         </form>
     </section>
+
+    <div id="chatCallOverlay" class="chat-call-overlay">
+        <div class="chat-call-card">
+            <div class="chat-call-avatar">
+                <i class="fa-solid fa-phone-volume"></i>
+            </div>
+            <div id="chatCallTitle" class="text-lg font-extrabold text-slate-900">Telfon pasangan</div>
+            <div id="chatCallStatus" class="mt-1 text-sm text-slate-500">Menghubungkan...</div>
+            <div class="chat-call-actions">
+                <button id="chatCallAcceptButton" type="button" class="chat-call-action accept hidden" title="Angkat">
+                    <i class="fa-solid fa-phone"></i>
+                </button>
+                <button id="chatCallMuteButton" type="button" class="chat-call-action hidden" title="Mute">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button id="chatCallEndButton" type="button" class="chat-call-action end" title="Tutup">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
+            </div>
+            <audio id="chatRemoteAudio" autoplay playsinline></audio>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -572,9 +668,17 @@
         const chatShell = document.querySelector('.chat-shell');
         const chatThemeButton = document.getElementById('chatThemeButton');
         const chatThemePanel = document.getElementById('chatThemePanel');
+        const chatCallButton = document.getElementById('chatCallButton');
         const chatNotifyButton = document.getElementById('chatNotifyButton');
         const chatBgImageButton = document.getElementById('chatBgImageButton');
         const chatBgImageInput = document.getElementById('chatBgImageInput');
+        const chatCallOverlay = document.getElementById('chatCallOverlay');
+        const chatCallTitle = document.getElementById('chatCallTitle');
+        const chatCallStatus = document.getElementById('chatCallStatus');
+        const chatCallAcceptButton = document.getElementById('chatCallAcceptButton');
+        const chatCallMuteButton = document.getElementById('chatCallMuteButton');
+        const chatCallEndButton = document.getElementById('chatCallEndButton');
+        const chatRemoteAudio = document.getElementById('chatRemoteAudio');
         const renderedMessages = new Map();
         let lastMessageId = 0;
         let lastRenderedDay = null;
@@ -588,7 +692,21 @@
         let firestoreAddDoc = null;
         let firestoreCollection = null;
         let firestoreDb = null;
+        let firestoreDoc = null;
+        let firestoreSetDoc = null;
+        let firestoreUpdateDoc = null;
+        let firestoreOnSnapshot = null;
         let pollingTimer = null;
+        let activeCallId = null;
+        let activeCallDocRef = null;
+        let activeCallUnsubscribe = null;
+        let remoteCandidateUnsubscribe = null;
+        let incomingCallOffer = null;
+        let peerConnection = null;
+        let localCallStream = null;
+        let remoteCallStream = null;
+        let callIsMuted = false;
+        let callIsCaller = false;
 
         function chatDebug(message, detail = null) {
             if (window.DompetKitaChatDebug) {
@@ -1013,12 +1131,16 @@
                 firestoreDb = firestore.getFirestore(app);
                 firestoreAddDoc = firestore.addDoc;
                 firestoreCollection = firestore.collection;
+                firestoreDoc = firestore.doc;
+                firestoreSetDoc = firestore.setDoc;
+                firestoreUpdateDoc = firestore.updateDoc;
+                firestoreOnSnapshot = firestore.onSnapshot;
 
                 const messagesRef = firestore.collection(firestoreDb, 'couples', chatCoupleId, 'chatMessages');
                 const messagesQuery = firestore.query(messagesRef, firestore.orderBy('id', 'asc'));
                 chatDebug('Firestore listener attach', { path: `couples/${chatCoupleId}/chatMessages` });
 
-                firestore.onSnapshot(messagesQuery, snapshot => {
+                firestoreOnSnapshot(messagesQuery, snapshot => {
                     chatDebug('Firestore snapshot', {
                         size: snapshot.size,
                         changes: snapshot.docChanges().length,
@@ -1042,6 +1164,7 @@
 
                 firebaseEnabled = true;
                 setChatStatus('Realtime Firebase aktif');
+                listenIncomingCalls();
                 pollingTimer = window.setInterval(fetchMessages, 2000);
             } catch (error) {
                 setChatStatus('Firebase gagal init, fallback aktif', error.message);
@@ -1073,6 +1196,260 @@
             } catch (error) {
                 setChatStatus('Firebase publish gagal, fallback tetap aktif', error);
             }
+        }
+
+        function canUseCallFeature() {
+            if (!chatFirebaseReady || !firebaseEnabled || !firestoreDb) {
+                Toast.fire({ icon: 'error', title: 'Telfon butuh Firebase realtime aktif.' });
+                return false;
+            }
+
+            if (!window.isSecureContext) {
+                Toast.fire({ icon: 'error', title: 'Telfon di production wajib pakai HTTPS.' });
+                return false;
+            }
+
+            if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
+                Toast.fire({ icon: 'error', title: 'Browser belum mendukung telfon.' });
+                return false;
+            }
+
+            return true;
+        }
+
+        function callDocRef() {
+            return firestoreDoc(firestoreDb, 'couples', chatCoupleId, 'calls', 'active');
+        }
+
+        function callCandidatesRef(role) {
+            return firestoreCollection(firestoreDb, 'couples', chatCoupleId, 'calls', 'active', role);
+        }
+
+        function openCallOverlay(title, status, mode = 'outgoing') {
+            chatCallTitle.textContent = title;
+            chatCallStatus.textContent = status;
+            chatCallOverlay.classList.add('active');
+            chatCallAcceptButton.classList.toggle('hidden', mode !== 'incoming');
+            chatCallMuteButton.classList.toggle('hidden', mode === 'incoming');
+        }
+
+        function setCallStatus(status) {
+            chatCallStatus.textContent = status;
+        }
+
+        async function getCallStream() {
+            localCallStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            return localCallStream;
+        }
+
+        function createPeerConnection(localCandidateRole) {
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+                ],
+            });
+
+            localCallStream.getTracks().forEach(track => pc.addTrack(track, localCallStream));
+            remoteCallStream = new MediaStream();
+            chatRemoteAudio.srcObject = remoteCallStream;
+
+            pc.addEventListener('track', event => {
+                event.streams[0].getTracks().forEach(track => remoteCallStream.addTrack(track));
+                setCallStatus('Tersambung');
+            });
+
+            pc.addEventListener('icecandidate', event => {
+                if (!event.candidate) return;
+                firestoreAddDoc(callCandidatesRef(localCandidateRole), {
+                    ...event.candidate.toJSON(),
+                    call_id: activeCallId,
+                });
+            });
+
+            pc.addEventListener('connectionstatechange', () => {
+                if (['connected', 'completed'].includes(pc.connectionState)) {
+                    setCallStatus('Tersambung');
+                }
+                if (['failed', 'disconnected', 'closed'].includes(pc.connectionState)) {
+                    setCallStatus('Panggilan terputus');
+                }
+            });
+
+            peerConnection = pc;
+            return pc;
+        }
+
+        function listenRemoteCandidates(role) {
+            if (remoteCandidateUnsubscribe) remoteCandidateUnsubscribe();
+
+            remoteCandidateUnsubscribe = firestoreOnSnapshot(callCandidatesRef(role), snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type !== 'added' || !peerConnection) return;
+                    const candidate = change.doc.data();
+                    if (candidate.call_id && candidate.call_id !== activeCallId) return;
+                    const { call_id, ...candidateInit } = candidate;
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidateInit)).catch(error => {
+                        chatDebug('ICE candidate gagal ditambah', error);
+                    });
+                });
+            });
+        }
+
+        function listenActiveCallDoc() {
+            if (activeCallUnsubscribe) activeCallUnsubscribe();
+
+            activeCallUnsubscribe = firestoreOnSnapshot(activeCallDocRef, async snapshot => {
+                const data = snapshot.data();
+                if (!data) return;
+                if (data.call_id && data.call_id !== activeCallId) return;
+
+                if (data.status === 'ended') {
+                    closeCall(false);
+                    return;
+                }
+
+                if (callIsCaller && data.status === 'accepted' && data.answer && peerConnection && !peerConnection.currentRemoteDescription) {
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                    setCallStatus('Tersambung');
+                }
+            });
+        }
+
+        function listenIncomingCalls() {
+            if (!firestoreOnSnapshot || !firestoreDb) return;
+
+            firestoreOnSnapshot(callDocRef(), snapshot => {
+                const data = snapshot.data();
+                if (!data || data.status !== 'ringing') return;
+                if (Number(data.caller_id) === Number(chatCurrentUserId)) return;
+                if (activeCallId) return;
+
+                activeCallId = data.call_id || 'active';
+                activeCallDocRef = callDocRef();
+                incomingCallOffer = data.offer;
+                callIsCaller = false;
+                openCallOverlay('Pasangan menelfon', 'Ada panggilan masuk', 'incoming');
+                showIncomingNotification({
+                    id: `call-${Date.now()}`,
+                    name: 'Pasangan',
+                    body: 'Ada panggilan masuk',
+                });
+            });
+        }
+
+        async function startOutgoingCall() {
+            if (!canUseCallFeature() || activeCallId) return;
+
+            try {
+                activeCallId = `${Date.now()}-${chatCurrentUserId}`;
+                callIsCaller = true;
+                activeCallDocRef = callDocRef();
+                openCallOverlay('Menelfon pasangan', 'Meminta izin mikrofon...', 'outgoing');
+
+                await getCallStream();
+                const pc = createPeerConnection('callerCandidates');
+                listenRemoteCandidates('calleeCandidates');
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await firestoreSetDoc(activeCallDocRef, {
+                    call_id: activeCallId,
+                    status: 'ringing',
+                    caller_id: Number(chatCurrentUserId),
+                    offer: {
+                        type: offer.type,
+                        sdp: offer.sdp,
+                    },
+                    createdAt: Date.now(),
+                });
+
+                listenActiveCallDoc();
+                setCallStatus('Memanggil...');
+            } catch (error) {
+                closeCall(false);
+                Toast.fire({ icon: 'error', title: 'Panggilan belum bisa dimulai.' });
+            }
+        }
+
+        async function acceptIncomingCall() {
+            if (!canUseCallFeature() || !incomingCallOffer || !activeCallDocRef) return;
+
+            try {
+                openCallOverlay('Telfon pasangan', 'Menghubungkan...', 'active');
+                await getCallStream();
+                const pc = createPeerConnection('calleeCandidates');
+                listenRemoteCandidates('callerCandidates');
+                listenActiveCallDoc();
+
+                await pc.setRemoteDescription(new RTCSessionDescription(incomingCallOffer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                await firestoreUpdateDoc(activeCallDocRef, {
+                    status: 'accepted',
+                    receiver_id: Number(chatCurrentUserId),
+                    answer: {
+                        type: answer.type,
+                        sdp: answer.sdp,
+                    },
+                    acceptedAt: Date.now(),
+                });
+
+                incomingCallOffer = null;
+                setCallStatus('Tersambung');
+            } catch (error) {
+                closeCall(true);
+                Toast.fire({ icon: 'error', title: 'Panggilan belum bisa diangkat.' });
+            }
+        }
+
+        async function closeCall(updateRemote = true) {
+            if (updateRemote && activeCallDocRef) {
+                try {
+                    await firestoreUpdateDoc(activeCallDocRef, {
+                        call_id: activeCallId,
+                        status: 'ended',
+                        ended_by: Number(chatCurrentUserId),
+                        endedAt: Date.now(),
+                    });
+                } catch (error) {
+                    chatDebug('Gagal menutup dokumen panggilan', error);
+                }
+            }
+
+            if (activeCallUnsubscribe) activeCallUnsubscribe();
+            if (remoteCandidateUnsubscribe) remoteCandidateUnsubscribe();
+            if (peerConnection) peerConnection.close();
+            if (localCallStream) localCallStream.getTracks().forEach(track => track.stop());
+
+            chatRemoteAudio.srcObject = null;
+            chatCallOverlay.classList.remove('active');
+            chatCallMuteButton.classList.add('hidden');
+            chatCallAcceptButton.classList.add('hidden');
+            chatCallMuteButton.classList.remove('active');
+            chatCallMuteButton.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+
+            activeCallId = null;
+            activeCallDocRef = null;
+            activeCallUnsubscribe = null;
+            remoteCandidateUnsubscribe = null;
+            incomingCallOffer = null;
+            peerConnection = null;
+            localCallStream = null;
+            remoteCallStream = null;
+            callIsMuted = false;
+            callIsCaller = false;
+        }
+
+        function toggleCallMute() {
+            if (!localCallStream) return;
+            callIsMuted = !callIsMuted;
+            localCallStream.getAudioTracks().forEach(track => {
+                track.enabled = !callIsMuted;
+            });
+            chatCallMuteButton.classList.toggle('active', callIsMuted);
+            chatCallMuteButton.innerHTML = callIsMuted
+                ? '<i class="fa-solid fa-microphone-slash"></i>'
+                : '<i class="fa-solid fa-microphone"></i>';
         }
 
         async function sendMessage(body) {
@@ -1312,6 +1689,10 @@
             setAttachment(file, 'image');
         });
         chatClearAttachment.addEventListener('click', clearAttachment);
+        chatCallButton.addEventListener('click', startOutgoingCall);
+        chatCallAcceptButton.addEventListener('click', acceptIncomingCall);
+        chatCallEndButton.addEventListener('click', () => closeCall(true));
+        chatCallMuteButton.addEventListener('click', toggleCallMute);
         chatVoiceButton.addEventListener('click', function () {
             if (mediaRecorder) {
                 stopRecording();

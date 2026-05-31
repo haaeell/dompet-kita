@@ -368,7 +368,7 @@
                     body: JSON.stringify({
                         email: document.getElementById('email').value,
                         password: document.getElementById('password').value,
-                        remember: document.getElementById('remember').checked
+                        remember: document.getElementById('remember')?.checked ?? false
                     })
                 });
 

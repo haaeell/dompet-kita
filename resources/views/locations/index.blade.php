@@ -326,8 +326,12 @@
             </div>
 
             <div id="locationHint" class="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-                Lokasi diperbarui otomatis saat aplikasi dibuka.
+                Lokasi hanya dibagikan setelah kamu menekan update lokasi.
             </div>
+
+            <button id="stopLocationButton" type="button" class="w-full rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700">
+                <i class="fa-solid fa-location-xmark mr-1"></i> Stop berbagi lokasi saya
+            </button>
 
             <div id="locationMembers" class="space-y-3">
                 @foreach($members as $member)
@@ -410,6 +414,7 @@
         const locationMembers = @json($locationPayload);
         const currentLocationUserId = @json($currentUserId);
         const locationUpdateUrl = @json(route('locations.update'));
+        const locationStopUrl = @json(route('locations.destroy'));
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const markerColors = ['#db2777', '#0891b2', '#16a34a', '#7c3aed'];
         const markers = new Map();
@@ -701,6 +706,14 @@
             syncMapMarkers();
         }
 
+        function deactivateMyLocation() {
+            const me = locationMembers.find(member => member.user_id === currentLocationUserId);
+            if (me) me.location = null;
+
+            renderCards();
+            syncMapMarkers();
+        }
+
         async function saveLocation(position) {
             const payload = {
                 latitude: position.coords.latitude,
@@ -723,6 +736,7 @@
             if (!response.ok) throw new Error('Gagal menyimpan lokasi.');
 
             const result = await response.json();
+            window.DompetKitaLocationTracker?.enableSharing?.();
             applyLocationResult(result.location);
             setHint(`Lokasi tersimpan. Akurasi sekitar ${formatDistance(payload.accuracy)}.`, 'success');
             Toast.fire({ icon: 'success', title: result.message || 'Lokasi dibagikan.' });
@@ -730,6 +744,7 @@
 
         function requestLocation() {
             if (window.DompetKitaLocationTracker) {
+                window.DompetKitaLocationTracker.enableSharing();
                 setHint('Sedang mengambil titik dan alamat detail terbaru...');
                 window.DompetKitaLocationTracker.requestNow({
                     force: true,
@@ -744,6 +759,7 @@
             }
 
             const button = document.getElementById('shareLocationButton');
+            window.DompetKitaLocationTracker?.enableSharing?.();
             button.disabled = true;
             button.classList.add('opacity-70');
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Mengambil...</span>';
@@ -767,11 +783,42 @@
             );
         }
 
+        async function stopSharingLocation() {
+            const button = document.getElementById('stopLocationButton');
+            button.disabled = true;
+            button.classList.add('opacity-70');
+
+            try {
+                const response = await fetch(locationStopUrl, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                });
+
+                if (!response.ok) throw new Error('Gagal menghentikan berbagi lokasi.');
+
+                const result = await response.json();
+                window.DompetKitaLocationTracker?.stop?.();
+                deactivateMyLocation();
+                setHint(result.message || 'Berbagi lokasi dihentikan.', 'success');
+                Toast.fire({ icon: 'success', title: result.message || 'Berbagi lokasi dihentikan.' });
+            } catch (error) {
+                setHint(error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-70');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             renderCards();
             renderMap();
 
             document.getElementById('shareLocationButton').addEventListener('click', requestLocation);
+            document.getElementById('stopLocationButton').addEventListener('click', stopSharingLocation);
             window.addEventListener('dompetkita:location-updated', function (event) {
                 if (event.detail?.location) {
                     applyLocationResult(event.detail.location);

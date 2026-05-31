@@ -12,12 +12,15 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ChatController;
 
+Route::view('/privacy', 'legal.privacy')->name('privacy');
+Route::view('/terms', 'legal.terms')->name('terms');
+
 // ─── Auth Routes ─────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -80,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('locations')->name('locations.')->group(function () {
         Route::get('/', [LocationController::class, 'index'])->name('index');
         Route::post('/', [LocationController::class, 'update'])->name('update');
+        Route::delete('/', [LocationController::class, 'destroy'])->name('destroy');
     });
 
     // Chat Pasangan

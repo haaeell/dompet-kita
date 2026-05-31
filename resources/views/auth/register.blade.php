@@ -368,6 +368,12 @@
                             Masuk
                         </a>
                     </p>
+                    <p class="mt-3 text-xs text-slate-400">
+                        Dengan mendaftar, kamu menyetujui
+                        <a href="{{ route('terms') }}" class="font-bold text-pink-600">Syarat Penggunaan</a>
+                        dan
+                        <a href="{{ route('privacy') }}" class="font-bold text-pink-600">Kebijakan Privasi</a>.
+                    </p>
                 </div>
 
             </div>

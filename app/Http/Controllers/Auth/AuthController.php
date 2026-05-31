@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -41,10 +42,27 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'couple_action' => ['required', Rule::in(['create', 'join'])],
+            'couple_name' => ['required_if:couple_action,create', 'nullable', 'string', 'max:255'],
+            'couple_avatar' => ['nullable', 'string', 'max:20'],
+            'invite_code' => ['required_if:couple_action,join', 'nullable', 'string', 'size:8'],
+            'user_avatar' => ['nullable', 'string', 'max:20'],
+        ], [
+            'email.unique' => 'Email sudah digunakan.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak sama.',
+            'couple_name.required_if' => 'Nama pasangan wajib diisi.',
+            'invite_code.required_if' => 'Kode undangan wajib diisi.',
+            'invite_code.size' => 'Kode undangan harus 8 karakter.',
+        ]);
 
-        if ($request->couple_action === 'create') {
+        if ($data['couple_action'] === 'create') {
             $couple = Couple::create([
-                'couple_name' => $request->couple_name,
+                'couple_name' => $data['couple_name'],
                 'avatar_couple' => $request->couple_avatar ?? '💑',
             ]);
 
@@ -53,7 +71,7 @@ class AuthController extends Controller
 
             $role = 'owner';
         } else {
-            $couple = Couple::where('invite_code', strtoupper($request->invite_code))->first();
+            $couple = Couple::where('invite_code', strtoupper($data['invite_code']))->first();
             if (!$couple) {
                 return response()->json(['success' => false, 'message' => 'Kode undangan tidak valid!'], 422);
             }
@@ -65,9 +83,9 @@ class AuthController extends Controller
 
         $user = User::create([
             'couple_id' => $couple->id,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
             'avatar' => $request->user_avatar ?? '👤',
             'role' => $role,
         ]);

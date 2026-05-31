@@ -1663,6 +1663,7 @@
         window.DompetKitaLocationTracker = (function () {
             const updateUrl = '{{ route('locations.update') }}';
             const intervalMs = 5 * 60 * 1000;
+            const sharingKey = 'dompetkita.location.sharing';
             let timer = null;
             let lastSentAt = 0;
             let isSending = false;
@@ -1673,6 +1674,14 @@
 
             function isAvailable() {
                 return Boolean(navigator.geolocation);
+            }
+
+            function isSharingEnabled() {
+                return localStorage.getItem(sharingKey) === '1';
+            }
+
+            function setSharingEnabled(enabled) {
+                localStorage.setItem(sharingKey, enabled ? '1' : '0');
             }
 
             function cacheKey(latitude, longitude) {
@@ -1787,18 +1796,31 @@
             }
 
             function start() {
+                if (!isSharingEnabled()) return;
                 requestNow({ force: true });
 
                 if (timer) clearInterval(timer);
                 timer = window.setInterval(() => requestNow(), intervalMs);
             }
 
-            window.addEventListener('load', start);
+            function stop() {
+                setSharingEnabled(false);
+                if (timer) clearInterval(timer);
+                timer = null;
+            }
+
+            function enableSharing() {
+                setSharingEnabled(true);
+            }
+
+            window.addEventListener('load', function () {
+                if (isSharingEnabled()) start();
+            });
             document.addEventListener('visibilitychange', function () {
-                if (!document.hidden) requestNow();
+                if (!document.hidden && isSharingEnabled()) requestNow();
             });
 
-            return { start, requestNow };
+            return { start, stop, enableSharing, requestNow, isSharingEnabled };
         })();
 
         function copyInvite() {

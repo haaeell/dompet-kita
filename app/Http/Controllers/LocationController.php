@@ -74,4 +74,18 @@ class LocationController extends Controller
         ]);
     }
 
+    public function destroy()
+    {
+        $user = Auth::user();
+
+        PartnerLocation::where('couple_id', $user->couple_id)
+            ->where('user_id', $user->id)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berbagi lokasi dihentikan.',
+        ]);
+    }
+
 }

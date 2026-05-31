@@ -77,14 +77,16 @@ class TransactionController extends Controller
         }
 
         // Validasi category & bank milik couple ini
-        $category = $couple->categories()->findOrFail($request->category_id);
+        $category = $couple->categories()
+            ->where('type', $request->type)
+            ->findOrFail($request->category_id);
         $bank = $couple->banks()->findOrFail($request->bank_id);
 
         $transaction = Transaction::create([
             'couple_id' => $couple->id,
             'user_id' => Auth::id(),
-            'category_id' => $request->category_id,
-            'bank_id' => $request->bank_id,
+            'category_id' => $category->id,
+            'bank_id' => $bank->id,
             'type' => $request->type,
             'amount' => $request->amount,
             'description' => $request->description,
@@ -115,16 +117,23 @@ class TransactionController extends Controller
             'category_id' => 'required|exists:categories,id',
             'bank_id' => 'required|exists:banks,id',
             'date' => 'required|date',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $transaction->update($request->only([
-            'amount',
-            'description',
-            'category_id',
-            'bank_id',
-            'date',
-            'notes'
-        ]));
+        $couple = Auth::user()->couple;
+        $category = $couple->categories()
+            ->where('type', $transaction->type)
+            ->findOrFail($request->category_id);
+        $bank = $couple->banks()->findOrFail($request->bank_id);
+
+        $transaction->update([
+            'amount' => $request->amount,
+            'description' => $request->description,
+            'category_id' => $category->id,
+            'bank_id' => $bank->id,
+            'date' => $request->date,
+            'notes' => $request->notes,
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Transaksi berhasil diperbarui!']);
     }

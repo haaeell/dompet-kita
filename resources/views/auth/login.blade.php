@@ -238,7 +238,7 @@
                             DompetKita
                         </h1>
                         <p class="text-xs font-bold tracking-[.16em] text-slate-400 mt-1">
-                            PASANGAN HOT
+                            PASANGAN
                         </p>
                     </div>
                 </div>

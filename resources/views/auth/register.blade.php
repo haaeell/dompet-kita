@@ -1,339 +1,483 @@
+{{-- ========== auth/register.blade.php ========== --}}
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- SEO Meta --}}
-    <meta name="description" content="Daftar ke DompetKita – Mulai kelola keuangan bersama pasangan sekarang.">
+    <meta name="description" content="Daftar ke DompetKita untuk mulai mengelola keuangan bersama pasangan.">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#db2777">
-    <meta name="author" content="DompetKita">
 
-    {{-- Open Graph --}}
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Daftar – DompetKita">
-    <meta property="og:description" content="Daftar ke DompetKita dan mulai kelola keuangan bersama pasangan.">
-    <meta property="og:image" content="https://placehold.co/1200x630/db2777/ffffff?text=DompetKita+💗">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:site_name" content="DompetKita">
-    <meta property="og:locale" content="id_ID">
+    <title>Daftar - DompetKita</title>
 
-    {{-- Twitter Card --}}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Daftar – DompetKita">
-    <meta name="twitter:description" content="Daftar ke DompetKita dan mulai kelola keuangan bersama pasangan.">
-    <meta name="twitter:image" content="{{ asset('images/og-image.png') }}">
-
-    {{-- PWA & Mobile --}}
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="DompetKita">
-    <meta name="application-name" content="DompetKita">
-    <meta name="msapplication-TileColor" content="#db2777">
-    <meta name="msapplication-tap-highlight" content="no">
-    <meta name="format-detection" content="telephone=no">
-
-    {{-- Favicon --}}
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
-    <link rel="apple-touch-icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
-
-    <title>Daftar – DompetKita</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <link
-        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        body {
-            background: #ffffff;
+        * {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #1f2937;
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, #ec4899, #f43f5e);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .font-display {
+            font-family: 'Bricolage Grotesque', sans-serif;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(236, 72, 153, .16), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(59, 130, 246, .10), transparent 30%),
+                #fff7fb;
+            color: #141827;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid rgba(255, 255, 255, .75);
+            box-shadow: 0 30px 90px rgba(219, 39, 119, .12);
+            backdrop-filter: blur(18px);
+        }
+
+        .brand-gradient {
+            background: linear-gradient(135deg, #ec4899, #db2777, #be185d);
+        }
+
+        .soft-gradient {
+            background:
+                radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .35), transparent 24%),
+                linear-gradient(135deg, #ec4899 0%, #db2777 48%, #be185d 100%);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 14px;
         }
 
         .input-field {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: #1f2937;
-            font-size: 14px;
             width: 100%;
+            border-radius: 18px;
+            border: 1px solid #eef2f7;
+            background: rgba(248, 250, 252, .88);
+            padding: 15px 48px 15px 44px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
             outline: none;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .input-field:focus {
-            border-color: #ec4899;
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+            transition: .2s ease;
         }
 
         .input-field::placeholder {
             color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .input-field:focus {
+            background: #ffffff;
+            border-color: #ec4899;
+            box-shadow: 0 0 0 4px rgba(236, 72, 153, .12);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #ec4899, #f43f5e);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 14px 24px;
-            font-weight: 700;
-            font-size: 15px;
             width: 100%;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
+            border-radius: 18px;
+            padding: 15px 20px;
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            box-shadow: 0 18px 36px rgba(219, 39, 119, .28);
+            transition: .2s ease;
         }
 
         .btn-primary:hover {
-            opacity: 0.95;
-            transform: translateY(-1px);
-            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 22px 44px rgba(219, 39, 119, .35);
+        }
+
+        .btn-primary:disabled {
+            opacity: .75;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: 1px solid transparent;
-            color: #6b7280;
-            background: transparent;
-            font-family: inherit;
+            border-radius: 16px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #64748b;
+            transition: .2s ease;
         }
 
         .tab-btn.active {
             background: #ffffff;
-            color: #ec4899;
-            border-color: #f3f4f6;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            color: #db2777;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
         }
 
-        .label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        .mini-card {
+            background: rgba(255, 255, 255, .18);
+            border: 1px solid rgba(255, 255, 255, .25);
         }
 
-        .mesh {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background: radial-gradient(ellipse at 20% 20%, rgba(236, 72, 153, 0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(244, 63, 94, 0.04) 0%, transparent 50%);
-        }
-
-        .card {
-            background: #ffffff;
-            border: 1px solid #f3f4f6;
-            border-radius: 24px;
-            padding: 32px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-        }
-
-        .emoji-btn {
-            font-size: 20px;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 8px;
-            border: 2px solid transparent;
-            transition: all 0.15s;
-        }
-
-        .emoji-btn:hover,
-        .emoji-btn.selected {
-            border-color: #ec4899;
-            background: rgba(236, 72, 153, 0.1);
+        @media (max-width: 768px) {
+            body {
+                background: #fff7fb;
+            }
         }
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center px-4 py-8">
-    <div class="mesh"></div>
-    <div class="relative z-10 w-full max-w-lg">
-        <div class="text-center mb-6">
-            <div class="text-4xl mb-2">💑</div>
-            <h1 class="font-bold text-3xl gradient-text mb-1" style="font-family: 'Bricolage Grotesque', sans-serif;">
-                DompetKita</h1>
-            <p class="text-gray-500 text-sm">Buat akun dan kelola keuangan bersama</p>
-        </div>
+<body class="min-h-screen overflow-x-hidden">
 
-        <div class="card">
-            <h2 class="text-lg font-bold text-gray-800 mb-5" style="font-family: 'Bricolage Grotesque', sans-serif;">
-                Buat
-                Akun Baru</h2>
+    <main class="relative min-h-screen flex items-center justify-center px-4 py-8">
 
-            {{-- Personal info --}}
-            <div class="space-y-4 mb-5">
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="label">Avatar Kamu</label>
-                        <div class="flex flex-wrap gap-1" id="avatarList">
-                            @foreach(['👨', '👩', '👦', '👧', '🧑', '👤', '🦊', '🐱', '🐶', '🐼', '🦁', '🐸'] as $em)
-                                <button type="button" class="emoji-btn" onclick="selectAvatar('{{ $em }}')"
-                                    id="av-{{ $loop->index }}">{{ $em }}</button>
-                            @endforeach
+        <section class="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-6 items-stretch">
+
+            {{-- LEFT PANEL --}}
+            <div class="hidden lg:flex glass-card rounded-[34px] p-8 flex-col justify-between overflow-hidden relative">
+                <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-pink-200/40"></div>
+                <div class="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-blue-100/60"></div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-10">
+                        <div
+                            class="w-13 h-13 rounded-2xl brand-gradient flex items-center justify-center shadow-lg shadow-pink-200">
+                            <i class="fa-solid fa-heart text-white text-xl"></i>
                         </div>
-                        <input type="hidden" id="userAvatar" value="👤">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="label">Nama Lengkap</label>
-                        <input type="text" id="name" placeholder="Nama kamu" class="input-field">
-                    </div>
-                </div>
-                <div>
-                    <label class="label">Email</label>
-                    <input type="email" id="email" placeholder="email@kamu.com" class="input-field">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">Password</label>
-                        <input type="password" id="password" placeholder="Min. 8 karakter" class="input-field">
-                    </div>
-                    <div>
-                        <label class="label">Konfirmasi</label>
-                        <input type="password" id="password_confirmation" placeholder="Ulangi password"
-                            class="input-field">
-                    </div>
-                </div>
-            </div>
-
-            <hr style="border-color: #f3f4f6; margin-bottom: 20px;">
-
-            {{-- Couple action --}}
-            <label class="label mb-3">Bergabung sebagai</label>
-            <div class="flex gap-2 p-1 rounded-xl mb-4" style="background: #f3f4f6;">
-                <button type="button" id="tabCreate" class="tab-btn active" onclick="setTab('create')">✨ Buat Pasangan
-                    Baru</button>
-                <button type="button" id="tabJoin" class="tab-btn" onclick="setTab('join')">🔗 Gabung Pasangan</button>
-            </div>
-            <input type="hidden" id="coupleAction" value="create">
-
-            {{-- Create couple --}}
-            <div id="panelCreate" class="space-y-3">
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="label">Icon Couple</label>
-                        <div class="flex flex-wrap gap-1">
-                            @foreach(['💑', '👫', '💏', '🥰', '💕', '❤️', '💍', '🌸'] as $em)
-                                <button type="button" class="emoji-btn" onclick="selectCoupleEmoji('{{ $em }}')"
-                                    id="cem-{{ $loop->index }}">{{ $em }}</button>
-                            @endforeach
+                        <div>
+                            <h1 class="font-display text-2xl font-extrabold text-slate-950 leading-none">
+                                DompetKita
+                            </h1>
+                            <p class="text-xs font-bold tracking-[.18em] text-slate-400 mt-1">
+                                PASANGAN
+                            </p>
                         </div>
-                        <input type="hidden" id="coupleAvatar" value="💑">
                     </div>
-                    <div class="col-span-2">
-                        <label class="label">Nama Pasangan Kalian</label>
-                        <input type="text" id="coupleName" placeholder="Misal: Rizky & Dinda" class="input-field">
+
+                    <div class="soft-gradient rounded-[32px] p-8 text-white shadow-2xl shadow-pink-200/60">
+                        <p class="text-white/80 font-semibold mb-2">
+                            Mulai dari satu akun
+                        </p>
+
+                        <h2 class="font-display text-4xl font-extrabold leading-tight mb-6">
+                            Catat bersama,<br>
+                            pantau bersama.
+                        </h2>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="mini-card rounded-2xl p-4">
+                                <p class="text-white/70 text-xs font-bold tracking-widest mb-2">
+                                    TRANSAKSI
+                                </p>
+                                <h3 class="text-2xl font-extrabold">Realtime</h3>
+                            </div>
+
+                            <div class="mini-card rounded-2xl p-4">
+                                <p class="text-white/70 text-xs font-bold tracking-widest mb-2">
+                                    UNDANGAN
+                                </p>
+                                <h3 class="text-2xl font-extrabold">Mudah</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10 grid grid-cols-3 gap-4 mt-8">
+                    <div class="rounded-3xl bg-white p-5 border border-pink-100">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 font-semibold">Catat pemasukan dan pengeluaran harian.</p>
+                    </div>
+
+                    <div class="rounded-3xl bg-white p-5 border border-blue-100">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 font-semibold">Buat pasangan baru atau gabung pakai kode.</p>
+                    </div>
+
+                    <div class="rounded-3xl bg-white p-5 border border-emerald-100">
+                        <div
+                            class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 font-semibold">Laporan keuangan bersama lebih rapi.</p>
                     </div>
                 </div>
             </div>
 
-            {{-- Join couple --}}
-            <div id="panelJoin" class="hidden">
-                <label class="label">Kode Undangan</label>
-                <input type="text" id="inviteCode" placeholder="Masukkan 8 karakter kode"
-                    class="input-field text-center text-xl font-mono tracking-widest" maxlength="8"
-                    oninput="this.value = this.value.toUpperCase()">
-                <p class="text-xs text-gray-400 mt-2 text-center">Minta kode dari pasanganmu yang sudah mendaftar</p>
-            </div>
+            {{-- REGISTER FORM --}}
+            <div class="glass-card rounded-[34px] p-6 sm:p-8 lg:p-10">
 
-            <button onclick="doRegister()" class="btn-primary mt-6">Daftar Sekarang 🚀</button>
-            <p class="text-center text-gray-400 text-sm mt-4">
-                Sudah punya akun? <a href="{{ route('login') }}" style="color: #ec4899;"
-                    class="font-semibold hover:text-pink-600 transition-colors">Masuk</a>
-            </p>
-        </div>
-    </div>
+                <div class="lg:hidden flex items-center gap-3 mb-8">
+                    <div
+                        class="w-12 h-12 rounded-2xl brand-gradient flex items-center justify-center shadow-lg shadow-pink-200">
+                        <i class="fa-solid fa-heart text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-2xl font-extrabold text-slate-950 leading-none">
+                            DompetKita
+                        </h1>
+                        <p class="text-xs font-bold tracking-[.16em] text-slate-400 mt-1">
+                            PASANGAN HOT
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mb-7">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-50 text-pink-700 text-xs font-bold mb-5">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Buat akun baru
+                    </div>
+
+                    <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-slate-950 leading-tight">
+                        Daftar DompetKita
+                    </h2>
+
+                    <p class="text-slate-500 mt-3 text-sm sm:text-base leading-relaxed">
+                        Isi data akun, lalu pilih buat pasangan baru atau gabung menggunakan kode undangan.
+                    </p>
+                </div>
+
+                <form onsubmit="doRegister(event)" class="space-y-5">
+
+                    <div>
+                        <label for="name" class="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap</label>
+                        <div class="input-group">
+                            <i class="fa-regular fa-user input-icon"></i>
+                            <input type="text" id="name" name="name" class="input-field"
+                                placeholder="Masukkan nama kamu" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                        <div class="input-group">
+                            <i class="fa-regular fa-envelope input-icon"></i>
+                            <input type="email" id="email" name="email" class="input-field" placeholder="Masukkan email"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="password" class="block text-sm font-bold text-slate-700 mb-2">Password</label>
+                            <div class="input-group">
+                                <i class="fa-solid fa-lock input-icon"></i>
+                                <input type="password" id="password" name="password" class="input-field"
+                                    placeholder="Min. 8 karakter" required>
+                                <button type="button" onclick="togglePassword('password', 'passwordIcon')"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-pink-600">
+                                    <i id="passwordIcon" class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="password_confirmation"
+                                class="block text-sm font-bold text-slate-700 mb-2">Konfirmasi</label>
+                            <div class="input-group">
+                                <i class="fa-solid fa-shield-halved input-icon"></i>
+                                <input type="password" id="password_confirmation" name="password_confirmation"
+                                    class="input-field" placeholder="Ulangi password" required>
+                                <button type="button" onclick="togglePassword('password_confirmation', 'confirmIcon')"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-pink-600">
+                                    <i id="confirmIcon" class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-sm font-bold text-slate-700 mb-3">Tipe Pendaftaran</label>
+
+                        <div class="flex gap-2 p-1.5 rounded-[20px] bg-slate-100">
+                            <button type="button" id="tabCreate" class="tab-btn active" onclick="setTab('create')">
+                                <i class="fa-solid fa-plus mr-1"></i>
+                                Buat Pasangan
+                            </button>
+
+                            <button type="button" id="tabJoin" class="tab-btn" onclick="setTab('join')">
+                                <i class="fa-solid fa-link mr-1"></i>
+                                Gabung Kode
+                            </button>
+                        </div>
+
+                        <input type="hidden" id="coupleAction" value="create">
+                    </div>
+
+                    <div id="panelCreate" class="rounded-3xl bg-white/70 border border-pink-100 p-5">
+                        <label for="coupleName" class="block text-sm font-bold text-slate-700 mb-2">Nama
+                            Pasangan</label>
+                        <div class="input-group">
+                            <i class="fa-solid fa-heart input-icon text-pink-400"></i>
+                            <input type="text" id="coupleName" name="couple_name" class="input-field"
+                                placeholder="Contoh: PASANGAN HOT">
+                        </div>
+                        <p class="text-xs font-semibold text-slate-400 mt-3">
+                            Kamu akan menjadi pemilik pasangan dan mendapat kode undangan.
+                        </p>
+                    </div>
+
+                    <div id="panelJoin" class="hidden rounded-3xl bg-white/70 border border-blue-100 p-5">
+                        <label for="inviteCode" class="block text-sm font-bold text-slate-700 mb-2">Kode
+                            Undangan</label>
+                        <div class="input-group">
+                            <i class="fa-solid fa-ticket input-icon text-blue-400"></i>
+                            <input type="text" id="inviteCode" name="invite_code" maxlength="8"
+                                class="input-field uppercase tracking-[.25em] text-center font-extrabold"
+                                placeholder="C0OQTQWE" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <p class="text-xs font-semibold text-slate-400 mt-3">
+                            Masukkan kode dari pasangan yang sudah punya akun.
+                        </p>
+                    </div>
+
+                    <button type="submit" id="registerBtn" class="btn-primary">
+                        <span id="btnText">Daftar Sekarang</span>
+                    </button>
+                </form>
+
+                <div class="mt-7 text-center">
+                    <p class="text-sm text-slate-500">
+                        Sudah punya akun?
+                        <a href="{{ route('login') }}" class="font-extrabold text-pink-600 hover:text-pink-700">
+                            Masuk
+                        </a>
+                    </p>
+                </div>
+
+            </div>
+        </section>
+    </main>
 
     <script>
         function setTab(tab) {
             document.getElementById('coupleAction').value = tab;
+
             document.getElementById('tabCreate').className = 'tab-btn' + (tab === 'create' ? ' active' : '');
             document.getElementById('tabJoin').className = 'tab-btn' + (tab === 'join' ? ' active' : '');
-            document.getElementById('panelCreate').className = tab === 'create' ? 'space-y-3' : 'hidden';
-            document.getElementById('panelJoin').className = tab === 'join' ? '' : 'hidden';
+
+            document.getElementById('panelCreate').className = tab === 'create'
+                ? 'rounded-3xl bg-white/70 border border-pink-100 p-5'
+                : 'hidden rounded-3xl bg-white/70 border border-pink-100 p-5';
+
+            document.getElementById('panelJoin').className = tab === 'join'
+                ? 'rounded-3xl bg-white/70 border border-blue-100 p-5'
+                : 'hidden rounded-3xl bg-white/70 border border-blue-100 p-5';
         }
 
-        function selectAvatar(em) {
-            document.getElementById('userAvatar').value = em;
-            document.querySelectorAll('[id^="av-"]').forEach(b => b.classList.remove('selected'));
-            event.target.classList.add('selected');
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            icon.classList.toggle('fa-eye', !isPassword);
+            icon.classList.toggle('fa-eye-slash', isPassword);
         }
 
-        function selectCoupleEmoji(em) {
-            document.getElementById('coupleAvatar').value = em;
-            document.querySelectorAll('[id^="cem-"]').forEach(b => b.classList.remove('selected'));
-            event.target.classList.add('selected');
-        }
+        async function doRegister(event) {
+            event.preventDefault();
 
-        async function doRegister() {
-            const btn = document.querySelector('.btn-primary');
+            const btn = document.getElementById('registerBtn');
+            const btnText = document.getElementById('btnText');
+
             const data = {
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value,
                 password_confirmation: document.getElementById('password_confirmation').value,
-                user_avatar: document.getElementById('userAvatar').value,
                 couple_action: document.getElementById('coupleAction').value,
                 couple_name: document.getElementById('coupleName').value,
-                couple_avatar: document.getElementById('coupleAvatar').value,
                 invite_code: document.getElementById('inviteCode').value,
             };
 
-            btn.textContent = 'Memproses...'; btn.disabled = true;
+            btn.disabled = true;
+            btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Memproses...';
 
-            const res = await fetch('{{ route("register") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(r => r.json()).catch(() => ({ success: false, message: 'Terjadi kesalahan!' }));
+            try {
+                const response = await fetch('{{ route("register") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
 
-            if (res.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '🎉 Berhasil!',
-                    text: 'Akun berhasil dibuat! Selamat datang!',
-                    background: '#ffffff',
-                    color: '#1f2937',
-                    confirmButtonColor: '#ec4899',
-                    timer: 2000
-                }).then(() => window.location.href = res.redirect);
-            } else {
-                const msg = res.errors ? Object.values(res.errors).flat().join('\n') : res.message;
+                const res = await response.json();
+
+                if (res.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Akun berhasil dibuat.',
+                        confirmButtonColor: '#db2777',
+                        background: '#ffffff',
+                        color: '#111827',
+                        timer: 1600
+                    }).then(() => {
+                        window.location.href = res.redirect;
+                    });
+
+                    return;
+                }
+
+                const message = res.errors
+                    ? Object.values(res.errors).flat().join('\n')
+                    : (res.message || 'Pendaftaran gagal.');
+
                 Swal.fire({
                     icon: 'error',
-                    title: 'Pendaftaran Gagal',
-                    text: msg,
+                    title: 'Pendaftaran gagal',
+                    text: message,
+                    confirmButtonColor: '#db2777',
                     background: '#ffffff',
-                    color: '#1f2937',
-                    confirmButtonColor: '#ec4899'
+                    color: '#111827'
                 });
-                btn.textContent = 'Daftar Sekarang 🚀'; btn.disabled = false;
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi kesalahan',
+                    text: 'Silakan coba lagi beberapa saat.',
+                    confirmButtonColor: '#db2777',
+                    background: '#ffffff',
+                    color: '#111827'
+                });
             }
+
+            btn.disabled = false;
+            btnText.textContent = 'Daftar Sekarang';
         }
     </script>
+
 </body>
 
 </html>

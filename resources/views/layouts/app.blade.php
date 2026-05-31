@@ -964,6 +964,7 @@
         }
 
         @keyframes splashFloat {
+
             0%,
             100% {
                 transform: translateY(0);
@@ -975,6 +976,7 @@
         }
 
         @keyframes splashWiggle {
+
             0%,
             100% {
                 transform: rotate(-2deg) scale(1);
@@ -996,6 +998,7 @@
         }
 
         @keyframes splashPop {
+
             0%,
             100% {
                 transform: scale(1) rotate(0deg);
@@ -1007,6 +1010,7 @@
         }
 
         @keyframes splashKiss {
+
             0%,
             100% {
                 filter: drop-shadow(0 0 0 rgba(244, 114, 182, 0));
@@ -1018,6 +1022,7 @@
         }
 
         @keyframes splashBeat {
+
             0%,
             100% {
                 transform: translateY(0) scale(0.88);
@@ -1039,6 +1044,7 @@
         }
 
         @keyframes lovePulse {
+
             0%,
             100% {
                 transform: translateY(0) scale(0.9);
@@ -1161,15 +1167,15 @@
 
 <body>
     <script>
-        (function () {
-            try {
-                if (sessionStorage.getItem('dompetkitaSplashSeen') === '1') {
+            (function () {
+                try {
+                    if (sessionStorage.getItem('dompetkitaSplashSeen') === '1') {
+                        document.documentElement.classList.add('splash-seen');
+                    }
+                } catch (error) {
                     document.documentElement.classList.add('splash-seen');
                 }
-            } catch (error) {
-                document.documentElement.classList.add('splash-seen');
-            }
-        })();
+            })();
     </script>
 
     <div id="appSplash" class="app-splash" aria-label="Memuat DompetKita">
@@ -1348,6 +1354,12 @@
                     class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-chart-column"></i> Laporan
                 </a>
+
+                {{-- <a href="{{ route('admin.settings.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 text-slate-700">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Pengaturan Sistem</span>
+                </a> --}}
             </div>
 
             <div class="invite-block">

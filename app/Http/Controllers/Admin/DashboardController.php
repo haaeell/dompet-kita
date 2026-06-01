@@ -116,9 +116,13 @@ class DashboardController extends Controller
 
     private function budgetHealth($monthStart, $monthEnd): array
     {
-        $budgets = CategoryBudget::with('category:id,name,icon')
-            ->whereDate('budget_month', $monthStart->toDateString())
-            ->get();
+        $budgets = CategoryBudget::query()
+            ->whereDate('budget_month', '<=', $monthStart->toDateString())
+            ->latest('budget_month')
+            ->latest('id')
+            ->get()
+            ->unique(fn (CategoryBudget $budget) => $budget->couple_id . ':' . $budget->category_id)
+            ->filter(fn (CategoryBudget $budget) => (float) $budget->amount > 0);
 
         $overBudget = 0;
         $nearLimit = 0;

@@ -22,23 +22,15 @@ class BudgetController extends Controller
         $currentMonthBudgets = CategoryBudget::where('couple_id', $couple->id)
             ->whereDate('budget_month', $budgetMonth->toDateString())
             ->get()
-            ->keyBy('category_id');
+            ->mapWithKeys(fn (CategoryBudget $budget) => [(int) $budget->category_id => $budget]);
 
-        $fallbackBudgets = CategoryBudget::where('couple_id', $couple->id)
-            ->whereDate('budget_month', '<', $budgetMonth->toDateString())
-            ->latest('budget_month')
-            ->latest('id')
-            ->get()
-            ->unique('category_id')
-            ->keyBy('category_id');
-
-        $activeBudgets = $fallbackBudgets->merge($currentMonthBudgets);
+        $effectiveBudgets = CategoryBudget::effectiveForMonth($couple->id, $budgetMonth);
+        $activeBudgets = $effectiveBudgets->filter(fn (CategoryBudget $budget) => (float) $budget->amount > 0);
 
         $spentByCategory = $couple->transactions()
             ->nonTransfer()
             ->where('type', 'expense')
-            ->whereMonth('date', $budgetMonth->month)
-            ->whereYear('date', $budgetMonth->year)
+            ->whereBetween('date', [$budgetMonth->copy()->startOfMonth(), $budgetMonth->copy()->endOfMonth()])
             ->select('category_id', DB::raw('SUM(amount) as total_amount'))
             ->groupBy('category_id')
             ->pluck('total_amount', 'category_id');
@@ -47,28 +39,32 @@ class BudgetController extends Controller
             ->filter(fn($category) => $activeBudgets->has($category->id))
             ->values();
 
-        $budgetMonths = CategoryBudget::where('couple_id', $couple->id)
+        $savedBudgetMonths = CategoryBudget::where('couple_id', $couple->id)
             ->select('budget_month')
             ->distinct()
             ->orderByDesc('budget_month')
             ->pluck('budget_month')
             ->map(fn($month) => Carbon::parse($month)->startOfMonth());
 
-        if (! $budgetMonths->contains(fn($month) => $month->isSameMonth($budgetMonth))) {
-            $budgetMonths->prepend($budgetMonth->copy());
-        }
+        $budgetMonths = collect(range(0, 11))
+            ->map(fn (int $offset) => $budgetMonth->copy()->subMonths($offset)->startOfMonth())
+            ->merge($savedBudgetMonths)
+            ->unique(fn (Carbon $month) => $month->format('Y-m'))
+            ->sortByDesc(fn (Carbon $month) => $month->format('Y-m'))
+            ->values();
 
         $historyMonths = $budgetMonths->take(12)->map(function (Carbon $month) use ($couple) {
-            $monthBudgets = CategoryBudget::where('couple_id', $couple->id)
-                ->whereDate('budget_month', $month->toDateString())
-                ->get();
+            $monthBudgets = CategoryBudget::activeForMonth($couple->id, $month);
+            $budgetedCategoryIds = $monthBudgets->keys()->all();
 
-            $spent = $couple->transactions()
-                ->nonTransfer()
-                ->where('type', 'expense')
-                ->whereMonth('date', $month->month)
-                ->whereYear('date', $month->year)
-                ->sum('amount');
+            $spent = empty($budgetedCategoryIds)
+                ? 0
+                : $couple->transactions()
+                    ->nonTransfer()
+                    ->where('type', 'expense')
+                    ->whereIn('category_id', $budgetedCategoryIds)
+                    ->whereBetween('date', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+                    ->sum('amount');
 
             $total = $monthBudgets->sum('amount');
 
@@ -110,14 +106,17 @@ class BudgetController extends Controller
         $budgetMonth = $this->resolveBudgetMonth($data['budget_month'] ?? null);
 
         if ($amount <= 0) {
-            CategoryBudget::where('couple_id', $couple->id)
-                ->where('category_id', $category->id)
-                ->whereDate('budget_month', $budgetMonth->toDateString())
-                ->delete();
+            CategoryBudget::updateOrCreate([
+                'couple_id' => $couple->id,
+                'category_id' => $category->id,
+                'budget_month' => $budgetMonth->toDateString(),
+            ], [
+                'amount' => 0,
+            ]);
 
             return redirect()
                 ->route('budgets.index', ['month' => $budgetMonth->format('Y-m')])
-                ->with('success', 'Budget kategori dihapus untuk bulan ini.');
+                ->with('success', 'Budget kategori dinonaktifkan mulai bulan ini.');
         }
 
         CategoryBudget::updateOrCreate([

@@ -157,18 +157,13 @@ class DashboardController extends Controller
         }
 
         $currentBudgetMonth = now()->startOfMonth();
-        $budgetRows = CategoryBudget::where('couple_id', $couple->id)
-            ->latest('budget_month')
-            ->latest('id')
-            ->get();
-        $budgetRows = $budgetRows->unique('category_id')->values();
+        $budgetRows = CategoryBudget::activeForMonth($couple->id, $currentBudgetMonth)->values();
 
         if ($budgetRows->isNotEmpty()) {
             $spentForBudget = $couple->transactions()
                 ->nonTransfer()
                 ->where('type', 'expense')
-                ->whereMonth('date', $currentBudgetMonth->month)
-                ->whereYear('date', $currentBudgetMonth->year)
+                ->whereBetween('date', [$currentBudgetMonth->copy()->startOfMonth(), $currentBudgetMonth->copy()->endOfMonth()])
                 ->select('category_id', DB::raw('SUM(amount) as total_amount'))
                 ->groupBy('category_id')
                 ->pluck('total_amount', 'category_id');

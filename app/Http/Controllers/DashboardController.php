@@ -7,8 +7,10 @@ use App\Models\Category;
 use App\Models\Bank;
 use App\Models\Target;
 use App\Models\TargetSaving;
+use App\Models\CategoryBudget;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -121,6 +123,75 @@ class DashboardController extends Controller
                 'amount' => $group->sum('amount'),
             ])->values()->sortByDesc('amount')->take(5);
 
+        $achievementBadges = collect();
+
+        if ($couple->transactions()->exists()) {
+            $achievementBadges->push([
+                'icon' => 'fa-receipt',
+                'title' => 'Mulai Mencatat',
+                'description' => 'Transaksi pertama sudah tercatat.',
+                'color' => '#db2777',
+            ]);
+        }
+
+        if ($coupleMembers->count() >= 2) {
+            $achievementBadges->push([
+                'icon' => 'fa-user-group',
+                'title' => 'Pasangan Kompak',
+                'description' => 'Dua akun sudah terhubung dalam satu dompet.',
+                'color' => '#7c3aed',
+            ]);
+        }
+
+        if ($monthlyIncome > 0 && $monthlyIncome > $monthlyExpense) {
+            $achievementBadges->push([
+                'icon' => 'fa-piggy-bank',
+                'title' => 'Bulan Surplus',
+                'description' => 'Pemasukan bulan ini masih lebih besar dari pengeluaran.',
+                'color' => '#16a34a',
+            ]);
+        }
+
+        $currentBudgetMonth = now()->startOfMonth();
+        $budgetRows = CategoryBudget::where('couple_id', $couple->id)
+            ->latest('budget_month')
+            ->latest('id')
+            ->get();
+        $budgetRows = $budgetRows->unique('category_id')->values();
+
+        if ($budgetRows->isNotEmpty()) {
+            $spentForBudget = $couple->transactions()
+                ->nonTransfer()
+                ->where('type', 'expense')
+                ->whereMonth('date', $currentBudgetMonth->month)
+                ->whereYear('date', $currentBudgetMonth->year)
+                ->select('category_id', DB::raw('SUM(amount) as total_amount'))
+                ->groupBy('category_id')
+                ->pluck('total_amount', 'category_id');
+
+            $safeBudgetCount = $budgetRows->filter(function ($budget) use ($spentForBudget) {
+                return (float) ($spentForBudget[$budget->category_id] ?? 0) <= (float) $budget->amount;
+            })->count();
+
+            $achievementBadges->push([
+                'icon' => $safeBudgetCount === $budgetRows->count() ? 'fa-shield-heart' : 'fa-chart-pie',
+                'title' => $safeBudgetCount === $budgetRows->count() ? 'Budget Aman' : 'Budget Aktif',
+                'description' => $safeBudgetCount === $budgetRows->count()
+                    ? 'Semua kategori berbudget masih dalam batas bulan ini.'
+                    : "{$safeBudgetCount} dari {$budgetRows->count()} budget kategori masih aman.",
+                'color' => $safeBudgetCount === $budgetRows->count() ? '#0891b2' : '#f59e0b',
+            ]);
+        }
+
+        if ($couple->targets()->where('status', 'completed')->exists()) {
+            $achievementBadges->push([
+                'icon' => 'fa-trophy',
+                'title' => 'Target Tercapai',
+                'description' => 'Ada target tabungan yang berhasil diselesaikan.',
+                'color' => '#f59e0b',
+            ]);
+        }
+
         return view('dashboard.index', compact(
             'couple',
             'coupleMembers',
@@ -136,7 +207,8 @@ class DashboardController extends Controller
             'targets',
             'debtReminders',
             'chartData',
-            'expenseByCategory'
+            'expenseByCategory',
+            'achievementBadges'
         ));
     }
 }

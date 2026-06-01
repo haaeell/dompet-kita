@@ -333,6 +333,26 @@
             background: var(--pink-light);
         }
 
+        .invite-link-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .invite-link {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
         .logout-btn {
             display: flex;
             align-items: center;
@@ -1252,7 +1272,7 @@
             <div style="width:1px; height:28px; background:var(--border);"></div>
 
             {{-- Kode Undangan --}}
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;">
+            <div id="tourMobileInvite" style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;">
                 <span
                     style="font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Kode
                     Undangan</span>
@@ -1264,6 +1284,11 @@
                     <button onclick="copyInvite()"
                         style="background:var(--pink-light); border:none; border-radius:6px; padding:3px 7px; cursor:pointer; color:var(--pink-dark); font-size:11px; line-height:1;">
                         <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <button onclick="copyInviteLink()"
+                        style="background:var(--pink-light); border:none; border-radius:6px; padding:3px 7px; cursor:pointer; color:var(--pink-dark); font-size:11px; line-height:1;"
+                        title="Salin link undangan">
+                        <i class="fa-solid fa-link"></i>
                     </button>
                 </div>
             </div>
@@ -1318,11 +1343,11 @@
 
             <div class="nav-section">
                 <div class="nav-label">Menu Utama</div>
-                <a href="{{ route('dashboard') }}"
+                <a href="{{ route('dashboard') }}" id="tourNavDashboard"
                     class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fa-solid fa-house"></i> Dashboard
                 </a>
-                <a href="{{ route('transactions.index') }}"
+                <a href="{{ route('transactions.index') }}" id="tourNavTransactions"
                     class="nav-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> Transaksi
                 </a>
@@ -1334,11 +1359,15 @@
                     class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-tag"></i> Kategori
                 </a>
-                <a href="{{ route('banks.index') }}"
+                <a href="{{ route('budgets.index') }}"
+                    class="nav-link {{ request()->routeIs('budgets.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-chart-pie"></i> Budget
+                </a>
+                <a href="{{ route('banks.index') }}" id="tourNavBanks"
                     class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-building-columns"></i> Rekening
                 </a>
-                <a href="{{ route('targets.index') }}"
+                <a href="{{ route('targets.index') }}" id="tourNavTargets"
                     class="nav-link {{ request()->routeIs('targets.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-bullseye"></i> Target
                 </a>
@@ -1362,12 +1391,18 @@
                 </a> --}}
             </div>
 
-            <div class="invite-block">
+            <div class="invite-block" id="inviteBlock">
                 <div class="invite-label">Kode Undangan</div>
                 <div class="invite-code-row">
                     <span class="invite-code">{{ auth()->user()->couple->invite_code ?? '' }}</span>
                     <button class="copy-btn" onclick="copyInvite()">
                         <i class="fa-regular fa-copy" style="font-size:13px;"></i>
+                    </button>
+                </div>
+                <div class="invite-link-row">
+                    <span class="invite-link">{{ route('register', ['invite' => auth()->user()->couple->invite_code ?? '', 'action' => 'join']) }}</span>
+                    <button class="copy-btn" onclick="copyInviteLink()" title="Salin link undangan">
+                        <i class="fa-solid fa-link" style="font-size:13px;"></i>
                     </button>
                 </div>
             </div>
@@ -1448,6 +1483,18 @@
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
                             class="fa-solid fa-hand-holding-dollar"></i></div>
                     <span class="text-xs font-medium">Hutang</span>
+                </a>
+                <a href="{{ route('categories.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('categories.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-tag"></i></div>
+                    <span class="text-xs font-medium">Kategori</span>
+                </a>
+                <a href="{{ route('budgets.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('budgets.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-chart-pie"></i></div>
+                    <span class="text-xs font-medium">Budget</span>
                 </a>
                 <a href="{{ route('locations.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('locations.*') ? 'text-pink-600 bg-pink-50' : '' }}">
@@ -1827,6 +1874,12 @@
             const code = '{{ auth()->user()->couple->invite_code ?? '' }}';
             navigator.clipboard.writeText(code);
             Toast.fire({ icon: 'success', title: 'Kode disalin!' });
+        }
+
+        function copyInviteLink() {
+            const link = @json(route('register', ['invite' => auth()->user()->couple->invite_code ?? '', 'action' => 'join']));
+            navigator.clipboard.writeText(link);
+            Toast.fire({ icon: 'success', title: 'Link undangan disalin!' });
         }
 
         function formatRupiah(num) {

@@ -396,6 +396,16 @@
                 : 'hidden rounded-3xl bg-white/70 border border-blue-100 p-5';
         }
 
+        document.addEventListener('DOMContentLoaded', function () {
+            const inviteCode = @json($inviteCode ?? '');
+            const inviteMode = @json($inviteMode ?? false);
+
+            if (inviteMode && inviteCode) {
+                setTab('join');
+                document.getElementById('inviteCode').value = inviteCode;
+            }
+        });
+
         function togglePassword(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);

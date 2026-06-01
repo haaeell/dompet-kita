@@ -2,12 +2,95 @@
 @section('title', 'Tambah Transaksi')
 
 @section('content')
-    <div class="flex items-center justify-between gap-3 mb-6 flex-wrap">
+    <style>
+        @media (max-width: 768px) {
+            .transaction-create-head {
+                margin: -6px -4px 14px;
+            }
+
+            .transaction-create-head .page-title {
+                font-size: 26px;
+                line-height: 1.1;
+            }
+
+            .transaction-create-head .btn-ghost {
+                width: auto;
+                padding: 9px 13px;
+                border-radius: 999px;
+            }
+
+            .transaction-create-card {
+                margin: 0 -4px;
+                border: 0;
+                border-radius: 8px;
+                padding: 16px;
+                box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+                padding-bottom: 220px;
+            }
+
+            .transaction-type-switch {
+                position: sticky;
+                top: 72px;
+                z-index: 5;
+                border-radius: 18px;
+                padding: 5px;
+                background: rgba(248, 250, 252, .92);
+                backdrop-filter: blur(12px);
+            }
+
+            .transaction-type-switch button {
+                border-radius: 14px;
+                padding: 12px 10px;
+            }
+
+            .transaction-field {
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                background: #fff;
+                padding: 12px;
+            }
+
+            .transaction-field .label {
+                margin-bottom: 8px;
+                font-size: 11px;
+                letter-spacing: .06em;
+                text-transform: uppercase;
+                color: #94a3b8;
+            }
+
+            .transaction-field .input-field {
+                border: 0;
+                padding: 0;
+                min-height: 34px;
+                background: transparent;
+                box-shadow: none;
+                font-size: 15px;
+            }
+
+            .transaction-field .input-field:focus {
+                box-shadow: none;
+                outline: 0;
+            }
+
+            #amountDisplay {
+                font-size: 24px;
+                line-height: 1.18;
+            }
+
+            #mobile-transaction-actions {
+                box-shadow: 0 -16px 30px rgba(15, 23, 42, .08);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 112px) !important;
+                border-radius: 22px 22px 0 0;
+            }
+        }
+    </style>
+
+    <div class="transaction-create-head flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div>
             <h1 class="page-title">Tambah Transaksi</h1>
             <p class="page-subtitle">Catat pemasukan atau pengeluaran baru</p>
         </div>
-        <a href="{{ route('transactions.index') }}" class="btn-ghost w-full sm:w-auto justify-center">
+        <a href="{{ route('transactions.index') }}" class="btn-ghost sm:w-auto justify-center">
             <i class="fa-solid fa-arrow-left"></i> Kembali
         </a>
     </div>
@@ -28,7 +111,7 @@
         </div>
     @endif
 
-    <div class="card p-6 max-w-3xl pb-40 sm:pb-6">
+    <div class="transaction-create-card card p-6 max-w-3xl pb-40 sm:pb-6">
         <div id="offline-transaction-notice"
             class="hidden mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <div class="font-semibold">Mode offline aktif</div>
@@ -38,7 +121,7 @@
         <form action="{{ route('transactions.store') }}" method="POST" id="transaction-form">
             @csrf
 
-            <div class="flex gap-2 mb-5 p-1.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="transaction-type-switch flex gap-2 mb-5 p-1.5 rounded-xl bg-slate-50 border border-slate-200">
                 <button type="button" id="btnIncome" class="flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all text-slate-600"
                         onclick="setTxType('income')">
                     <i class="fa-solid fa-arrow-up mr-1.5"></i> Pemasukan
@@ -114,7 +197,7 @@
 
     <div id="mobile-transaction-actions"
         class="sm:hidden fixed inset-x-0 z-[1101] border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3"
-        style="bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);">
+        style="bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);">
         <div class="grid grid-cols-2 gap-3 max-w-3xl mx-auto">
             <a href="{{ route('transactions.index') }}" class="btn-ghost w-full justify-center">
                 Batal

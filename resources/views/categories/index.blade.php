@@ -12,6 +12,12 @@
         </button>
     </div>
 
+    @if(session('success'))
+        <div class="mb-5 rounded-3xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">
+            {{ session('success') }}
+        </div>
+    @endif
+
     @php
         $income = $categories->where('type', 'income');
         $expense = $categories->where('type', 'expense');
@@ -150,6 +156,10 @@
             opacity: 1 !important;
         }
 
+        .cat-item {
+            flex-wrap: wrap;
+        }
+
         .category-tabs {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -214,11 +224,37 @@
         }
 
         @media (max-width: 640px) {
+            .page-header {
+                margin: -6px -4px 14px;
+            }
+
+            .page-header .page-title {
+                font-size: 26px;
+                line-height: 1.1;
+            }
+
+            .page-header .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
             .category-tab {
                 padding: 11px 10px;
                 gap: 8px;
                 font-size: 13px;
             }
+
+            .cat-item {
+                align-items: flex-start !important;
+                border-radius: 8px !important;
+                padding: 14px !important;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, .04);
+            }
+
+            .cat-item .cat-del-btn {
+                opacity: 1 !important;
+            }
+
         }
     </style>
 

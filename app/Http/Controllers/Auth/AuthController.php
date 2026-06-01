@@ -37,7 +37,10 @@ class AuthController extends Controller
 
     public function showRegister()
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'inviteCode' => strtoupper((string) request('invite', '')),
+            'inviteMode' => request('action') === 'join' || request()->filled('invite'),
+        ]);
     }
 
     public function register(Request $request)
@@ -91,6 +94,7 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
+        $request->session()->flash('show_onboarding', true);
         return response()->json(['success' => true, 'redirect' => route('dashboard')]);
     }
 

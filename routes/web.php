@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\TargetController;
 use App\Http\Controllers\ReportController;
@@ -48,6 +49,11 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
     });
 
+    Route::prefix('budgets')->name('budgets.')->group(function () {
+        Route::get('/', [BudgetController::class, 'index'])->name('index');
+        Route::post('/', [BudgetController::class, 'update'])->name('update');
+    });
+
     // Bank / Rekening
     Route::prefix('banks')->name('banks.')->group(function () {
         Route::get('/', [BankController::class, 'index'])->name('index');
@@ -65,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [TargetController::class, 'index'])->name('index');
         Route::post('/', [TargetController::class, 'store'])->name('store');
         Route::post('/{target}/saving', [TargetController::class, 'addSaving'])->name('saving');
+        Route::post('/{target}/spend', [TargetController::class, 'spend'])->name('spend');
         Route::delete('/{target}', [TargetController::class, 'destroy'])->name('destroy');
     });
 

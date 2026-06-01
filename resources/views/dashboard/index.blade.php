@@ -14,6 +14,16 @@
             display: none;
         }
 
+        .achievement-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            color: #fff;
+        }
+
         @media (max-width: 768px) {
             .dashboard-desktop-view {
                 display: none;
@@ -389,6 +399,29 @@
                 background: linear-gradient(90deg, var(--pink), var(--pink-dark));
             }
 
+            .mobile-badge-strip {
+                display: flex;
+                gap: 10px;
+                overflow-x: auto;
+                margin: 0 -16px;
+                padding: 0 16px 4px;
+                scroll-snap-type: x mandatory;
+            }
+
+            .mobile-achievement-badge {
+                min-width: 210px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border-radius: 18px;
+                border: 1px solid #f1f5f9;
+                background: #fff;
+                padding: 12px;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, .05);
+                scroll-snap-align: start;
+            }
+
+
             .mobile-tx-item {
                 display: flex;
                 align-items: center;
@@ -565,7 +598,7 @@
             </section>
         @endif
 
-        <section class="mobile-section">
+        <section class="mobile-section" id="tourMobileQuickActions">
             <div class="quick-action-grid">
                 <a href="{{ route('transactions.create') }}" class="quick-action">
                     <i class="fa-solid fa-plus"></i>
@@ -610,6 +643,28 @@
                 </div>
             </div>
         </section>
+
+        @if($achievementBadges->isNotEmpty())
+            <section class="mobile-section">
+                <div class="mobile-section-head">
+                    <h2 class="mobile-section-title">Badge Kamu</h2>
+                    <span class="text-[11px] font-bold text-[var(--text-secondary)]">{{ $achievementBadges->count() }} aktif</span>
+                </div>
+                <div class="mobile-badge-strip">
+                    @foreach($achievementBadges as $badge)
+                        <div class="mobile-achievement-badge">
+                            <div class="achievement-icon" style="background: {{ $badge['color'] }};">
+                                <i class="fa-solid {{ $badge['icon'] }}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-[13px] font-extrabold text-[var(--text-primary)] truncate">{{ $badge['title'] }}</div>
+                                <div class="text-[11px] leading-snug text-[var(--text-secondary)] mt-1">{{ $badge['description'] }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
 
         @if($topTarget)
             <section class="mobile-section">
@@ -673,14 +728,14 @@
 
     <div class="dashboard-desktop-view">
     {{-- Page Header --}}
-    <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4 mb-6" id="tourDashboardHeader">
         <div class="flex-1 min-w-[250px]">
             <h1 class="page-title mb-1">Halo, {{ auth()->user()->name }}! 👋</h1>
             <p class="page-subtitle m-0">{{ now()->isoFormat('dddd, D MMMM Y') }}</p>
         </div>
 
         {{-- Filter Pasangan --}}
-        <form action="{{ url()->current() }}" method="GET" id="filterForm" class="m-0">
+        <form action="{{ url()->current() }}" method="GET" id="filterForm" class="m-0" data-tour="member-filter">
             <select name="user_id" onchange="document.getElementById('filterForm').submit();"
                 class="input-field py-2 px-3 rounded-xl min-w-[160px] cursor-pointer h-auto text-[13px] font-semibold">
                 <option value="">👨‍👩‍ Semua Transaksi</option>
@@ -742,7 +797,7 @@
 
     {{-- Summary Cards --}}
     @php $balance = $monthlyIncome - $monthlyExpense; @endphp
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 mb-7">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 mb-7" id="tourSummaryCards">
 
         <div class="card border-l-4 border-pink-400 p-4">
             <div class="flex items-center justify-between mb-3">
@@ -820,6 +875,31 @@
             </div>
         </div>
     </div>
+
+    @if($achievementBadges->isNotEmpty())
+        <div class="card p-4 mb-7">
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-[var(--text-primary)] m-0">Badge Achievement</h3>
+                    <p class="text-xs text-[var(--text-secondary)] m-0">Pencapaian otomatis dari aktivitas kalian.</p>
+                </div>
+                <span class="rounded-full bg-pink-50 px-3 py-1 text-xs font-bold text-pink-700">{{ $achievementBadges->count() }} badge</span>
+            </div>
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-3">
+                @foreach($achievementBadges as $badge)
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 flex items-start gap-3">
+                        <span class="achievement-icon" style="background: {{ $badge['color'] }};">
+                            <i class="fa-solid {{ $badge['icon'] }}"></i>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block text-sm font-extrabold text-[var(--text-primary)]">{{ $badge['title'] }}</span>
+                            <span class="block text-xs leading-relaxed text-[var(--text-secondary)] mt-1">{{ $badge['description'] }}</span>
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- Mid Row Layout --}}
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 mb-5">
@@ -979,3 +1059,78 @@
     </div>
     </div>
 @endsection
+
+@if(session('show_onboarding'))
+    @push('scripts')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.6/dist/driver.css">
+        <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.6/dist/driver.js.iife.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const driverFactory = window.driver?.js?.driver;
+                if (!driverFactory) return;
+
+                const firstVisible = selectors => selectors
+                    .map(selector => document.querySelector(selector))
+                    .find(element => element && element.offsetParent !== null);
+
+                const rawSteps = [
+                    {
+                        element: firstVisible(['#tourDashboardHeader', '.mobile-home-hero']),
+                        popover: {
+                            title: 'Selamat datang di DompetKita',
+                            description: 'Ini ringkasan keuangan kamu dan pasangan. Dari sini kalian bisa mulai melihat kondisi bulan ini.',
+                        },
+                    },
+                    {
+                        element: firstVisible(['#inviteBlock', '#tourMobileInvite', '#profileInviteLink']),
+                        popover: {
+                            title: 'Undang pasangan',
+                            description: 'Salin link undangan, kirim ke pasangan, lalu kode akan otomatis terisi saat dia daftar.',
+                        },
+                    },
+                    {
+                        element: firstVisible(['#tourSummaryCards', '.mobile-metrics-grid']),
+                        popover: {
+                            title: 'Pantau saldo dan kekayaan',
+                            description: 'Kartu ini membantu melihat pemasukan, pengeluaran, rekening aktif, hutang, dan piutang.',
+                        },
+                    },
+                    {
+                        element: firstVisible(['[data-tour="member-filter"]', '#mobileUserFilter']),
+                        popover: {
+                            title: 'Filter per orang',
+                            description: 'Pakai filter ini untuk melihat semua transaksi pasangan atau hanya data salah satu orang.',
+                        },
+                    },
+                    {
+                        element: firstVisible(['#tourNavTransactions', '#tourMobileQuickActions']),
+                        popover: {
+                            title: 'Catat transaksi pertama',
+                            description: 'Mulai dari transaksi. Setelah rutin dicatat, laporan dan target tabungan jadi lebih bermakna.',
+                        },
+                    },
+                    {
+                        element: firstVisible(['#tourNavBanks', '#tourNavTargets']),
+                        popover: {
+                            title: 'Lengkapi rekening dan target',
+                            description: 'Tambahkan rekening atau e-wallet, lalu buat target nabung berdua agar progresnya terlihat.',
+                        },
+                    },
+                ].filter(step => step.element);
+
+                if (!rawSteps.length) return;
+
+                driverFactory({
+                    showProgress: true,
+                    animate: true,
+                    allowClose: true,
+                    nextBtnText: 'Lanjut',
+                    prevBtnText: 'Kembali',
+                    doneBtnText: 'Selesai',
+                    popoverClass: 'dompetkita-driver-popover',
+                    steps: rawSteps,
+                }).drive();
+            });
+        </script>
+    @endpush
+@endif

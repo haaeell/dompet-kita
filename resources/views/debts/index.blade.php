@@ -2,12 +2,171 @@
 @section('title', 'Hutang & Piutang')
 
 @section('content')
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+    <style>
+        .debt-mobile-list {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .debt-page-head {
+                margin: -6px -4px 16px;
+            }
+
+            .debt-page-head .page-title {
+                font-size: 26px;
+                line-height: 1.1;
+            }
+
+            .debt-filter-bar {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .debt-filter-bar form,
+            .debt-filter-bar select {
+                width: 100%;
+            }
+
+            .debt-type-tabs {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 5px;
+                border-radius: 18px;
+                background: #fff;
+                border: 1px solid #f1f5f9;
+                box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
+            }
+
+            .debt-type-tabs .btn-ghost {
+                width: 100%;
+                justify-content: center;
+                border-radius: 14px;
+                padding: 10px 12px;
+                border: 0;
+                background: transparent;
+            }
+
+            .debt-summary-grid {
+                display: flex;
+                gap: 12px;
+                overflow-x: auto;
+                margin: 0 -16px 18px;
+                padding: 0 16px 4px;
+                scroll-snap-type: x mandatory;
+            }
+
+            .debt-summary-grid > .card {
+                min-width: 78%;
+                scroll-snap-align: start;
+                border-radius: 8px;
+                padding: 16px;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, .05);
+            }
+
+            .debt-summary-grid .text-3xl {
+                font-size: 22px;
+                line-height: 1.16;
+                word-break: break-word;
+            }
+
+            .debt-entry-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .debt-entry-grid > .card {
+                border-radius: 8px;
+                padding: 18px;
+            }
+
+            .debt-entry-grid textarea {
+                min-height: 96px;
+            }
+
+            .debt-desktop-table {
+                display: none;
+            }
+
+            .debt-mobile-list {
+                display: grid;
+                gap: 12px;
+            }
+
+            .debt-list-card {
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                background: #fff;
+                padding: 14px;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, .04);
+            }
+
+            .debt-list-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .debt-amount {
+                font-size: 18px;
+                font-weight: 800;
+                line-height: 1.18;
+            }
+
+            .debt-meta-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 12px;
+            }
+
+            .debt-meta-box {
+                border-radius: 8px;
+                background: #f8fafc;
+                padding: 10px;
+                min-width: 0;
+            }
+
+            .debt-meta-label {
+                font-size: 10px;
+                font-weight: 800;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+            }
+
+            .debt-meta-value {
+                margin-top: 4px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #0f172a;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .debt-mobile-actions {
+                margin-top: 12px;
+                display: grid;
+                gap: 8px;
+            }
+
+            .debt-mobile-actions details {
+                border-radius: 8px;
+            }
+        }
+    </style>
+
+    <div class="debt-page-head flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="page-title mb-1">Hutang & Piutang</h1>
             <p class="page-subtitle m-0">Catat hutang dan piutang, bayar atau tandai kembali dengan mudah.</p>
         </div>
-        <div class="flex flex-wrap gap-2 items-center">
+        <div class="debt-filter-bar flex flex-wrap gap-2 items-center">
             <form action="{{ route('debts.index') }}" method="GET" id="debtFilterForm" class="m-0">
                 <input type="hidden" name="type" value="{{ $type }}">
                 <select name="user_id" onchange="document.getElementById('debtFilterForm').submit();"
@@ -20,14 +179,16 @@
                     @endforeach
                 </select>
             </form>
-            <a href="{{ route('debts.index', ['type' => 'hutang', 'user_id' => $selectedUserId]) }}"
-                class="btn-ghost {{ $type === 'hutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
-                Hutang
-            </a>
-            <a href="{{ route('debts.index', ['type' => 'piutang', 'user_id' => $selectedUserId]) }}"
-                class="btn-ghost {{ $type === 'piutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
-                Piutang
-            </a>
+            <div class="debt-type-tabs">
+                <a href="{{ route('debts.index', ['type' => 'hutang', 'user_id' => $selectedUserId]) }}"
+                    class="btn-ghost {{ $type === 'hutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
+                    Hutang
+                </a>
+                <a href="{{ route('debts.index', ['type' => 'piutang', 'user_id' => $selectedUserId]) }}"
+                    class="btn-ghost {{ $type === 'piutang' ? 'bg-pink-50 border-pink-200 text-pink-700' : '' }}">
+                    Piutang
+                </a>
+            </div>
         </div>
     </div>
 
@@ -42,7 +203,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+    <div class="debt-summary-grid grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         <div class="card p-4">
             <div class="text-[11px] uppercase tracking-[0.18em] text-[var(--text-secondary)] mb-3">Total Kekayaan</div>
             <div class="text-3xl font-bold">Rp {{ number_format($totalWealth, 0, ',', '.') }}</div>
@@ -71,7 +232,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-5 mb-6">
+    <div class="debt-entry-grid grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-5 mb-6">
         <div class="card p-6">
             <h2 class="text-lg font-bold mb-4">Catat {{ $type === 'hutang' ? 'Hutang' : 'Piutang' }} Baru</h2>
             <form action="{{ route('debts.store') }}" method="POST">
@@ -142,7 +303,7 @@
         </div>
     </div>
 
-    <div class="card p-6">
+    <div class="card p-6 debt-desktop-table">
         <h2 class="text-lg font-bold mb-4">Daftar {{ ucfirst($type) }}</h2>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -240,5 +401,92 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <div class="debt-mobile-list">
+        <h2 class="text-base font-extrabold text-slate-900 m-0">Daftar {{ ucfirst($type) }}</h2>
+        @forelse($debts as $debt)
+            <article class="debt-list-card">
+                <div class="debt-list-top">
+                    <div class="min-w-0">
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold {{ $debt->type === 'hutang' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700' }}">
+                            {{ $debt->type === 'hutang' ? 'Hutang' : 'Piutang' }}
+                        </span>
+                        <div class="debt-amount mt-2 {{ $debt->type === 'hutang' ? 'text-rose-600' : 'text-green-700' }}">
+                            Rp {{ number_format($debt->amount, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold {{ $debt->status === 'pending' ? 'bg-yellow-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
+                        {{ ucfirst($debt->status) }}
+                    </span>
+                </div>
+
+                <div class="mt-3">
+                    <div class="text-sm font-extrabold text-slate-900">{{ $debt->counterparty }}</div>
+                    <div class="text-xs text-slate-500 mt-1">{{ $debt->purpose }}</div>
+                    @if($debt->notes)
+                        <div class="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">{{ $debt->notes }}</div>
+                    @endif
+                </div>
+
+                <div class="debt-meta-grid">
+                    <div class="debt-meta-box">
+                        <div class="debt-meta-label">Pemilik</div>
+                        <div class="debt-meta-value">{{ $debt->user->id === auth()->id() ? 'Saya' : $debt->user->name }}</div>
+                    </div>
+                    <div class="debt-meta-box">
+                        <div class="debt-meta-label">Jatuh Tempo</div>
+                        <div class="debt-meta-value">{{ $debt->due_date->isoFormat('D MMM Y') }}</div>
+                    </div>
+                    <div class="debt-meta-box">
+                        <div class="debt-meta-label">Rekening</div>
+                        <div class="debt-meta-value">{{ $debt->bank->name }}</div>
+                    </div>
+                    <div class="debt-meta-box">
+                        <div class="debt-meta-label">Penyelesaian</div>
+                        <div class="debt-meta-value">
+                            {{ $debt->paid_at ? $debt->paid_at->isoFormat('D MMM Y') : 'Belum selesai' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="debt-mobile-actions">
+                    @if($debt->status === 'pending')
+                        <details class="border border-slate-200 p-3 bg-slate-50">
+                            <summary class="cursor-pointer text-sm font-bold text-[var(--pink-dark)]">Bayar / Tandai kembali</summary>
+                            <form action="{{ route('debts.pay', $debt) }}" method="POST" class="mt-3 space-y-3">
+                                @csrf
+                                @method('PUT')
+                                <div>
+                                    <label class="label" for="mobile_settlement_bank_id_{{ $debt->id }}">Rekening Penyelesaian</label>
+                                    <select id="mobile_settlement_bank_id_{{ $debt->id }}" name="settlement_bank_id" class="input-field" required>
+                                        <option value="">Pilih rekening</option>
+                                        @foreach($banks as $bank)
+                                            <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="label" for="mobile_paid_at_{{ $debt->id }}">Tanggal Bayar</label>
+                                    <input type="text" id="mobile_paid_at_{{ $debt->id }}" name="paid_at" class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y" value="{{ now()->toDateString() }}" required>
+                                </div>
+                                <button type="submit" class="btn-primary w-full justify-center">Catat Pembayaran</button>
+                            </form>
+                        </details>
+                        <form action="{{ route('debts.destroy', $debt) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-ghost w-full justify-center text-rose-600">Hapus</button>
+                        </form>
+                    @else
+                        <div class="rounded-lg bg-emerald-50 px-3 py-2 text-center text-xs font-bold text-emerald-700">Selesai</div>
+                    @endif
+                </div>
+            </article>
+        @empty
+            <div class="rounded-lg border border-dashed border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                Belum ada catatan {{ $type }}.
+            </div>
+        @endforelse
     </div>
 @endsection

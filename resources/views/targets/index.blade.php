@@ -1,6 +1,69 @@
 @extends('layouts.app')
 @section('title', 'Target Tabungan')
 @section('content')
+    <style>
+        .target-modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        @media (max-width: 768px) {
+            body.target-modal-open {
+                overflow: hidden;
+            }
+
+            body.target-modal-open .bottom-nav {
+                display: none !important;
+            }
+
+            #modalTarget.modal-overlay.active,
+            #modalSaving.modal-overlay.active,
+            #modalSpend.modal-overlay.active {
+                z-index: 1600;
+                align-items: flex-end;
+                padding: 72px 12px calc(12px + env(safe-area-inset-bottom));
+            }
+
+            #modalTarget .modal-box,
+            #modalSaving .modal-box,
+            #modalSpend .modal-box {
+                width: 100%;
+                max-width: 440px;
+                min-height: 0;
+                max-height: calc(100dvh - 96px);
+                margin: 0 auto;
+                overflow-y: auto;
+                border-radius: 24px;
+                padding: 18px 16px 0;
+                box-shadow: 0 -18px 42px rgba(15, 23, 42, 0.18);
+            }
+
+            #modalTarget .target-modal-actions,
+            #modalSaving .target-modal-actions,
+            #modalSpend .target-modal-actions {
+                position: sticky;
+                bottom: 0;
+                margin: 18px -16px 0;
+                padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+                background: rgba(255, 255, 255, 0.96);
+                border-top: 1px solid #f1f5f9;
+                backdrop-filter: blur(12px);
+                z-index: 2;
+            }
+
+            #modalSaving .modal-box > div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            #modalSpend select.input-field,
+            #modalSaving select.input-field {
+                width: 100%;
+                min-width: 0;
+            }
+        }
+    </style>
+
     <div class="page-header"
         style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
         <div>
@@ -16,6 +79,21 @@
         $active = $targets->where('status', 'active');
         $done = $targets->where('status', 'completed');
     @endphp
+
+    <div class="card p-4 mb-5 border-blue-100 bg-blue-50">
+        <div class="flex items-start gap-3">
+            <div class="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-white text-blue-700">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <div class="min-w-0">
+                <div class="font-extrabold text-slate-900">Cara kerja target tabungan</div>
+                <div class="mt-1 text-sm leading-relaxed text-slate-600">
+                    Target adalah amplop tujuan. <b>Setor ke target</b> berarti memindahkan uang antar rekening, jadi tidak dihitung sebagai pengeluaran konsumtif.
+                    <b>Pakai dana target</b> baru dicatat sebagai pengeluaran asli, misalnya kategori Liburan, Kesehatan, atau Belanja.
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if($targets->isEmpty())
         <div class="card" style="text-align:center; padding:64px 24px;">
@@ -135,7 +213,9 @@
                                         style="display: flex; flex-direction: column; background: #fafafa; padding: 8px; border-radius: 6px; font-size: 11px; border: 1px solid #f1f5f9;">
                                         <div style="display: flex; justify-content: space-between; font-weight: 600; color: #1a1a2e;">
                                             <span>{{ $saving->user->name }}</span>
-                                            <span style="color: #16a34a;">+Rp {{ number_format($saving->amount, 0, ',', '.') }}</span>
+                                            <span style="color: {{ $saving->amount < 0 ? '#e11d48' : '#16a34a' }};">
+                                                {{ $saving->amount < 0 ? '-' : '+' }}Rp {{ number_format(abs($saving->amount), 0, ',', '.') }}
+                                            </span>
                                         </div>
                                         <div
                                             style="display: flex; justify-content: space-between; color: #94a3b8; margin-top: 2px; font-size: 10px;">
@@ -149,11 +229,16 @@
                             </div>
                         </div>
 
-                        {{-- Tombol Tambah Tabungan --}}
-                        <button onclick="openSaving({{ $target->id }}, '{{ addslashes($target->name) }}')" class="btn-primary"
-                            style="width:100%; justify-content:center; padding:11px;">
-                            <i class="fa-solid fa-piggy-bank"></i> Tambah Tabungan
-                        </button>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <button onclick="openSaving({{ $target->id }}, '{{ addslashes($target->name) }}')" class="btn-primary"
+                                style="width:100%; justify-content:center; padding:11px;">
+                                <i class="fa-solid fa-arrow-right-arrow-left"></i> Setor
+                            </button>
+                            <button onclick="openSpend({{ $target->id }}, '{{ addslashes($target->name) }}', {{ (int) $target->current_amount }})" class="btn-ghost"
+                                style="width:100%; justify-content:center; padding:11px;">
+                                <i class="fa-solid fa-wallet"></i> Pakai
+                            </button>
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -175,7 +260,7 @@
 
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px;">
                 @foreach($done as $target)
-                    <div class="card" style="padding:18px; opacity:0.8; display:flex; align-items:center; gap:14px;">
+                    <div class="card" style="padding:18px; opacity:0.9; display:flex; align-items:center; gap:14px;">
                         <div
                             style="width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; background:{{ $target->color }}15; flex-shrink:0;">
                             {{ $target->icon }}
@@ -189,6 +274,12 @@
                                 {{ number_format($target->target_amount, 0, ',', '.') }}
                             </div>
                         </div>
+                        @if($target->current_amount > 0)
+                            <button onclick="openSpend({{ $target->id }}, '{{ addslashes($target->name) }}', {{ (int) $target->current_amount }})"
+                                class="btn-ghost" style="padding:9px 12px; white-space:nowrap;">
+                                Pakai Dana
+                            </button>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -243,7 +334,7 @@
                 </div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:22px;">
+            <div class="target-modal-actions">
                 <button onclick="closeModal('modalTarget')" class="btn-ghost"
                     style="flex:1; justify-content:center;">Batal</button>
                 <button onclick="submitTarget()" class="btn-primary" style="flex:1; justify-content:center;">
@@ -265,6 +356,9 @@
             </div>
             <p id="savingTargetName" style="font-size:13px; color:var(--pink-dark); font-weight:600; margin-bottom:20px;">
             </p>
+            <div style="margin-bottom:16px; padding:12px; border-radius:12px; background:#eff6ff; color:#1d4ed8; font-size:12px; line-height:1.6;">
+                Setor target adalah pindah uang dari rekening harian ke rekening/amplop target. Ini tidak dianggap pengeluaran konsumtif.
+            </div>
             <input type="hidden" id="savingTargetId">
 
             <div style="display:flex; flex-direction:column; gap:16px;">
@@ -311,7 +405,7 @@
                 </div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:22px;">
+            <div class="target-modal-actions">
                 <button onclick="closeModal('modalSaving')" class="btn-ghost"
                     style="flex:1; justify-content:center;">Batal</button>
                 <button onclick="submitSaving()" class="btn-primary" style="flex:1; justify-content:center;">
@@ -321,12 +415,88 @@
         </div>
     </div>
 
+    <div id="modalSpend" class="modal-overlay">
+        <div class="modal-box">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <h2 class="modal-title" style="margin-bottom:0;">Pakai Dana Target</h2>
+                <button onclick="closeModal('modalSpend')"
+                    style="background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:6px; border-radius:8px; font-size:16px; line-height:1;"
+                    onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p id="spendTargetName" style="font-size:13px; color:var(--pink-dark); font-weight:600; margin-bottom:10px;"></p>
+            <div style="margin-bottom:16px; padding:12px; border-radius:12px; background:#fff1f2; color:#be123c; font-size:12px; line-height:1.6;">
+                Pakai dana target berarti uang benar-benar keluar untuk kebutuhan. Ini akan dicatat sebagai pengeluaran asli sesuai kategori yang kamu pilih.
+            </div>
+            <input type="hidden" id="spendTargetId">
+            <input type="hidden" id="spendAvailableAmount">
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div>
+                    <label class="label">Dari Rekening Target</label>
+                    <select id="spendBankId" class="input-field">
+                        <option value="">-- Pilih rekening --</option>
+                        @foreach($banks as $bank)
+                            <option value="{{ $bank->id }}">{{ $bank->name }} ({{ $bank->account_name }}) - Rp {{ number_format($bank->current_balance ?? 0, 0, ',', '.') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Kategori Pengeluaran</label>
+                    <select id="spendCategoryId" class="input-field">
+                        <option value="">-- Pilih kategori --</option>
+                        @foreach($expenseCategories as $category)
+                            <option value="{{ $category->id }}">{{ $category->icon }} {{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Jumlah Dipakai (Rp)</label>
+                    <input type="text" id="spendAmount" placeholder="500.000" class="input-field rupiah"
+                        style="font-size:22px; font-family:'Playfair Display',serif; font-weight:700;">
+                </div>
+                <div>
+                    <label class="label">Deskripsi Pengeluaran</label>
+                    <input type="text" id="spendDescription" placeholder="Bayar tiket / booking hotel..." class="input-field">
+                </div>
+                <div>
+                    <label class="label">Tanggal</label>
+                    <input type="text" id="spendDate" class="input-field js-date-picker" data-format="Y-m-d" data-alt-format="j F Y" value="{{ now()->format('Y-m-d') }}">
+                </div>
+                <div>
+                    <label class="label">Catatan</label>
+                    <input type="text" id="spendNotes" placeholder="Opsional..." class="input-field">
+                </div>
+            </div>
+
+            <div class="target-modal-actions">
+                <button onclick="closeModal('modalSpend')" class="btn-ghost"
+                    style="flex:1; justify-content:center;">Batal</button>
+                <button onclick="submitSpend()" class="btn-primary" style="flex:1; justify-content:center;">
+                    <i class="fa-solid fa-wallet"></i> Pakai Dana
+                </button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
     <script>
-        function openModal(id) { $('#' + id).addClass('active'); }
-        function closeModal(id) { $('#' + id).removeClass('active'); }
+        function syncTargetModalState() {
+            document.body.classList.toggle('target-modal-open', $('.modal-overlay.active').length > 0);
+        }
+
+        function openModal(id) {
+            $('#' + id).addClass('active');
+            syncTargetModalState();
+        }
+
+        function closeModal(id) {
+            $('#' + id).removeClass('active');
+            syncTargetModalState();
+        }
 
         $('.modal-overlay').on('click', function (e) {
             if ($(e.target).hasClass('modal-overlay')) closeModal($(e.target).attr('id'));
@@ -377,6 +547,14 @@
             openModal('modalSaving');
         }
 
+        function openSpend(id, name, availableAmount) {
+            $('#spendTargetId').val(id);
+            $('#spendAvailableAmount').val(availableAmount);
+            $('#spendTargetName').text('Target: ' + name + ' - tersedia Rp ' + new Intl.NumberFormat('id-ID').format(availableAmount));
+            $('#spendDescription').val('Pakai dana target ' + name);
+            openModal('modalSpend');
+        }
+
         async function submitSaving() {
             const id = $('#savingTargetId').val();
             const data = {
@@ -417,6 +595,54 @@
                     Toast.fire({ icon: 'success', title: res.message });
                     setTimeout(() => location.reload(), 1200);
                 }
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#db2777' });
+            }
+        }
+
+        async function submitSpend() {
+            const id = $('#spendTargetId').val();
+            const amountRaw = $('#spendAmount').val();
+            const amount = Number(String(amountRaw).replace(/\./g, '').replace(/,/g, ''));
+            const available = Number($('#spendAvailableAmount').val() || 0);
+            const data = {
+                bank_id: $('#spendBankId').val(),
+                category_id: $('#spendCategoryId').val(),
+                amount: amountRaw,
+                description: $('#spendDescription').val(),
+                date: $('#spendDate').val(),
+                notes: $('#spendNotes').val(),
+            };
+
+            if (!data.bank_id || !data.category_id) {
+                Toast.fire({ icon: 'warning', title: 'Pilih rekening dan kategori pengeluaran.' });
+                return;
+            }
+            if (!amount || amount <= 0) {
+                Toast.fire({ icon: 'warning', title: 'Masukkan jumlah dana yang dipakai.' });
+                return;
+            }
+            if (amount > available) {
+                Toast.fire({ icon: 'warning', title: 'Jumlah melebihi dana target yang tersedia.' });
+                return;
+            }
+            if (!data.description) {
+                Toast.fire({ icon: 'warning', title: 'Deskripsi pengeluaran wajib diisi.' });
+                return;
+            }
+
+            const res = await $.ajax({
+                url: `/targets/${id}/spend`,
+                method: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name=csrf-token]').attr('content'), 'Accept': 'application/json' },
+                data: JSON.stringify(data)
+            });
+
+            if (res.success) {
+                closeModal('modalSpend');
+                Toast.fire({ icon: 'success', title: res.message });
+                setTimeout(() => location.reload(), 1200);
             } else {
                 Swal.fire({ icon: 'error', title: 'Error', text: res.message, confirmButtonColor: '#db2777' });
             }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Target;
 use App\Models\TargetSaving;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +24,13 @@ class TargetController extends Controller
             ->get();
 
         $banks = $couple->banks;
+        $expenseCategories = $couple->categories()
+            ->where('type', 'expense')
+            ->where('name', '!=', Transaction::TRANSFER_CATEGORY)
+            ->orderBy('name')
+            ->get();
 
-        return view('targets.index', compact('targets', 'banks'));
+        return view('targets.index', compact('targets', 'banks', 'expenseCategories'));
     }
 
     public function store(Request $request)
@@ -46,21 +52,28 @@ class TargetController extends Controller
             'icon',
             'target_amount',
             'deadline',
-            'color'
+            'color',
         ]));
 
-        return response()->json(['success' => true, 'message' => 'Target berhasil dibuat! Semangat menabung! 💪', 'target' => $target]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Target berhasil dibuat. Anggap target ini seperti amplop tujuan.',
+            'target' => $target,
+        ]);
     }
 
     public function destroy(Target $target)
     {
         $this->authorize('delete', $target);
         $target->update(['status' => 'cancelled']);
+
         return response()->json(['success' => true, 'message' => 'Target dibatalkan.']);
     }
 
     public function addSaving(Request $request, Target $target)
     {
+        abort_unless($target->couple_id === Auth::user()->couple_id, 403);
+
         $request->merge([
             'amount' => str_replace(['.', ','], '', $request->amount),
         ]);
@@ -84,13 +97,11 @@ class TargetController extends Controller
             $targetBank = $couple->banks()->findOrFail($request->target_bank_id);
 
             if ($sourceBank->current_balance < $request->amount) {
-                return response()->json(['success' => false, 'message' => 'Saldo rekening asal tidak mencukupi!'], 422);
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Saldo rekening asal tidak mencukupi.'], 422);
             }
 
-            $sourceBank->decrement('current_balance', $request->amount);
-            $targetBank->increment('current_balance', $request->amount);
-
-            $saving = TargetSaving::create([
+            TargetSaving::create([
                 'target_id' => $target->id,
                 'user_id' => Auth::id(),
                 'amount' => $request->amount,
@@ -104,7 +115,8 @@ class TargetController extends Controller
                 'category_id' => $this->getOrCreateSavingCategory($couple, 'expense'),
                 'type' => 'expense',
                 'amount' => $request->amount,
-                'description' => "Pindah dana ke " . $targetBank->name . " untuk target: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
+                'description' => 'Setor target ' . $target->name . ' ke ' . $targetBank->name,
+                'notes' => $request->notes,
                 'date' => $request->date,
             ]);
 
@@ -114,41 +126,125 @@ class TargetController extends Controller
                 'category_id' => $this->getOrCreateSavingCategory($couple, 'income'),
                 'type' => 'income',
                 'amount' => $request->amount,
-                'description' => "Terima dana dari " . $sourceBank->name . " untuk target: " . $target->name . ($request->notes ? " (" . $request->notes . ")" : ""),
+                'description' => 'Dana target ' . $target->name . ' dari ' . $sourceBank->name,
+                'notes' => $request->notes,
                 'date' => $request->date,
             ]);
-
-            DB::commit();
 
             $target->refresh();
 
             if ($target->current_amount >= $target->target_amount) {
                 $target->update(['status' => 'completed']);
+                DB::commit();
+
                 return response()->json([
                     'success' => true,
-                    'message' => '🎉 Selamat! Target berhasil tercapai!',
+                    'message' => 'Selamat, target tercapai. Setoran ini hanya pindah uang antar rekening.',
                     'completed' => true,
                     'target' => $target,
                 ]);
             }
 
-            return response()->json(['success' => true, 'message' => 'Dana berhasil dipindahkan antar rekening dan tabungan target diperbarui!', 'target' => $target]);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Setoran target berhasil. Ini hanya pindah uang antar rekening, bukan pengeluaran konsumtif.',
+                'target' => $target,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Gagal memproses transfer tabungan: ' . $e->getMessage()], 500);
+
+            return response()->json(['success' => false, 'message' => 'Gagal memproses setoran target: ' . $e->getMessage()], 500);
         }
     }
-    private function getOrCreateSavingCategory($couple, $type)
+
+    public function spend(Request $request, Target $target)
     {
-        $category = $couple->categories()->where('name', 'Tabungan')->where('type', $type)->first();
-        if (!$category) {
+        abort_unless($target->couple_id === Auth::user()->couple_id, 403);
+
+        $request->merge([
+            'amount' => str_replace(['.', ','], '', $request->amount),
+        ]);
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'bank_id' => 'required|exists:banks,id',
+            'category_id' => 'required|exists:categories,id',
+            'description' => 'required|string|max:255',
+            'date' => 'required|date',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $couple = Auth::user()->couple;
+        $amount = (float) $request->amount;
+
+        if ($amount > $target->current_amount) {
+            return response()->json(['success' => false, 'message' => 'Dana target belum cukup untuk dipakai sebesar itu.'], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $bank = $couple->banks()->findOrFail($request->bank_id);
+            $category = $couple->categories()
+                ->where('type', 'expense')
+                ->findOrFail($request->category_id);
+
+            if ($bank->current_balance < $amount) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Saldo rekening target tidak mencukupi.'], 422);
+            }
+
+            TargetSaving::create([
+                'target_id' => $target->id,
+                'user_id' => Auth::id(),
+                'amount' => -$amount,
+                'notes' => 'Pakai dana: ' . ($request->notes ?: $request->description),
+                'date' => $request->date,
+            ]);
+
+            $couple->transactions()->create([
+                'user_id' => Auth::id(),
+                'bank_id' => $bank->id,
+                'category_id' => $category->id,
+                'type' => 'expense',
+                'amount' => $amount,
+                'description' => $request->description,
+                'notes' => trim('Pakai dana target ' . $target->name . ($request->notes ? ' - ' . $request->notes : '')),
+                'date' => $request->date,
+            ]);
+
+            $target->refresh();
+            if ($target->current_amount < $target->target_amount && $target->status === 'completed') {
+                $target->update(['status' => 'active']);
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Dana target berhasil dipakai dan dicatat sebagai pengeluaran asli.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json(['success' => false, 'message' => 'Gagal memakai dana target: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function getOrCreateSavingCategory($couple, string $type): int
+    {
+        $category = $couple->categories()
+            ->where('name', Transaction::TRANSFER_CATEGORY)
+            ->where('type', $type)
+            ->first();
+
+        if (! $category) {
             $category = $couple->categories()->create([
-                'name' => 'Tabungan',
-                'icon' => '🐷',
-                'color' => $type == 'expense' ? '#db2777' : '#10b981',
-                'type' => $type
+                'name' => Transaction::TRANSFER_CATEGORY,
+                'icon' => '🔁',
+                'color' => '#3b82f6',
+                'type' => $type,
             ]);
         }
+
         return $category->id;
     }
 }

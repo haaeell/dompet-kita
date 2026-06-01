@@ -7,9 +7,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <meta name="description" content="Masuk ke DompetKita untuk mengelola keuangan bersama dengan lebih rapi.">
+    <title>Masuk - DompetKita</title>
+
+    <meta name="title" content="Masuk - DompetKita">
+    <meta name="description"
+        content="Masuk ke DompetKita untuk mengelola keuangan bersama, mencatat pemasukan dan pengeluaran, memantau target, hutang piutang, serta laporan keuangan dalam satu aplikasi modern.">
+    <meta name="keywords"
+        content="DompetKita, aplikasi keuangan, keuangan pasangan, pencatatan keuangan, pengeluaran, pemasukan, target keuangan, laporan keuangan">
+    <meta name="author" content="DompetKita">
+    <meta name="application-name" content="DompetKita">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#db2777">
+    <meta name="color-scheme" content="light">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('logo.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('logo.png') }}">
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('logo.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('logo.png') }}">
+    <link rel="shortcut icon" href="{{ asset('logo.png') }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="id_ID">
+    <meta property="og:site_name" content="DompetKita">
+    <meta property="og:title" content="Masuk - DompetKita">
+    <meta property="og:description"
+        content="Kelola keuangan bersama dengan lebih rapi, transparan, dan modern melalui DompetKita.">
+    <meta property="og:image" content="{{ asset('logo.png') }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Logo DompetKita">
+    <meta property="og:url" content="{{ url()->current() }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Masuk - DompetKita">
+    <meta name="twitter:description"
+        content="Kelola transaksi, target, hutang piutang, dan laporan keuangan bersama dalam satu dashboard.">
+    <meta name="twitter:image" content="{{ asset('logo.png') }}">
+    <meta name="twitter:image:alt" content="Logo DompetKita">
+
+    <!-- Mobile App -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DompetKita">
+
+    <!-- Microsoft -->
+    <meta name="msapplication-TileColor" content="#db2777">
+    <meta name="msapplication-TileImage" content="{{ asset('logo.png') }}">
 
     <title>Masuk - DompetKita</title>
 

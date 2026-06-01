@@ -164,7 +164,8 @@
                 </div>
 
                 <div class="rounded-3xl bg-white border border-pink-100 p-4" id="profileInviteLink">
-                    <div class="text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)] mb-2">Link Undangan Pasangan</div>
+                    <div class="text-[11px] uppercase tracking-[0.16em] text-[var(--text-secondary)] mb-2">Link Undangan
+                        Pasangan</div>
                     <div class="flex items-center gap-2">
                         <input type="text" class="input-field flex-1 min-w-0" readonly
                             value="{{ route('register', ['invite' => $user->couple->invite_code ?? '', 'action' => 'join']) }}">
@@ -172,14 +173,11 @@
                             <i class="fa-solid fa-link"></i> Salin
                         </button>
                     </div>
-                    <p class="text-xs text-[var(--text-secondary)] mt-2">Kirim link ini ke pasanganmu agar kode undangan terisi otomatis.</p>
+                    <p class="text-xs text-[var(--text-secondary)] mt-2">Kirim link ini ke pasanganmu agar kode undangan
+                        terisi otomatis.</p>
                 </div>
 
-                <div class="rounded-3xl bg-pink-50 border border-pink-100 p-4">
-                    <div class="text-sm font-semibold text-[var(--pink-dark)] mb-2">Tentang</div>
-                    <p class="text-sm text-[var(--text-secondary)] leading-relaxed">Ubah nama, email, avatar, dan password
-                        akun pasanganmu di halaman ini dengan mudah.</p>
-                </div>
+
             </div>
         </div>
 

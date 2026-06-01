@@ -1384,11 +1384,12 @@
                     <i class="fa-solid fa-chart-column"></i> Laporan
                 </a>
 
-                {{-- <a href="{{ route('admin.settings.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 text-slate-700">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Pengaturan Sistem</span>
-                </a> --}}
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-shield-heart"></i> Admin Panel
+                    </a>
+                @endif
             </div>
 
             <div class="invite-block" id="inviteBlock">

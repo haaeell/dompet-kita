@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TransactionController;
@@ -111,6 +112,9 @@ Route::middleware(['auth'])->group(function () {
         ->prefix('admin')
         ->name('admin.')
         ->group(function () {
+            Route::get('/', [AdminDashboardController::class, 'index'])
+                ->name('dashboard');
+
             Route::get('/settings', [SettingController::class, 'index'])
                 ->name('settings.index');
 

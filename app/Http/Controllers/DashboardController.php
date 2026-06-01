@@ -17,6 +17,10 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        if (Auth::user()->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         $couple = Auth::user()->couple;
         $month = now()->month;
         $year = now()->year;

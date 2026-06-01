@@ -29,7 +29,11 @@ class AuthController extends Controller
 
         if (Auth::attempt($request->only('email', 'password'), $request->filled('remember'))) {
             $request->session()->regenerate();
-            return response()->json(['success' => true, 'redirect' => route('dashboard')]);
+            $redirect = Auth::user()->role === 'admin'
+                ? route('admin.dashboard')
+                : route('dashboard');
+
+            return response()->json(['success' => true, 'redirect' => $redirect]);
         }
 
         return response()->json(['success' => false, 'message' => 'Email atau password salah!'], 422);

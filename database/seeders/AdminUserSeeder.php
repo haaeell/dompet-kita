@@ -15,9 +15,11 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Administrator',
                 'password' => Hash::make('password'),
+                'role' => 'admin',
+                'couple_id' => null,
             ]
         );
 
-        $this->command->info('Admin user berhasil dibuat: admin@sekolah.com / admin123');
+        $this->command->info('Admin user berhasil dibuat: admin@gmail.com / password');
     }
 }

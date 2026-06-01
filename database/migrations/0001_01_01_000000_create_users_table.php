@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('avatar')->nullable(); // Emoji avatar user
-            $table->enum('role', ['owner', 'partner'])->default('partner');
+            $table->string('role', 20)->default('partner');
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

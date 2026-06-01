@@ -11,7 +11,7 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $couple = Auth::user()->couple;
-        $query = $couple->transactions()->with(['user', 'category', 'bank']);
+        $query = $couple->transactions()->visibleTo(Auth::user())->with(['user', 'category', 'bank']);
 
         if ($request->type) $query->where('type', $request->type);
         if ($request->category_id) $query->where('category_id', $request->category_id);
@@ -57,6 +57,7 @@ class TransactionController extends Controller
             'date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'client_uuid' => 'nullable|string|max:80',
+            'is_private' => 'nullable|boolean',
         ]);
 
         $couple = Auth::user()->couple;
@@ -93,6 +94,7 @@ class TransactionController extends Controller
             'notes' => $request->notes,
             'date' => $request->date,
             'client_uuid' => $request->client_uuid,
+            'is_private' => $request->boolean('is_private'),
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -118,6 +120,7 @@ class TransactionController extends Controller
             'bank_id' => 'required|exists:banks,id',
             'date' => 'required|date',
             'notes' => 'nullable|string|max:500',
+            'is_private' => 'nullable|boolean',
         ]);
 
         $couple = Auth::user()->couple;
@@ -133,6 +136,7 @@ class TransactionController extends Controller
             'bank_id' => $bank->id,
             'date' => $request->date,
             'notes' => $request->notes,
+            'is_private' => $request->boolean('is_private'),
         ]);
 
         return response()->json(['success' => true, 'message' => 'Transaksi berhasil diperbarui!']);

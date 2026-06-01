@@ -12,6 +12,9 @@ class Debt extends Model
         'user_id',
         'type',
         'amount',
+        'installment_count',
+        'installment_amount',
+        'paid_amount',
         'counterparty',
         'purpose',
         'due_date',
@@ -19,15 +22,34 @@ class Debt extends Model
         'settlement_bank_id',
         'status',
         'paid_at',
+        'last_payment_at',
         'notes',
         'initial_transaction_id',
     ];
 
     protected $casts = [
         'amount' => 'float',
+        'installment_amount' => 'float',
+        'paid_amount' => 'float',
         'due_date' => 'date',
         'paid_at' => 'date',
+        'last_payment_at' => 'date',
     ];
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return max(0, (float) $this->amount - (float) $this->paid_amount);
+    }
+
+    public function getInstallmentProgressAttribute(): string
+    {
+        $installmentAmount = (float) ($this->installment_amount ?: $this->amount);
+        $paidInstallments = $installmentAmount > 0
+            ? min((int) $this->installment_count, (int) floor(((float) $this->paid_amount + 0.01) / $installmentAmount))
+            : 0;
+
+        return $paidInstallments . '/' . max(1, (int) $this->installment_count);
+    }
 
     public function couple(): BelongsTo
     {

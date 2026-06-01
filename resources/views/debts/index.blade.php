@@ -244,6 +244,19 @@
                         <input type="text" id="amount" name="amount" value="{{ old('amount') }}" class="input-field rupiah"
                             placeholder="1.250.000" required>
                     </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="label" for="installment_count">Jumlah Cicilan</label>
+                            <input type="number" id="installment_count" name="installment_count"
+                                value="{{ old('installment_count', 1) }}" min="1" max="120" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label" for="installment_amount">Nominal per Cicilan</label>
+                            <input type="text" id="installment_amount" name="installment_amount"
+                                value="{{ old('installment_amount') }}" class="input-field rupiah"
+                                placeholder="Otomatis">
+                        </div>
+                    </div>
                     <div>
                         <label class="label" for="counterparty">{{ $type === 'hutang' ? 'Dari' : 'Ke' }}</label>
                         <input type="text" id="counterparty" name="counterparty" value="{{ old('counterparty') }}"
@@ -328,6 +341,9 @@
                                 <div class="mt-2 text-sm font-bold {{ $debt->type === 'hutang' ? 'text-rose-600' : 'text-green-700' }}">
                                     Rp {{ number_format($debt->amount, 0, ',', '.') }}
                                 </div>
+                                <div class="mt-1 text-xs text-[var(--text-secondary)]">
+                                    Cicilan {{ $debt->installment_progress }} • Sisa Rp {{ number_format($debt->remaining_amount, 0, ',', '.') }}
+                                </div>
                             </td>
                             <td class="px-4 py-4 align-top">
                                 <div class="font-semibold">{{ $debt->user->name }}</div>
@@ -348,6 +364,9 @@
                             </td>
                             <td class="px-4 py-4 align-top">
                                 <div>{{ $debt->due_date->isoFormat('D MMM Y') }}</div>
+                                @if($debt->last_payment_at && ! $debt->paid_at)
+                                    <div class="text-xs text-[var(--text-secondary)]">Bayar terakhir: {{ $debt->last_payment_at->isoFormat('D MMM Y') }}</div>
+                                @endif
                                 @if($debt->paid_at)
                                     <div class="text-xs text-[var(--text-secondary)]">Lunas: {{ $debt->paid_at->isoFormat('D MMM Y') }}</div>
                                 @endif
@@ -375,6 +394,13 @@
                                                         <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_name }}</option>
                                                     @endforeach
                                                 </select>
+                                            </div>
+                                            <div>
+                                                <label class="label" for="payment_amount_{{ $debt->id }}">Jumlah Dibayar</label>
+                                                <input type="text" id="payment_amount_{{ $debt->id }}" name="payment_amount"
+                                                    class="input-field rupiah"
+                                                    value="{{ (int) min($debt->remaining_amount, $debt->installment_amount ?: $debt->remaining_amount) }}"
+                                                    required>
                                             </div>
                                             <div>
                                                 <label class="label" for="paid_at_{{ $debt->id }}">Tanggal Bayar</label>
@@ -415,6 +441,9 @@
                         <div class="debt-amount mt-2 {{ $debt->type === 'hutang' ? 'text-rose-600' : 'text-green-700' }}">
                             Rp {{ number_format($debt->amount, 0, ',', '.') }}
                         </div>
+                        <div class="mt-1 text-xs font-semibold text-slate-500">
+                            Cicilan {{ $debt->installment_progress }} • Sisa Rp {{ number_format($debt->remaining_amount, 0, ',', '.') }}
+                        </div>
                     </div>
                     <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold {{ $debt->status === 'pending' ? 'bg-yellow-50 text-amber-700' : 'bg-emerald-50 text-emerald-700' }}">
                         {{ ucfirst($debt->status) }}
@@ -445,7 +474,7 @@
                     <div class="debt-meta-box">
                         <div class="debt-meta-label">Penyelesaian</div>
                         <div class="debt-meta-value">
-                            {{ $debt->paid_at ? $debt->paid_at->isoFormat('D MMM Y') : 'Belum selesai' }}
+                            {{ $debt->paid_at ? 'Lunas ' . $debt->paid_at->isoFormat('D MMM Y') : ($debt->last_payment_at ? 'Terakhir ' . $debt->last_payment_at->isoFormat('D MMM Y') : 'Belum selesai') }}
                         </div>
                     </div>
                 </div>
@@ -465,6 +494,13 @@
                                             <option value="{{ $bank->id }}">{{ $bank->name }} - {{ $bank->account_name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div>
+                                    <label class="label" for="mobile_payment_amount_{{ $debt->id }}">Jumlah Dibayar</label>
+                                    <input type="text" id="mobile_payment_amount_{{ $debt->id }}" name="payment_amount"
+                                        class="input-field rupiah"
+                                        value="{{ (int) min($debt->remaining_amount, $debt->installment_amount ?: $debt->remaining_amount) }}"
+                                        required>
                                 </div>
                                 <div>
                                     <label class="label" for="mobile_paid_at_{{ $debt->id }}">Tanggal Bayar</label>

@@ -35,6 +35,11 @@ class User extends Authenticatable
         return $this->hasMany(ChatMessage::class);
     }
 
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
     public function getProfilePhotoUrlAttribute(): ?string
     {
         return $this->profile_photo ? asset('uploads/profiles/' . $this->profile_photo) : null;

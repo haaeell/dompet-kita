@@ -8,6 +8,8 @@ use App\Models\Bank;
 use App\Models\Target;
 use App\Models\TargetSaving;
 use App\Models\CategoryBudget;
+use App\Models\BillReminder;
+use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +32,9 @@ class DashboardController extends Controller
         $selectedUserId = $request->get('user_id');
         $selectedUser = $selectedUserId ? $couple->users()->find($selectedUserId) : null;
 
-        $transactionQuery = $couple->transactions();
-        $incomeQuery = $couple->transactions()->nonTransfer()->where('type', 'income');
-        $expenseQuery = $couple->transactions()->nonTransfer()->where('type', 'expense');
+        $transactionQuery = $couple->transactions()->visibleTo(Auth::user());
+        $incomeQuery = $couple->transactions()->visibleTo(Auth::user())->nonTransfer()->where('type', 'income');
+        $expenseQuery = $couple->transactions()->visibleTo(Auth::user())->nonTransfer()->where('type', 'expense');
 
         if ($selectedUser) {
             $transactionQuery->where('user_id', $selectedUserId);
@@ -64,14 +66,20 @@ class DashboardController extends Controller
 
         $banks = $banksQuery->get();
         $totalWealth = $banks->sum('current_balance');
+        $assetsQuery = $couple->assets()->where('is_active', true);
+        if ($selectedUser) {
+            $assetsQuery->where('user_id', $selectedUser->id);
+        }
+        $totalAssets = (float) $assetsQuery->sum('current_value');
         $debtQuery = $couple->debts();
         if ($selectedUser) {
             $debtQuery->where('user_id', $selectedUserId);
         }
 
-        $outstandingHutang = (clone $debtQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = (clone $debtQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $outstandingHutang = (clone $debtQuery)->where('type', 'hutang')->where('status', 'pending')->sum(DB::raw('amount - paid_amount'));
+        $outstandingPiutang = (clone $debtQuery)->where('type', 'piutang')->where('status', 'pending')->sum(DB::raw('amount - paid_amount'));
         $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
+        $netWorth = $totalWealth + $totalAssets + $outstandingPiutang - $outstandingHutang;
         $targets = $couple->targets()->where('status', 'active')->latest()->take(3)->get();
 
         $debtReminderQuery = $couple->debts()
@@ -88,12 +96,20 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
+        $billReminders = $couple->billReminders()
+            ->with(['user', 'bank', 'category'])
+            ->where('is_paid', false)
+            ->whereDate('due_date', '<=', now()->addDays(7)->toDateString())
+            ->orderBy('due_date')
+            ->take(6)
+            ->get();
+
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
 
-            $dayIncome = $couple->transactions()->nonTransfer()->where('type', 'income')->whereDate('date', $date->toDateString());
-            $dayExpense = $couple->transactions()->nonTransfer()->where('type', 'expense')->whereDate('date', $date->toDateString());
+            $dayIncome = $couple->transactions()->visibleTo(Auth::user())->nonTransfer()->where('type', 'income')->whereDate('date', $date->toDateString());
+            $dayExpense = $couple->transactions()->visibleTo(Auth::user())->nonTransfer()->where('type', 'expense')->whereDate('date', $date->toDateString());
 
             if ($selectedUserId) {
                 $dayIncome->where('user_id', $selectedUserId);
@@ -108,6 +124,7 @@ class DashboardController extends Controller
         }
 
         $expenseByCategoryQuery = $couple->transactions()
+            ->visibleTo(Auth::user())
             ->nonTransfer()
             ->where('type', 'expense')
             ->whereMonth('date', $month)->whereYear('date', $year);
@@ -158,18 +175,32 @@ class DashboardController extends Controller
 
         $currentBudgetMonth = now()->startOfMonth();
         $budgetRows = CategoryBudget::activeForMonth($couple->id, $currentBudgetMonth)->values();
+        $budgetNotifications = collect();
 
         if ($budgetRows->isNotEmpty()) {
-            $spentForBudget = $couple->transactions()
-                ->nonTransfer()
-                ->where('type', 'expense')
-                ->whereBetween('date', [$currentBudgetMonth->copy()->startOfMonth(), $currentBudgetMonth->copy()->endOfMonth()])
-                ->select('category_id', DB::raw('SUM(amount) as total_amount'))
-                ->groupBy('category_id')
-                ->pluck('total_amount', 'category_id');
+            $safeBudgetCount = $budgetRows->filter(function ($budget) use ($couple, $currentBudgetMonth, $budgetNotifications) {
+                $spent = $couple->transactions()
+                    ->visibleTo(Auth::user())
+                    ->nonTransfer()
+                    ->where('type', 'expense')
+                    ->where('category_id', $budget->category_id)
+                    ->when($budget->user_id, fn ($query) => $query->where('user_id', $budget->user_id))
+                    ->when($budget->bank_id, fn ($query) => $query->where('bank_id', $budget->bank_id))
+                    ->whereBetween('date', [$currentBudgetMonth->copy()->startOfMonth(), $currentBudgetMonth->copy()->endOfMonth()])
+                    ->sum('amount');
+                $ratio = $budget->amount > 0 ? $spent / $budget->amount : 0;
 
-            $safeBudgetCount = $budgetRows->filter(function ($budget) use ($spentForBudget) {
-                return (float) ($spentForBudget[$budget->category_id] ?? 0) <= (float) $budget->amount;
+                if ($ratio >= .8) {
+                    $budgetNotifications->push([
+                        'title' => $budget->category?->name ?? 'Budget',
+                        'spent' => $spent,
+                        'amount' => $budget->amount,
+                        'percent' => min(999, round($ratio * 100)),
+                        'status' => $ratio >= 1 ? 'Lewat batas' : 'Hampir habis',
+                    ]);
+                }
+
+                return (float) $spent <= (float) $budget->amount;
             })->count();
 
             $achievementBadges->push([
@@ -179,6 +210,49 @@ class DashboardController extends Controller
                     ? 'Semua kategori berbudget masih dalam batas bulan ini.'
                     : "{$safeBudgetCount} dari {$budgetRows->count()} budget kategori masih aman.",
                 'color' => $safeBudgetCount === $budgetRows->count() ? '#0891b2' : '#f59e0b',
+            ]);
+        }
+
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+        $weeklyTransactions = $couple->transactions()
+            ->visibleTo(Auth::user())
+            ->nonTransfer()
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->with(['category', 'user'])
+            ->get();
+        $weeklyExpense = $weeklyTransactions->where('type', 'expense')->sum('amount');
+        $weeklyIncome = $weeklyTransactions->where('type', 'income')->sum('amount');
+        $weeklyTopCategory = $weeklyTransactions->where('type', 'expense')->groupBy('category_id')
+            ->map(fn ($rows) => [
+                'name' => $rows->first()->category?->name ?? 'Lainnya',
+                'amount' => $rows->sum('amount'),
+            ])
+            ->sortByDesc('amount')
+            ->first();
+        $weeklyRecap = [
+            'income' => $weeklyIncome,
+            'expense' => $weeklyExpense,
+            'transaction_count' => $weeklyTransactions->count(),
+            'top_category' => $weeklyTopCategory,
+        ];
+
+        $goalRecommendations = collect();
+        foreach ($couple->targets()->where('status', 'active')->get() as $target) {
+            if ($target->deadline && $target->remaining > 0) {
+                $monthsLeft = max(1, now()->diffInMonths($target->deadline, false) + 1);
+                $goalRecommendations->push([
+                    'title' => $target->name,
+                    'description' => 'Agar tercapai pada ' . $target->deadline->isoFormat('MMMM Y') . ', sisihkan sekitar Rp ' . number_format($target->remaining / $monthsLeft, 0, ',', '.') . ' per bulan.',
+                ]);
+            }
+        }
+
+        if ($expenseByCategory->isNotEmpty()) {
+            $topExpense = $expenseByCategory->first();
+            $goalRecommendations->push([
+                'title' => 'Pola pengeluaran',
+                'description' => 'Kategori terbesar bulan ini: ' . $topExpense['name'] . ' sebesar Rp ' . number_format($topExpense['amount'], 0, ',', '.') . '. Cek apakah perlu dibuat budget khusus.',
             ]);
         }
 
@@ -200,14 +274,20 @@ class DashboardController extends Controller
             'monthlyExpense',
             'banks',
             'totalWealth',
+            'totalAssets',
             'totalWealthIncludingPiutang',
+            'netWorth',
             'outstandingHutang',
             'outstandingPiutang',
             'targets',
             'debtReminders',
+            'billReminders',
             'chartData',
             'expenseByCategory',
-            'achievementBadges'
+            'achievementBadges',
+            'budgetNotifications',
+            'goalRecommendations',
+            'weeklyRecap'
         ));
     }
 }

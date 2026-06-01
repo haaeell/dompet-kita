@@ -59,6 +59,16 @@ class Couple extends Model
         return $this->hasMany(ChatMessage::class);
     }
 
+    public function billReminders(): HasMany
+    {
+        return $this->hasMany(BillReminder::class);
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
     public function getTotalIncomeAttribute(): float
     {
         return $this->transactions()->where('type', 'income')->sum('amount');

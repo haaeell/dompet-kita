@@ -32,7 +32,7 @@ class DashboardController extends Controller
             'transactions' => Transaction::nonTransfer()->count(),
             'banks' => Bank::count(),
             'targets_active' => Target::where('status', 'active')->count(),
-            'debts_unpaid' => Debt::where('status', 'unpaid')->count(),
+            'debts_unpaid' => Debt::where('status', 'pending')->count(),
             'chat_messages' => ChatMessage::count(),
         ];
 

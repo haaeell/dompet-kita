@@ -8,6 +8,7 @@ use App\Models\Debt;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class DebtController extends Controller
@@ -43,8 +44,14 @@ class DebtController extends Controller
             $debtSummaryQuery->where('user_id', $selectedUser->id);
         }
 
-        $outstandingHutang = (clone $debtSummaryQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = (clone $debtSummaryQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $outstandingHutang = (clone $debtSummaryQuery)
+            ->where('type', 'hutang')
+            ->where('status', 'pending')
+            ->sum(DB::raw('amount - paid_amount'));
+        $outstandingPiutang = (clone $debtSummaryQuery)
+            ->where('type', 'piutang')
+            ->where('status', 'pending')
+            ->sum(DB::raw('amount - paid_amount'));
 
         return view('debts.index', compact(
             'debts',
@@ -65,6 +72,8 @@ class DebtController extends Controller
         $request->validate([
             'type' => 'required|in:hutang,piutang',
             'amount' => 'required|numeric|min:1',
+            'installment_count' => 'nullable|integer|min:1|max:120',
+            'installment_amount' => 'nullable|numeric|min:1',
             'counterparty' => 'required|string|max:255',
             'purpose' => 'required|string|max:255',
             'due_date' => 'required|date',
@@ -73,12 +82,17 @@ class DebtController extends Controller
         ]);
 
         $bank = $couple->banks()->findOrFail($request->bank_id);
+        $installmentCount = max(1, (int) $request->input('installment_count', 1));
+        $installmentAmount = (float) ($request->input('installment_amount') ?: ceil((float) $request->amount / $installmentCount));
 
         $debt = Debt::create([
             'couple_id' => $couple->id,
             'user_id' => Auth::id(),
             'type' => $request->type,
             'amount' => $request->amount,
+            'installment_count' => $installmentCount,
+            'installment_amount' => min((float) $request->amount, $installmentAmount),
+            'paid_amount' => 0,
             'counterparty' => $request->counterparty,
             'purpose' => $request->purpose,
             'due_date' => $request->due_date,
@@ -120,6 +134,7 @@ class DebtController extends Controller
         $request->validate([
             'settlement_bank_id' => 'required|exists:banks,id',
             'paid_at' => 'required|date',
+            'payment_amount' => 'nullable|numeric|min:1',
         ]);
 
         if ($debt->status === 'paid') {
@@ -127,11 +142,20 @@ class DebtController extends Controller
         }
 
         $settlementBank = $debt->couple->banks()->findOrFail($request->settlement_bank_id);
+        $remainingAmount = $debt->remaining_amount;
+        $paymentAmount = min(
+            $remainingAmount,
+            (float) ($request->input('payment_amount') ?: ($debt->installment_amount ?: $remainingAmount))
+        );
+        $newPaidAmount = min((float) $debt->amount, (float) $debt->paid_amount + $paymentAmount);
+        $isFullyPaid = $newPaidAmount >= (float) $debt->amount;
 
         $debt->update([
             'settlement_bank_id' => $settlementBank->id,
-            'paid_at' => $request->paid_at,
-            'status' => 'paid',
+            'last_payment_at' => $request->paid_at,
+            'paid_at' => $isFullyPaid ? $request->paid_at : null,
+            'paid_amount' => $newPaidAmount,
+            'status' => $isFullyPaid ? 'paid' : 'pending',
         ]);
 
         $category = $this->getDebtCategory($debt->couple, $debt->type);
@@ -146,13 +170,15 @@ class DebtController extends Controller
             'category_id' => $category->id,
             'bank_id' => $settlementBank->id,
             'type' => $transactionType,
-            'amount' => $debt->amount,
-            'description' => $description,
-            'notes' => 'Penyelesaian ' . $debt->type,
+            'amount' => $paymentAmount,
+            'description' => $description . ($isFullyPaid ? ' (lunas)' : ' (cicilan)'),
+            'notes' => 'Pembayaran cicilan ' . $debt->installment_progress . ' - ' . $debt->type,
             'date' => $request->paid_at,
         ]);
 
-        return back()->with('success', 'Pembayaran hutang/piutang berhasil dicatat.');
+        return back()->with('success', $isFullyPaid
+            ? 'Pembayaran hutang/piutang berhasil dicatat dan sudah lunas.'
+            : 'Cicilan berhasil dicatat. Sisa Rp ' . number_format($debt->fresh()->remaining_amount, 0, ',', '.'));
     }
 
     public function destroy(Debt $debt)

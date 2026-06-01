@@ -319,6 +319,12 @@
                 <button type="submit" class="btn-primary justify-center full">
                     <i class="fa-solid fa-filter"></i> Terapkan Filter
                 </button>
+                <a href="{{ route('reports.pdf', request()->query()) }}" class="btn-ghost justify-center full">
+                    <i class="fa-solid fa-file-pdf"></i> Export PDF
+                </a>
+                <a href="{{ route('reports.excel', request()->query()) }}" class="btn-ghost justify-center full">
+                    <i class="fa-solid fa-file-excel"></i> Export Excel
+                </a>
             </div>
         </form>
 
@@ -495,6 +501,12 @@
                 style="width:160px; background: #fff; border: 1px solid #e2e8f0; color: #1a1a2e;">
 
             <button type="submit" class="btn-primary">Terapkan</button>
+            <a href="{{ route('reports.pdf', request()->query()) }}" class="btn-ghost">
+                <i class="fa-solid fa-file-pdf"></i> PDF
+            </a>
+            <a href="{{ route('reports.excel', request()->query()) }}" class="btn-ghost">
+                <i class="fa-solid fa-file-excel"></i> Excel
+            </a>
         </form>
     </div>
 

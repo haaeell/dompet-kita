@@ -553,11 +553,10 @@
                         <i class="fa-solid fa-coins"></i>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <div class="mobile-metric-label">{{ $selectedUserId ? 'Total Kekayaan Pribadi' : 'Total Kekayaan' }}</div>
-                        <div class="mobile-metric-value text-blue-700">Rp {{ number_format($totalWealth, 0, ',', '.') }}</div>
+                        <div class="mobile-metric-label">{{ $selectedUserId ? 'Net Worth Pribadi' : 'Net Worth' }}</div>
+                        <div class="mobile-metric-value text-blue-700">Rp {{ number_format($netWorth, 0, ',', '.') }}</div>
                         <div class="mobile-metric-note">
-                            Termasuk rekening aktif{{ $selectedMember ? ' milik ' . $selectedMember->name : '' }}.
-                            Dengan piutang: Rp {{ number_format($totalWealthIncludingPiutang, 0, ',', '.') }}
+                            Saldo Rp {{ number_format($totalWealth, 0, ',', '.') }} + aset Rp {{ number_format($totalAssets, 0, ',', '.') }}.
                         </div>
                     </div>
                 </div>
@@ -659,6 +658,45 @@
                             <div class="min-w-0">
                                 <div class="text-[13px] font-extrabold text-[var(--text-primary)] truncate">{{ $badge['title'] }}</div>
                                 <div class="text-[11px] leading-snug text-[var(--text-secondary)] mt-1">{{ $badge['description'] }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if($budgetNotifications->isNotEmpty() || $billReminders->isNotEmpty() || $goalRecommendations->isNotEmpty())
+            <section class="mobile-section">
+                <div class="mobile-section-head">
+                    <h2 class="mobile-section-title">Perlu Perhatian</h2>
+                    <a href="{{ route('reminders.index') }}" class="mobile-link">Reminder</a>
+                </div>
+                <div class="mobile-list-card">
+                    @foreach($budgetNotifications->take(2) as $notice)
+                        <div class="mobile-tx-item">
+                            <div class="mobile-tx-icon bg-amber-50 text-amber-700"><i class="fa-solid fa-chart-pie"></i></div>
+                            <div class="min-w-0 flex-1">
+                                <div class="mobile-tx-title">{{ $notice['status'] }}: {{ $notice['title'] }}</div>
+                                <div class="mobile-tx-meta">{{ $notice['percent'] }}% terpakai dari budget</div>
+                            </div>
+                        </div>
+                    @endforeach
+                    @foreach($billReminders->take(2) as $reminder)
+                        <div class="mobile-tx-item">
+                            <div class="mobile-tx-icon bg-pink-50 text-pink-700"><i class="fa-solid fa-bell"></i></div>
+                            <div class="min-w-0 flex-1">
+                                <div class="mobile-tx-title">{{ $reminder->title }}</div>
+                                <div class="mobile-tx-meta">Jatuh tempo {{ $reminder->due_date->isoFormat('D MMM Y') }}</div>
+                            </div>
+                            <div class="mobile-tx-amount text-pink-700">Rp {{ number_format($reminder->amount, 0, ',', '.') }}</div>
+                        </div>
+                    @endforeach
+                    @foreach($goalRecommendations->take(1) as $item)
+                        <div class="mobile-tx-item">
+                            <div class="mobile-tx-icon bg-blue-50 text-blue-700"><i class="fa-solid fa-lightbulb"></i></div>
+                            <div class="min-w-0 flex-1">
+                                <div class="mobile-tx-title">{{ $item['title'] }}</div>
+                                <div class="mobile-tx-meta whitespace-normal">{{ $item['description'] }}</div>
                             </div>
                         </div>
                     @endforeach
@@ -795,6 +833,58 @@
         </div>
     @endif
 
+    @if($budgetNotifications->isNotEmpty() || $billReminders->isNotEmpty() || $goalRecommendations->isNotEmpty())
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-7">
+            <div class="card p-4 border-amber-100 bg-amber-50/70">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold text-amber-900 m-0">Notifikasi Budget</h3>
+                    <a href="{{ route('budgets.index') }}" class="text-xs font-bold text-amber-700">Kelola</a>
+                </div>
+                <div class="space-y-2">
+                    @forelse($budgetNotifications->take(3) as $notice)
+                        <div class="rounded-xl bg-white p-3 border border-amber-100">
+                            <div class="text-sm font-extrabold text-slate-900">{{ $notice['status'] }}: {{ $notice['title'] }}</div>
+                            <div class="text-xs text-slate-500 mt-1">Terpakai Rp {{ number_format($notice['spent'], 0, ',', '.') }} dari Rp {{ number_format($notice['amount'], 0, ',', '.') }} ({{ $notice['percent'] }}%)</div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-amber-700 m-0">Semua budget masih aman.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="card p-4 border-pink-100 bg-pink-50/70">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold text-pink-900 m-0">Reminder Tagihan</h3>
+                    <a href="{{ route('reminders.index') }}" class="text-xs font-bold text-pink-700">Kelola</a>
+                </div>
+                <div class="space-y-2">
+                    @forelse($billReminders->take(3) as $reminder)
+                        <div class="rounded-xl bg-white p-3 border border-pink-100">
+                            <div class="text-sm font-extrabold text-slate-900">{{ $reminder->title }}</div>
+                            <div class="text-xs text-slate-500 mt-1">{{ $reminder->due_date->isoFormat('D MMM Y') }} - Rp {{ number_format($reminder->amount, 0, ',', '.') }}</div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-pink-700 m-0">Tidak ada tagihan dekat-dekat ini.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="card p-4 border-blue-100 bg-blue-50/70">
+                <h3 class="text-base font-bold text-blue-900 m-0 mb-3">Rekomendasi & Rekap</h3>
+                <div class="rounded-xl bg-white p-3 border border-blue-100 mb-2">
+                    <div class="text-sm font-extrabold text-slate-900">Rekap minggu ini</div>
+                    <div class="text-xs text-slate-500 mt-1">{{ $weeklyRecap['transaction_count'] }} transaksi, keluar Rp {{ number_format($weeklyRecap['expense'], 0, ',', '.') }}</div>
+                </div>
+                @foreach($goalRecommendations->take(2) as $item)
+                    <div class="rounded-xl bg-white p-3 border border-blue-100 mb-2">
+                        <div class="text-sm font-extrabold text-slate-900">{{ $item['title'] }}</div>
+                        <div class="text-xs text-slate-500 mt-1">{{ $item['description'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Summary Cards --}}
     @php $balance = $monthlyIncome - $monthlyExpense; @endphp
     <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 mb-7" id="tourSummaryCards">
@@ -819,25 +909,25 @@
         <div class="card border-l-4 border-blue-500 p-4">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-[11px] font-bold tracking-widest uppercase text-[var(--text-secondary)]">
-                    {{ $selectedUserId ? 'Total Kekayaan Pribadi' : 'Total Kekayaan' }}
+                    {{ $selectedUserId ? 'Net Worth Pribadi' : 'Net Worth' }}
                 </span>
                 <span
                     class="w-[34px] h-[34px] rounded-[10px] bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
-                    <i class="fa-solid fa-coins text-sm"></i>
+                    <i class="fa-solid fa-gem text-sm"></i>
                 </span>
             </div>
             <div class="text-2xl font-bold text-blue-700 mb-1 break-all">
-                Rp {{ number_format($totalWealth, 0, ',', '.') }}
+                Rp {{ number_format($netWorth, 0, ',', '.') }}
             </div>
             <div class="text-xs text-[var(--text-secondary)]">
                 @if($selectedUserId)
-                    Saldo rekening aktif milik {{ $coupleMembers->firstWhere('id', $selectedUserId)->name ?? 'pasangan' }}
+                    Kekayaan bersih milik {{ $coupleMembers->firstWhere('id', $selectedUserId)->name ?? 'pasangan' }}
                 @else
-                    Saldo seluruh rekening aktif
+                    Saldo + aset + piutang - hutang
                 @endif
             </div>
             <div class="text-xs text-blue-700 mt-2 font-medium">
-                Jika ditambah piutang: Rp {{ number_format($totalWealthIncludingPiutang, 0, ',', '.') }}
+                Saldo Rp {{ number_format($totalWealth, 0, ',', '.') }} • Aset Rp {{ number_format($totalAssets, 0, ',', '.') }}
             </div>
         </div>
 

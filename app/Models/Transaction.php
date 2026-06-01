@@ -21,10 +21,11 @@ class Transaction extends Model
         'notes',
         'date',
         'receipt_image',
-        'client_uuid'
+        'client_uuid',
+        'is_private',
     ];
 
-    protected $casts = ['date' => 'datetime', 'amount' => 'float'];
+    protected $casts = ['date' => 'datetime', 'amount' => 'float', 'is_private' => 'boolean'];
 
     public function setDateAttribute($value): void
     {
@@ -64,6 +65,15 @@ class Transaction extends Model
     {
         return $query->whereDoesntHave('category', function ($categoryQuery) {
             $categoryQuery->where('name', self::TRANSFER_CATEGORY);
+        });
+    }
+
+    public function scopeVisibleTo($query, User $user)
+    {
+        return $query->where(function ($visibilityQuery) use ($user) {
+            $visibilityQuery
+                ->where('is_private', false)
+                ->orWhere('user_id', $user->id);
         });
     }
 

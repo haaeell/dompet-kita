@@ -13,6 +13,8 @@ use App\Http\Controllers\TargetController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\BillReminderController;
+use App\Http\Controllers\AssetController;
 
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
@@ -86,6 +88,22 @@ Route::middleware(['auth'])->group(function () {
 
     // Laporan
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
+    Route::get('/reports/excel', [ReportController::class, 'exportExcel'])->name('reports.excel');
+
+    Route::prefix('reminders')->name('reminders.')->group(function () {
+        Route::get('/', [BillReminderController::class, 'index'])->name('index');
+        Route::post('/', [BillReminderController::class, 'store'])->name('store');
+        Route::put('/{billReminder}/paid', [BillReminderController::class, 'markPaid'])->name('paid');
+        Route::delete('/{billReminder}', [BillReminderController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('assets')->name('assets.')->group(function () {
+        Route::get('/', [AssetController::class, 'index'])->name('index');
+        Route::post('/', [AssetController::class, 'store'])->name('store');
+        Route::put('/{asset}', [AssetController::class, 'update'])->name('update');
+        Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy');
+    });
 
     // Lokasi Pasangan
     Route::prefix('locations')->name('locations.')->group(function () {

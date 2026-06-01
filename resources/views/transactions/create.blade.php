@@ -182,6 +182,14 @@
                     <label class="label">Catatan</label>
                     <input type="text" name="notes" value="{{ old('notes') }}" placeholder="Opsional..." class="input-field">
                 </div>
+
+                <label class="flex items-start gap-3 rounded-2xl border border-pink-100 bg-pink-50/60 p-4 text-sm text-slate-700">
+                    <input type="checkbox" name="is_private" value="1" class="mt-1" {{ old('is_private') ? 'checked' : '' }}>
+                    <span>
+                        <span class="block font-extrabold text-slate-900">Jadikan transaksi privat</span>
+                        <span class="block text-xs leading-relaxed text-slate-500">Pasangan tidak akan melihat detail transaksi ini. Nominal tetap aman untuk catatan pribadi kamu.</span>
+                    </span>
+                </label>
             </div>
 
             <div class="hidden sm:grid grid-cols-2 gap-3 mt-6">

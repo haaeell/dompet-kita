@@ -2,13 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ReportExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
     public function index(Request $request)
+    {
+        $data = $this->buildReportData($request);
+
+        return view('reports.index', $data);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $data = $this->buildReportData($request);
+        $pdf = Pdf::loadView('reports.pdf', $data)->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan_dompetkita_' . now()->format('Ymd_His') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data = $this->buildReportData($request);
+
+        return Excel::download(
+            new ReportExport($data['transactions']),
+            'laporan_dompetkita_' . now()->format('Ymd_His') . '.xlsx'
+        );
+    }
+
+    private function buildReportData(Request $request): array
     {
         $user = Auth::user();
         $couple = $user->couple;
@@ -30,6 +59,7 @@ class ReportController extends Controller
         $partnerIds = $couple->users->where('id', '!=', $user->id)->pluck('id');
 
         $transactionQuery = $couple->transactions()
+            ->visibleTo($user)
             ->with(['user', 'category', 'bank'])
             ->whereBetween('date', [$startDate->toDateTimeString(), $endDate->toDateTimeString()]);
 
@@ -61,8 +91,8 @@ class ReportController extends Controller
         }
 
         $totalWealth = $banksQuery->sum('current_balance');
-        $outstandingHutang = (clone $debtsQuery)->where('type', 'hutang')->where('status', 'pending')->sum('amount');
-        $outstandingPiutang = (clone $debtsQuery)->where('type', 'piutang')->where('status', 'pending')->sum('amount');
+        $outstandingHutang = (clone $debtsQuery)->where('type', 'hutang')->where('status', 'pending')->sum(DB::raw('amount - paid_amount'));
+        $outstandingPiutang = (clone $debtsQuery)->where('type', 'piutang')->where('status', 'pending')->sum(DB::raw('amount - paid_amount'));
         $totalWealthIncludingPiutang = $totalWealth + $outstandingPiutang;
         $debts = $debtsQuery->latest('due_date')->get();
 
@@ -90,10 +120,12 @@ class ReportController extends Controller
         if ($dayCount <= 31) {
             for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
                 $trendIncomeQuery = $couple->transactions()
+                    ->visibleTo($user)
                     ->nonTransfer()
                     ->where('type', 'income')
                     ->whereDate('date', $date->toDateString());
                 $trendExpenseQuery = $couple->transactions()
+                    ->visibleTo($user)
                     ->nonTransfer()
                     ->where('type', 'expense')
                     ->whereDate('date', $date->toDateString());
@@ -118,11 +150,13 @@ class ReportController extends Controller
 
             while ($trendStart->lte($trendEnd)) {
                 $trendIncomeQuery = $couple->transactions()
+                    ->visibleTo($user)
                     ->nonTransfer()
                     ->where('type', 'income')
                     ->whereMonth('date', $trendStart->month)
                     ->whereYear('date', $trendStart->year);
                 $trendExpenseQuery = $couple->transactions()
+                    ->visibleTo($user)
                     ->nonTransfer()
                     ->where('type', 'expense')
                     ->whereMonth('date', $trendStart->month)
@@ -146,7 +180,7 @@ class ReportController extends Controller
             }
         }
 
-        return view('reports.index', compact(
+        return compact(
             'transactions',
             'totalIncome',
             'totalExpense',
@@ -164,6 +198,6 @@ class ReportController extends Controller
             'userFilter',
             'startDate',
             'endDate'
-        ));
+        );
     }
 }

@@ -1363,9 +1363,17 @@
                     class="nav-link {{ request()->routeIs('budgets.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-chart-pie"></i> Budget
                 </a>
+                <a href="{{ route('reminders.index') }}"
+                    class="nav-link {{ request()->routeIs('reminders.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-bell"></i> Reminder
+                </a>
                 <a href="{{ route('banks.index') }}" id="tourNavBanks"
                     class="nav-link {{ request()->routeIs('banks.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-building-columns"></i> Rekening
+                </a>
+                <a href="{{ route('assets.index') }}"
+                    class="nav-link {{ request()->routeIs('assets.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-gem"></i> Aset
                 </a>
                 <a href="{{ route('targets.index') }}" id="tourNavTargets"
                     class="nav-link {{ request()->routeIs('targets.*') ? 'active' : '' }}">
@@ -1479,6 +1487,12 @@
                             class="fa-solid fa-bullseye"></i></div>
                     <span class="text-xs font-medium">Target</span>
                 </a>
+                <a href="{{ route('assets.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('assets.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-gem"></i></div>
+                    <span class="text-xs font-medium">Aset</span>
+                </a>
                 <a href="{{ route('debts.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('debts.*') ? 'text-pink-600 bg-pink-50' : '' }}">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
@@ -1496,6 +1510,12 @@
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
                             class="fa-solid fa-chart-pie"></i></div>
                     <span class="text-xs font-medium">Budget</span>
+                </a>
+                <a href="{{ route('reminders.index') }}"
+                    class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('reminders.*') ? 'text-pink-600 bg-pink-50' : '' }}">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-base"><i
+                            class="fa-solid fa-bell"></i></div>
+                    <span class="text-xs font-medium">Reminder</span>
                 </a>
                 <a href="{{ route('locations.index') }}"
                     class="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-pink-50 text-slate-600 {{ request()->routeIs('locations.*') ? 'text-pink-600 bg-pink-50' : '' }}">

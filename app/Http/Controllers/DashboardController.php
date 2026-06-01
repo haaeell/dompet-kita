@@ -59,7 +59,7 @@ class DashboardController extends Controller
 
         $banksQuery = $couple->banks()->where('is_active', true);
         if ($selectedUser) {
-            $banksQuery->where('account_name', $selectedUser->name);
+            $banksQuery->where('user_id', $selectedUser->id);
         }
 
         $banks = $banksQuery->get();

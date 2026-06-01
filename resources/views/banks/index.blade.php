@@ -55,6 +55,9 @@
                     <div>
                         <div class="text-sm font-bold text-slate-700">{{ $bank->name }}</div>
                         <div class="text-xs text-slate-500 font-medium">{{ $bank->account_name }}</div>
+                        <div class="mt-0.5 text-[11px] font-semibold text-slate-400">
+                            Pemilik: {{ $bank->user?->name ?? 'Belum ditautkan' }}
+                        </div>
                     </div>
 
                     @if($bank->account_number)
@@ -114,7 +117,19 @@
                 </div>
 
                 <div>
-                    <label class="label">Nama Pemilik</label>
+                    <label class="label">Pemilik Rekening di Aplikasi</label>
+                    <select id="bankUserId" class="input-field">
+                        @foreach($coupleUsers as $member)
+                            <option value="{{ $member->id }}" data-name="{{ $member->name }}" {{ $member->id === auth()->id() ? 'selected' : '' }}>
+                                {{ $member->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">Filter saldo dan laporan memakai pemilik ini, bukan teks nama rekening.</p>
+                </div>
+
+                <div>
+                    <label class="label">Nama di Rekening</label>
                     <input type="text" id="bankAccountName" placeholder="Nama sesuai aplikasi/buku tabungan" class="input-field">
                 </div>
 
@@ -170,9 +185,16 @@
 
         pickBankColor('#10b981');
 
+        $('#bankUserId').on('change', function () {
+            if (!$('#bankAccountName').val()) {
+                $('#bankAccountName').val($(this).find(':selected').data('name') || '');
+            }
+        }).trigger('change');
+
         async function submitBank() {
             const data = {
                 name: $('#bankName').val(),
+                user_id: $('#bankUserId').val(),
                 account_name: $('#bankAccountName').val(),
                 account_number: $('#bankAccountNumber').val(),
                 icon: $('#bankIcon').val(),

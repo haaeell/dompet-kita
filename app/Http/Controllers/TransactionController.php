@@ -36,7 +36,7 @@ class TransactionController extends Controller
 
         $banks = $couple->banks()
             ->where('is_active', true)
-            ->where('account_name', Auth::user()->name)
+            ->where('user_id', Auth::id())
             ->get();
 
         if ($banks->isEmpty()) {

@@ -17,8 +17,10 @@ class BankController extends Controller
     public function index()
     {
         $couple = Auth::user()->couple;
-        $banks = $couple->banks()->withCount('transactions')->get();
-        return view('banks.index', compact('banks'));
+        $banks = $couple->banks()->with('user')->withCount('transactions')->get();
+        $coupleUsers = $couple->users()->orderBy('name')->get();
+
+        return view('banks.index', compact('banks', 'coupleUsers'));
     }
 
     public function transfer()
@@ -143,15 +145,24 @@ class BankController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'account_name' => 'required|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
             'account_number' => 'nullable|string|max:50',
             'icon' => 'required|string|max:10',
             'color' => 'required|string|size:7',
             'initial_balance' => 'required|numeric|min:0',
         ]);
 
-        $bank = Auth::user()->couple->banks()->create(array_merge(
+        $couple = Auth::user()->couple;
+        $owner = $request->filled('user_id')
+            ? $couple->users()->findOrFail($request->user_id)
+            : Auth::user();
+
+        $bank = $couple->banks()->create(array_merge(
             $request->only(['name', 'account_name', 'account_number', 'icon', 'color', 'initial_balance']),
-            ['current_balance' => $request->initial_balance]
+            [
+                'user_id' => $owner->id,
+                'current_balance' => $request->initial_balance,
+            ]
         ));
 
         return response()->json(['success' => true, 'message' => 'Rekening berhasil ditambahkan!', 'bank' => $bank]);
@@ -163,10 +174,16 @@ class BankController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'account_name' => 'required|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
             'icon' => 'required|string',
             'color' => 'required|string|size:7',
         ]);
-        $bank->update($request->only(['name', 'account_name', 'account_number', 'icon', 'color']));
+        $data = $request->only(['name', 'account_name', 'account_number', 'icon', 'color']);
+        $data['user_id'] = $request->filled('user_id')
+            ? Auth::user()->couple->users()->findOrFail($request->user_id)->id
+            : $bank->user_id;
+
+        $bank->update($data);
         return response()->json(['success' => true, 'message' => 'Rekening berhasil diperbarui!']);
     }
 

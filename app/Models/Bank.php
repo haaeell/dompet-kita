@@ -10,6 +10,7 @@ class Bank extends Model
 {
     protected $fillable = [
         'couple_id',
+        'user_id',
         'name',
         'account_name',
         'account_number',
@@ -23,6 +24,11 @@ class Bank extends Model
     public function couple(): BelongsTo
     {
         return $this->belongsTo(Couple::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function transactions(): HasMany

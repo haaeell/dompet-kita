@@ -53,11 +53,10 @@ class ReportController extends Controller
             ->whereBetween('due_date', [$startDate->toDateString(), $endDate->toDateString()]);
 
         if ($userFilter === 'me') {
-            $banksQuery->where('account_name', $user->name);
+            $banksQuery->where('user_id', $user->id);
             $debtsQuery->where('user_id', $user->id);
         } elseif ($userFilter === 'partner') {
-            $partnerNames = $couple->users->where('id', '!=', $user->id)->pluck('name');
-            $banksQuery->whereIn('account_name', $partnerNames);
+            $banksQuery->whereIn('user_id', $partnerIds);
             $debtsQuery->whereIn('user_id', $partnerIds);
         }
 

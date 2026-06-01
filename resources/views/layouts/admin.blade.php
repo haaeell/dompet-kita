@@ -44,6 +44,10 @@
                     class="inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold {{ request()->routeIs('admin.settings.*') ? 'bg-pink-50 text-pink-700' : 'text-slate-600 hover:bg-slate-50' }}">
                     <i class="fa-solid fa-gear w-5"></i> Pengaturan
                 </a>
+                <a href="{{ route('admin.feature-announcements.index') }}"
+                    class="inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold {{ request()->routeIs('admin.feature-announcements.*') ? 'bg-pink-50 text-pink-700' : 'text-slate-600 hover:bg-slate-50' }}">
+                    <i class="fa-solid fa-bullhorn w-5"></i> Update App
+                </a>
                 <form action="{{ route('logout') }}" method="POST" class="lg:pt-4">
                     @csrf
                     <button class="inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50">

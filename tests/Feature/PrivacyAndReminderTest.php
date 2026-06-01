@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Bank;
 use App\Models\Category;
 use App\Models\Couple;
+use App\Models\FeatureAnnouncement;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,6 +70,35 @@ class PrivacyAndReminderTest extends TestCase
             ->assertOk()
             ->assertSee('Kalender Tagihan')
             ->assertSee('billReminderCalendar');
+    }
+
+    public function test_feature_announcement_is_shown_until_user_reads_it(): void
+    {
+        [$owner] = $this->workspace();
+
+        $announcement = FeatureAnnouncement::create([
+            'title' => 'Kalender tagihan sudah hadir',
+            'type' => 'feature',
+            'version' => 'v1.2',
+            'body' => 'Sekarang jadwal tagihan bisa dilihat dalam kalender besar.',
+            'is_active' => true,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $this->actingAs($owner)
+            ->get('/')
+            ->assertOk()
+            ->assertSee('Kalender tagihan sudah hadir')
+            ->assertSee('Saya mengerti');
+
+        $this->actingAs($owner)
+            ->put("/feature-announcements/{$announcement->id}/read")
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->get('/')
+            ->assertOk()
+            ->assertDontSee('Kalender tagihan sudah hadir');
     }
 
     private function workspace(): array

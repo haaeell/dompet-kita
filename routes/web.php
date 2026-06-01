@@ -15,6 +15,8 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\BillReminderController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\FeatureAnnouncementController;
+use App\Http\Controllers\Admin\FeatureAnnouncementController as AdminFeatureAnnouncementController;
 
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
@@ -125,6 +127,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/feature-announcements/{featureAnnouncement}/read', [FeatureAnnouncementController::class, 'dismiss'])
+        ->name('feature-announcements.read');
 
     Route::middleware(['auth', 'role:admin'])
         ->prefix('admin')
@@ -138,5 +142,14 @@ Route::middleware(['auth'])->group(function () {
 
             Route::post('/settings/maintenance', [SettingController::class, 'toggleMaintenance'])
                 ->name('settings.maintenance');
+
+            Route::get('/feature-announcements', [AdminFeatureAnnouncementController::class, 'index'])
+                ->name('feature-announcements.index');
+            Route::post('/feature-announcements', [AdminFeatureAnnouncementController::class, 'store'])
+                ->name('feature-announcements.store');
+            Route::put('/feature-announcements/{featureAnnouncement}', [AdminFeatureAnnouncementController::class, 'update'])
+                ->name('feature-announcements.update');
+            Route::delete('/feature-announcements/{featureAnnouncement}', [AdminFeatureAnnouncementController::class, 'destroy'])
+                ->name('feature-announcements.destroy');
         });
 });

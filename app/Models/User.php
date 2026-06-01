@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
@@ -38,6 +39,13 @@ class User extends Authenticatable
     public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);
+    }
+
+    public function readFeatureAnnouncements(): BelongsToMany
+    {
+        return $this->belongsToMany(FeatureAnnouncement::class, 'feature_announcement_reads')
+            ->withPivot('read_at')
+            ->withTimestamps();
     }
 
     public function getProfilePhotoUrlAttribute(): ?string

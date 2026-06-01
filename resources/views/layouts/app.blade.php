@@ -1551,6 +1551,76 @@
         </div>
     </div>
 
+    @php
+        $unreadFeatureAnnouncement = auth()->check()
+            ? \App\Models\FeatureAnnouncement::query()
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('published_at')
+                        ->orWhere('published_at', '<=', now());
+                })
+                ->whereDoesntHave('reads', function ($query) {
+                    $query->where('users.id', auth()->id());
+                })
+                ->latest('published_at')
+                ->latest()
+                ->first()
+            : null;
+        $featureAnnouncementLabels = [
+            'feature' => 'Fitur Baru',
+            'improvement' => 'Peningkatan',
+            'fix' => 'Perbaikan',
+            'info' => 'Info',
+        ];
+    @endphp
+
+    @if($unreadFeatureAnnouncement)
+        <div id="featureUpdateModal"
+            class="fixed inset-0 z-[1300] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm">
+            <div class="w-full max-w-md overflow-hidden rounded-[28px] border border-pink-100 bg-white shadow-2xl">
+                <div class="relative bg-gradient-to-br from-pink-50 via-white to-rose-50 px-6 pb-5 pt-6">
+                    <div class="absolute right-5 top-5">
+                        <button type="button" onclick="document.getElementById('featureUpdateModal')?.remove()"
+                            class="grid h-9 w-9 place-items-center rounded-full bg-white/80 text-slate-400 hover:text-pink-600">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="mb-4 inline-grid h-14 w-14 place-items-center rounded-2xl bg-pink-600 text-xl text-white shadow-lg shadow-pink-200">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div class="mb-2 flex flex-wrap items-center gap-2">
+                        <span class="rounded-full bg-pink-100 px-3 py-1 text-xs font-extrabold text-pink-700">
+                            {{ $featureAnnouncementLabels[$unreadFeatureAnnouncement->type] ?? 'Update' }}
+                        </span>
+                        @if($unreadFeatureAnnouncement->version)
+                            <span class="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-slate-500">
+                                {{ $unreadFeatureAnnouncement->version }}
+                            </span>
+                        @endif
+                    </div>
+                    <h2 class="text-2xl font-extrabold leading-tight text-slate-900">
+                        {{ $unreadFeatureAnnouncement->title }}
+                    </h2>
+                    <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                        {{ $unreadFeatureAnnouncement->body }}
+                    </p>
+                </div>
+                <form action="{{ route('feature-announcements.read', $unreadFeatureAnnouncement) }}" method="POST"
+                    class="grid gap-3 border-t border-pink-50 bg-white p-5 sm:grid-cols-[1fr_auto]">
+                    @csrf
+                    @method('PUT')
+                    <button type="button" onclick="document.getElementById('featureUpdateModal')?.remove()"
+                        class="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-slate-500 hover:bg-slate-50">
+                        Nanti aja
+                    </button>
+                    <button class="rounded-2xl bg-pink-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-pink-100 hover:bg-pink-700">
+                        Saya mengerti
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <div id="offlineFloatingAlert"
         class="fixed right-4 top-4 z-[1200] hidden max-w-[calc(100vw-2rem)] rounded-2xl border px-4 py-3 shadow-xl backdrop-blur md:right-6 md:top-6"
         role="status" aria-live="polite">

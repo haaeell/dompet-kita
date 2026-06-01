@@ -21,6 +21,14 @@ use App\Http\Controllers\Admin\FeatureAnnouncementController as AdminFeatureAnno
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 Route::view('/terms', 'legal.terms')->name('terms');
 
+Route::get('/', function (\Illuminate\Http\Request $request) {
+    if (auth()->check()) {
+        return app(DashboardController::class)->index($request);
+    }
+
+    return view('welcome');
+})->name('dashboard');
+
 // ─── Auth Routes ─────────────────────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -33,9 +41,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 // ─── Protected Routes ─────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
-
-    // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Transaksi
     Route::prefix('transactions')->name('transactions.')->group(function () {

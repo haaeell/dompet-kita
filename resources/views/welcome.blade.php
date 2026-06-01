@@ -4,600 +4,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Pengumuman Kelulusan Siswa</title>
-    <meta name="description" content="Cek pengumuman kelulusan siswa secara online dengan cepat dan mudah.">
-    <meta name="keywords" content="kelulusan, siswa, pengumuman, sekolah">
-    <meta name="author" content="Sekolah">
-    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <meta property="og:title" content="Pengumuman Kelulusan Siswa">
-    <meta property="og:description" content="Cek hasil kelulusanmu sekarang juga secara online.">
-    <meta property="og:image" content="{{ asset('images/logo.png') }}">
+    <meta name="theme-color" content="#db2777">
+    <meta name="description" content="DompetKita membantu pasangan Indonesia mencatat uang bersama, budget, tagihan, target tabungan, aset, dan net worth.">
+    <meta name="keywords" content="keuangan pasangan, aplikasi keuangan pasangan, catat uang bersama, budget pasangan, dompet pasangan">
+    <meta property="og:title" content="DompetKita - Keuangan Bersama Pasangan">
+    <meta property="og:description" content="Kelola uang berdua dengan lebih rapi, transparan, dan nyaman.">
+    <meta property="og:image" content="{{ asset('images/app-logo-dompetkita.png') }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="id_ID">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Pengumuman Kelulusan Siswa">
-    <meta name="twitter:description" content="Cek hasil kelulusanmu sekarang juga.">
-    <meta name="twitter:image" content="{{ asset('images/logo.png') }}">
-    <meta name="theme-color" content="#4f46e5">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>DompetKita - Keuangan Bersama Pasangan</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/app-logo-dompetkita.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/pwa-icon-dompetkita-192.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
             font-family: 'Poppins', sans-serif;
+            color: #10172a;
+            background: #fff7fb;
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.82);
+            border-bottom: 1px solid rgba(251, 207, 232, 0.8);
+            backdrop-filter: blur(18px);
         }
 
-        .btn-gradient {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            transition: all 0.2s;
+        .hero-shell {
+            background:
+                radial-gradient(circle at 15% 12%, rgba(244, 114, 182, 0.22), transparent 28%),
+                radial-gradient(circle at 88% 20%, rgba(251, 207, 232, 0.45), transparent 26%),
+                linear-gradient(180deg, #fff7fb 0%, #ffffff 72%);
         }
 
-        .btn-gradient:hover {
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #f472b6, #db2777);
+            color: #fff;
+            padding: 14px 22px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 18px 34px rgba(219, 39, 119, 0.24);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
-        .btn-gradient:active {
-            transform: translateY(0);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 42px rgba(219, 39, 119, 0.3);
         }
 
-        .input-focus:focus {
-            border-color: #6366f1 !important;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            outline: none;
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 18px;
+            border: 1px solid #fbcfe8;
+            background: #fff;
+            color: #be185d;
+            padding: 14px 22px;
+            font-weight: 800;
+            text-decoration: none;
         }
 
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            display: none;
+        .phone-frame {
+            width: min(360px, 100%);
+            border-radius: 38px;
+            border: 10px solid #1f2937;
+            background: #fff;
+            box-shadow: 0 26px 80px rgba(157, 23, 77, 0.22);
+            overflow: hidden;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .phone-top {
+            height: 34px;
+            background: #1f2937;
+            display: grid;
+            place-items: center;
         }
 
-        .result-section {
-            display: none;
+        .phone-speaker {
+            width: 82px;
+            height: 6px;
+            border-radius: 999px;
+            background: #475569;
         }
 
-        .result-section.show {
+        .app-preview {
+            background: linear-gradient(180deg, #fff7fb, #fff);
+            padding: 18px;
+        }
+
+        .mini-card {
+            border: 1px solid #fce7f3;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 14px;
+        }
+
+        .feature-card {
+            border: 1px solid #fce7f3;
+            border-radius: 24px;
+            background: #fff;
+            padding: 24px;
+            box-shadow: 0 12px 34px rgba(157, 23, 77, 0.06);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            color: #db2777;
+            background: #fce7f3;
+            margin-bottom: 18px;
+        }
+
+        .section-band {
+            background: #fff;
+        }
+
+        .step-dot {
+            width: 44px;
+            height: 44px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: #db2777;
+            color: #fff;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .preview-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: #fce7f3;
+            overflow: hidden;
+        }
+
+        .preview-bar span {
             display: block;
-            animation: fadeUp 0.45s ease;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #f472b6, #db2777);
         }
 
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        @media (max-width: 768px) {
+            .hero-shell {
+                padding-top: 22px;
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .pulse-dot {
-            animation: pulseDot 1.5s ease infinite;
-        }
-
-        @keyframes pulseDot {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.4;
-                transform: scale(0.7);
-            }
-        }
-
-        .cd-num {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1;
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        @media (max-width: 640px) {
-            .cd-num {
-                font-size: 1.6rem;
-            }
-        }
-
-        .lulus-glow {
-            animation: glowPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes glowPulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 rgba(16, 185, 129, 0);
-            }
-
-            50% {
-                box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+            .phone-frame {
+                border-width: 8px;
+                border-radius: 32px;
             }
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-slate-50">
-
-    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3">
-            <img src="{{ asset('images/logo.png') }}"
-                class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover flex-shrink-0" alt="Logo">
-            <span class="text-xs sm:text-sm font-semibold text-gray-800 truncate">SMA Plus Asthahannas — Pengumuman
-                Kelulusan</span>
-            <span class="ml-auto text-[10px] sm:text-xs text-gray-400 flex-shrink-0">TA
-                {{ date('Y') - 1 }}/{{ date('Y') }}</span>
+<body>
+    <header class="glass-nav sticky top-0 z-50">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+            <a href="/" class="flex items-center gap-3 text-slate-900 no-underline">
+                <img src="{{ asset('images/app-logo-dompetkita.png') }}" alt="DompetKita" class="h-10 w-10 rounded-2xl object-cover">
+                <div>
+                    <div class="text-base font-extrabold leading-none">DompetKita</div>
+                    <div class="mt-1 text-[11px] font-bold uppercase tracking-wide text-pink-600">Keuangan Pasangan</div>
+                </div>
+            </a>
+            <nav class="hidden items-center gap-6 text-sm font-bold text-slate-500 md:flex">
+                <a href="#fitur" class="hover:text-pink-600">Fitur</a>
+                <a href="#cara-kerja" class="hover:text-pink-600">Cara Kerja</a>
+                <a href="#privasi" class="hover:text-pink-600">Privasi</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('login') }}" class="rounded-2xl px-4 py-2 text-sm font-extrabold text-slate-600 no-underline hover:bg-pink-50 hover:text-pink-700">Login</a>
+                <a href="{{ route('register') }}" class="rounded-2xl bg-pink-600 px-4 py-2 text-sm font-extrabold text-white no-underline shadow-lg shadow-pink-100">Daftar</a>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-
-        <div class="text-center mb-10 sm:mb-14" id="heroSection">
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-3" id="heroTitle">
-                Halo! 👋<br>
-                <span class="gradient-text italic">Siap Lihat Hasilmu? 🎓</span>
-            </h1>
-            <p class="text-gray-500 text-sm sm:text-[15px] leading-relaxed max-w-md mx-auto" id="heroSubtitle">
-                Yuk cek hasil kelulusanmu di sini. Masukkan NIS dan password yang sudah diberikan ya.
-            </p>
-        </div>
-        @php
-            $announcement = \App\Models\AnnouncementDate::where('is_active', true)->first();
-            $isOpen = $announcement && now()->gte($announcement->announcement_date);
-        @endphp
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start" id="mainGrid">
-
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
-
-                @if ($announcement && !$isOpen)
-                    <p
-                        class="text-[10px] sm:text-xs font-semibold tracking-widest uppercase text-gray-400 text-center mb-5">
-                        <i class="fa-regular fa-clock mr-1"></i> Pengumuman dibuka dalam
+    <main>
+        <section class="hero-shell">
+            <div class="mx-auto grid min-h-[calc(100vh-64px)] max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_420px] lg:py-16">
+                <div>
+                    <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-pink-700">
+                        <i class="fa-solid fa-heart"></i>
+                        Dibuat untuk pasangan Indonesia
+                    </div>
+                    <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                        Kelola uang berdua tanpa drama spreadsheet.
+                    </h1>
+                    <p class="mt-5 max-w-2xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
+                        DompetKita membantu kamu dan pasangan mencatat pemasukan, pengeluaran, budget, tagihan, target tabungan, aset, sampai net worth dalam satu tempat yang rapi dan nyaman dipakai harian.
                     </p>
-                    <div class="flex items-end justify-center gap-2 sm:gap-3 mb-5">
-                        <div
-                            class="text-center bg-slate-50 border border-gray-100 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex-1 sm:flex-none sm:min-w-[68px]">
-                            <span class="cd-num block" id="cd-days">00</span>
-                            <span
-                                class="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase text-gray-400 mt-1 block">Hari</span>
+                    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                        <a href="{{ route('register') }}" class="btn-primary">
+                            Mulai Gratis <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="#fitur" class="btn-secondary">
+                            Lihat Fitur <i class="fa-solid fa-chevron-down"></i>
+                        </a>
+                    </div>
+                    <div class="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+                        <div class="rounded-3xl border border-pink-100 bg-white/80 p-4">
+                            <div class="text-2xl font-black text-pink-600">2 akun</div>
+                            <div class="mt-1 text-xs font-bold text-slate-500">Untuk kamu dan pasangan</div>
                         </div>
-                        <span class="text-xl font-light text-gray-300 mb-3">:</span>
-                        <div
-                            class="text-center bg-slate-50 border border-gray-100 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex-1 sm:flex-none sm:min-w-[68px]">
-                            <span class="cd-num block" id="cd-hours">00</span>
-                            <span
-                                class="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase text-gray-400 mt-1 block">Jam</span>
+                        <div class="rounded-3xl border border-pink-100 bg-white/80 p-4">
+                            <div class="text-2xl font-black text-pink-600">1 dompet</div>
+                            <div class="mt-1 text-xs font-bold text-slate-500">Data keuangan bersama</div>
                         </div>
-                        <span class="text-xl font-light text-gray-300 mb-3">:</span>
-                        <div
-                            class="text-center bg-slate-50 border border-gray-100 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex-1 sm:flex-none sm:min-w-[68px]">
-                            <span class="cd-num block" id="cd-minutes">00</span>
-                            <span
-                                class="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase text-gray-400 mt-1 block">Menit</span>
-                        </div>
-                        <span class="text-xl font-light text-gray-300 mb-3">:</span>
-                        <div
-                            class="text-center bg-slate-50 border border-gray-100 rounded-xl px-3 sm:px-5 py-3 sm:py-4 flex-1 sm:flex-none sm:min-w-[68px]">
-                            <span class="cd-num block" id="cd-seconds">00</span>
-                            <span
-                                class="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase text-gray-400 mt-1 block">Detik</span>
+                        <div class="rounded-3xl border border-pink-100 bg-white/80 p-4">
+                            <div class="text-2xl font-black text-pink-600">Privat</div>
+                            <div class="mt-1 text-xs font-bold text-slate-500">Mode rahasia tersedia</div>
                         </div>
                     </div>
-                    <p class="text-center text-xs text-gray-400">
-                        Dibuka pada <span
-                            class="font-semibold text-gray-700">{{ $announcement->announcement_date->translatedFormat('l, d F Y — H:i') }}
-                            WIB</span>
-                    </p>
-                    @if ($announcement->description)
-                        <p class="text-center text-xs text-gray-400 italic mt-2">{{ $announcement->description }}</p>
-                    @endif
-                    <script>
-                        const targetDate = new Date("{{ $announcement->announcement_date->toISOString() }}");
-                        function updateCountdown() {
-                            const now = new Date();
-                            const diff = targetDate - now;
-                            if (diff <= 0) { location.reload(); return; }
-                            const d = Math.floor(diff / 86400000);
-                            const h = Math.floor((diff % 86400000) / 3600000);
-                            const m = Math.floor((diff % 3600000) / 60000);
-                            const s = Math.floor((diff % 60000) / 1000);
-                            document.getElementById('cd-days').textContent = String(d).padStart(2, '0');
-                            document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
-                            document.getElementById('cd-minutes').textContent = String(m).padStart(2, '0');
-                            document.getElementById('cd-seconds').textContent = String(s).padStart(2, '0');
-                        }
-                        updateCountdown();
-                        setInterval(updateCountdown, 1000);
-                    </script>
-
-                @elseif ($isOpen)
-                    <div class="text-center py-2">
-                        <div
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-bold tracking-widest uppercase mb-3">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot inline-block"></span>
-                            Pengumuman Sudah Dibuka
-                        </div>
-                        <p class="text-sm text-gray-400 mt-1">
-                            Resmi dibuka sejak <span
-                                class="font-semibold text-gray-700">{{ $announcement->announcement_date->translatedFormat('d F Y, H:i') }}
-                                WIB</span>
-                        </p>
-                    </div>
-
-                @else
-                    <div class="text-center py-4">
-                        <div
-                            class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-400 text-xl mx-auto mb-4">
-                            <i class="fa-solid fa-calendar-xmark"></i>
-                        </div>
-                        <p class="font-semibold text-gray-700 mb-1">Tanggal Belum Diatur</p>
-                        <p class="text-sm text-gray-400">Administrator belum mengatur tanggal pengumuman.</p>
-                    </div>
-                @endif
-
-            </div>
-
-            @if (!$announcement || !$isOpen)
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-8 text-center">
-                    <div
-                        class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-indigo-400 text-xl mx-auto mb-4">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
-                    <p class="font-semibold text-gray-800 mb-1">Belum Dapat Diakses</p>
-                    <p class="text-sm text-gray-400 leading-relaxed">Tunggu hingga tanggal pengumuman tiba.<br>Pantau terus
-                        halaman ini.</p>
                 </div>
 
-            @else
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" id="loginSection">
-                    <div class="px-5 sm:px-7 pt-5 sm:pt-7 pb-2">
-                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-1">Cek Kelulusanmu</h3>
-                        <p class="text-xs sm:text-sm text-gray-400 mb-5">Masukkan NIS dan password yang diberikan sekolah
-                        </p>
-
-                        <div id="errorBar" style="display:none;"
-                            class="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-500 text-sm font-medium mb-5">
-                            <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
-                            <span id="errorText">NIS atau password salah.</span>
+                <div class="flex justify-center lg:justify-end">
+                    <div class="phone-frame">
+                        <div class="phone-top">
+                            <div class="phone-speaker"></div>
                         </div>
-
-                        <form id="checkForm">
-                            @csrf
-                            <div class="mb-4">
-                                <label
-                                    class="block text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase text-gray-400 mb-2">NIS
-                                    / Username</label>
-                                <div class="relative">
-                                    <i
-                                        class="fa-solid fa-id-badge absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none"></i>
-                                    <input type="text" id="inputNis" placeholder="Masukkan NIS kamu"
-                                        class="input-focus w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-slate-50 text-base text-gray-800 placeholder-gray-300 transition-all"
-                                        required autocomplete="off">
+                        <div class="app-preview">
+                            <div class="mb-4 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[11px] font-extrabold uppercase tracking-wide text-pink-600">Ringkasan</div>
+                                    <div class="text-xl font-black text-slate-900">Net Worth</div>
+                                </div>
+                                <div class="grid h-11 w-11 place-items-center rounded-2xl bg-pink-600 text-white">
+                                    <i class="fa-solid fa-heart"></i>
                                 </div>
                             </div>
-                            <div class="mb-5">
-                                <label
-                                    class="block text-[10px] sm:text-[11px] font-semibold tracking-widest uppercase text-gray-400 mb-2">Password</label>
-                                <div class="relative">
-                                    <i
-                                        class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none"></i>
-                                    <input type="password" id="inputPassword" placeholder="Masukkan password"
-                                        class="input-focus w-full pl-9 pr-10 py-2.5 rounded-xl border border-gray-200 bg-slate-50 text-base text-gray-800 placeholder-gray-300 transition-all"
-                                        required>
-                                    <button type="button" onclick="togglePw()"
-                                        class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 text-xs transition-colors bg-transparent border-none cursor-pointer">
-                                        <i class="fa-regular fa-eye" id="pwIcon"></i>
-                                    </button>
+                            <div class="mini-card mb-3 bg-pink-600 text-white">
+                                <div class="text-xs font-bold opacity-80">Total Kekayaan Bersih</div>
+                                <div class="mt-2 text-2xl font-black">Rp 18.450.000</div>
+                                <div class="mt-2 text-[11px] font-semibold opacity-85">Saldo + aset + piutang - hutang</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="mini-card">
+                                    <div class="text-[11px] font-bold text-slate-400">Budget Makan</div>
+                                    <div class="mt-2 text-lg font-black text-slate-900">62%</div>
+                                    <div class="preview-bar mt-2"><span style="width:62%"></span></div>
+                                </div>
+                                <div class="mini-card">
+                                    <div class="text-[11px] font-bold text-slate-400">Target Bali</div>
+                                    <div class="mt-2 text-lg font-black text-slate-900">78%</div>
+                                    <div class="preview-bar mt-2"><span style="width:78%"></span></div>
                                 </div>
                             </div>
-                            <button type="submit" id="submitBtn"
-                                class="btn-gradient w-full py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2">
-                                <div class="spinner" id="spinner"></div>
-                                <i class="fa-solid fa-magnifying-glass" id="searchIcon"></i>
-                                <span id="btnText">Cek Kelulusan</span>
-                            </button>
-                        </form>
-                    </div>
-                    <div class="px-5 sm:px-7 py-4 bg-slate-50 border-t border-gray-100 mt-5">
-                        <p class="text-center text-xs text-gray-400 leading-relaxed">Hubungi Tim Pengajaran jika ada
-                            kendala.</p>
-                    </div>
-                </div>
-            @endif
-
-        </div>
-
-        <div class="result-section mt-5" id="resultSection">
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div id="resAvatar"
-                            class="w-11 h-11 rounded-full btn-gradient flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                            —</div>
-                        <div class="min-w-0">
-                            <p id="resNama" class="font-semibold text-gray-900 text-sm truncate">—</p>
-                            <p class="text-xs text-gray-400 mt-0.5">
-                                NIS <code id="resNis"
-                                    class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-[10px] text-gray-500">—</code>
-                                · <span id="resKelas">—</span>
-                            </p>
+                            <div class="mini-card mt-3">
+                                <div class="mb-3 flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-black text-slate-900">Kalender Tagihan</div>
+                                        <div class="text-[11px] font-semibold text-slate-400">Juni 2026</div>
+                                    </div>
+                                    <i class="fa-solid fa-calendar-days text-pink-600"></i>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400">
+                                    @foreach(['S','S','R','K','J','S','M'] as $day)
+                                        <span>{{ $day }}</span>
+                                    @endforeach
+                                    @for($day = 1; $day <= 21; $day++)
+                                        <span class="{{ in_array($day, [5, 12, 18]) ? 'rounded-lg bg-pink-100 text-pink-700' : '' }} py-1">{{ $day }}</span>
+                                    @endfor
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-4 gap-2 text-center text-[10px] font-bold text-slate-400">
+                                <div><i class="fa-solid fa-house block text-base text-pink-600"></i>Home</div>
+                                <div><i class="fa-solid fa-arrow-right-arrow-left block text-base"></i>Trx</div>
+                                <div><i class="fa-solid fa-bell block text-base"></i>Bill</div>
+                                <div><i class="fa-solid fa-grip block text-base"></i>Menu</div>
+                            </div>
                         </div>
                     </div>
-                    <div id="resBadge" class="flex-shrink-0"></div>
                 </div>
-
-                <div class="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-                    <div class="px-4 py-3">
-                        <p class="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-1">Total Nilai
-                        </p>
-                        <p id="resTotalScore" class="text-2xl font-bold gradient-text">—</p>
-                    </div>
-                    <div class="px-4 py-3">
-                        <p class="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-1">Rata-rata</p>
-                        <p id="resAvgScore" class="text-2xl font-bold gradient-text">—</p>
-                    </div>
-                    <div class="px-4 py-3">
-                        <p class="text-[10px] font-semibold tracking-widest uppercase text-gray-400 mb-1">Peringkat</p>
-                        <p id="resRanking" class="text-2xl font-bold gradient-text">—</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-0 px-5 py-3">
-                    <div class="py-2 pr-4">
-                        <p class="text-[10px] text-gray-400 mb-0.5">NISN</p>
-                        <p id="infoNisn" class="text-sm font-semibold text-gray-800">—</p>
-                    </div>
-                    <div class="py-2">
-                        <p class="text-[10px] text-gray-400 mb-0.5">Tempat, Tanggal Lahir</p>
-                        <p id="infoTTL" class="text-sm font-semibold text-gray-800">—</p>
-                    </div>
-                    <div class="py-2 pr-4">
-                        <p class="text-[10px] text-gray-400 mb-0.5">Orang Tua</p>
-                        <p id="infoOrtu" class="text-sm font-semibold text-gray-800">—</p>
-                    </div>
-                    <div class="py-2">
-                        <p class="text-[10px] text-gray-400 mb-0.5">Mapel Pilihan</p>
-                        <p id="infoMapel" class="text-sm font-semibold text-gray-800">—</p>
-                    </div>
-                    <div class="py-2 col-span-2">
-                        <p class="text-[10px] text-gray-400 mb-0.5">Status Kelulusan</p>
-                        <p id="infoStatus" class="text-sm font-bold">—</p>
-                    </div>
-                </div>
-
-                <div class="px-5 py-3 bg-slate-50 border-t border-gray-100 flex items-center justify-between gap-3">
-                    <button onclick="backToForm()"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-medium text-gray-500 hover:text-gray-800 hover:border-gray-300 transition-all cursor-pointer">
-                        <i class="fa-solid fa-arrow-left text-xs"></i> Kembali
-                    </button>
-                    <a href="#" id="downloadBtn" target="_blank"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl btn-gradient text-white text-xs font-semibold">
-                        <i class="fa-solid fa-file-arrow-down"></i> Download Surat
-                    </a>
-                </div>
-
             </div>
-            <p class="text-center text-xs text-gray-400 mt-3">Dokumen ini bersifat resmi. Simpan dengan baik dan jangan
-                disebarluaskan.</p>
-        </div>
+        </section>
 
+        <section id="fitur" class="section-band py-16 sm:py-20">
+            <div class="mx-auto max-w-6xl px-4 sm:px-6">
+                <div class="mx-auto max-w-2xl text-center">
+                    <p class="text-sm font-extrabold uppercase tracking-wide text-pink-600">Fitur Utama</p>
+                    <h2 class="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">Yang biasanya ribet, dibuat lebih gampang.</h2>
+                    <p class="mt-4 text-sm leading-relaxed text-slate-500 sm:text-base">
+                        Fokusnya bukan cuma catat uang, tapi bikin pasangan sama-sama paham kondisi keuangan.
+                    </p>
+                </div>
+                <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach([
+                        ['icon' => 'fa-arrow-right-arrow-left', 'title' => 'Transaksi Bersama', 'text' => 'Catat pemasukan dan pengeluaran dari rekening yang berbeda, lengkap dengan kategori dan pemilik transaksi.'],
+                        ['icon' => 'fa-chart-pie', 'title' => 'Budget Per Kategori', 'text' => 'Atur budget hanya untuk kategori yang penting, seperti makanan, transport, atau hiburan.'],
+                        ['icon' => 'fa-bell', 'title' => 'Reminder Tagihan', 'text' => 'Pantau listrik, internet, kontrakan, cicilan, dan subscription dalam kalender bulanan.'],
+                        ['icon' => 'fa-bullseye', 'title' => 'Target Tabungan', 'text' => 'Bikin target liburan, dana darurat, atau rencana besar lain dengan progress yang mudah dipahami.'],
+                        ['icon' => 'fa-gem', 'title' => 'Aset & Net Worth', 'text' => 'Lacak saldo rekening, aset, piutang, hutang, lalu lihat kekayaan bersih secara otomatis.'],
+                        ['icon' => 'fa-file-export', 'title' => 'Export Laporan', 'text' => 'Rekap keuangan bisa diexport ke PDF atau Excel untuk diskusi bulanan bersama pasangan.'],
+                    ] as $feature)
+                        <article class="feature-card">
+                            <div class="feature-icon"><i class="fa-solid {{ $feature['icon'] }}"></i></div>
+                            <h3 class="text-lg font-black text-slate-900">{{ $feature['title'] }}</h3>
+                            <p class="mt-3 text-sm leading-relaxed text-slate-500">{{ $feature['text'] }}</p>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        <section id="cara-kerja" class="bg-pink-50 py-16 sm:py-20">
+            <div class="mx-auto max-w-6xl px-4 sm:px-6">
+                <div class="grid gap-10 lg:grid-cols-[0.8fr_1fr] lg:items-center">
+                    <div>
+                        <p class="text-sm font-extrabold uppercase tracking-wide text-pink-600">Cara Kerja</p>
+                        <h2 class="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">Mulai berdua dalam beberapa menit.</h2>
+                        <p class="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base">
+                            Cocok untuk pasangan yang baru mulai terbuka soal uang, atau yang sudah punya banyak rekening dan rencana bersama.
+                        </p>
+                    </div>
+                    <div class="grid gap-4">
+                        @foreach([
+                            ['Daftar akun', 'Buat akun pertama, lalu sistem menyiapkan ruang keuangan pasangan.'],
+                            ['Undang pasangan', 'Bagikan kode atau link undangan agar pasangan masuk ke ruang yang sama.'],
+                            ['Catat dan evaluasi', 'Mulai input transaksi, rekening, budget, tagihan, target, dan cek rekap bersama.'],
+                        ] as $index => $step)
+                            <div class="flex gap-4 rounded-3xl border border-pink-100 bg-white p-5">
+                                <div class="step-dot">{{ $index + 1 }}</div>
+                                <div>
+                                    <h3 class="font-black text-slate-900">{{ $step[0] }}</h3>
+                                    <p class="mt-1 text-sm leading-relaxed text-slate-500">{{ $step[1] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="privasi" class="section-band py-16 sm:py-20">
+            <div class="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:items-center">
+                <div>
+                    <p class="text-sm font-extrabold uppercase tracking-wide text-pink-600">Tetap Nyaman</p>
+                    <h2 class="mt-2 text-3xl font-black text-slate-950 sm:text-4xl">Transparan, tapi tetap ada ruang pribadi.</h2>
+                    <p class="mt-4 text-sm leading-relaxed text-slate-500 sm:text-base">
+                        Tidak semua transaksi harus jadi bahan diskusi. DompetKita menyediakan mode privasi untuk transaksi tertentu, plus kontrol saldo rekening yang bisa disembunyikan atau ditampilkan.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <span class="rounded-full bg-pink-50 px-4 py-2 text-xs font-extrabold text-pink-700">Mode Privasi</span>
+                        <span class="rounded-full bg-pink-50 px-4 py-2 text-xs font-extrabold text-pink-700">Hide Saldo</span>
+                        <span class="rounded-full bg-pink-50 px-4 py-2 text-xs font-extrabold text-pink-700">Data Per Pasangan</span>
+                    </div>
+                </div>
+                <div class="rounded-[32px] border border-pink-100 bg-pink-50 p-6">
+                    <div class="rounded-3xl bg-white p-5 shadow-sm">
+                        <div class="mb-4 flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-black text-slate-900">Rekap Mingguan</div>
+                                <div class="text-xs font-semibold text-slate-400">Diskusi uang jadi lebih tenang</div>
+                            </div>
+                            <i class="fa-solid fa-chart-line text-pink-600"></i>
+                        </div>
+                        @foreach([
+                            ['Makan & jajan', 'Rp 580.000', '72%'],
+                            ['Transport', 'Rp 210.000', '41%'],
+                            ['Tagihan', 'Rp 750.000', '100%'],
+                        ] as $row)
+                            <div class="mb-4 last:mb-0">
+                                <div class="mb-2 flex justify-between text-sm font-bold">
+                                    <span>{{ $row[0] }}</span>
+                                    <span class="text-pink-600">{{ $row[1] }}</span>
+                                </div>
+                                <div class="preview-bar"><span style="width:{{ $row[2] }}"></span></div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-slate-950 py-16 text-white sm:py-20">
+            <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
+                <h2 class="text-3xl font-black sm:text-4xl">Siap bikin keuangan berdua lebih rapi?</h2>
+                <p class="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                    Mulai dari catatan kecil hari ini. Nanti pelan-pelan, kamu dan pasangan punya gambaran yang lebih jelas soal uang, target, dan kebiasaan belanja.
+                </p>
+                <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                    <a href="{{ route('register') }}" class="btn-primary">Buat Akun Sekarang</a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-2xl border border-white/15 px-5 py-3 text-sm font-extrabold text-white no-underline hover:bg-white/10">Sudah punya akun</a>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer class="border-t border-gray-100 bg-white py-5 text-center text-xs text-gray-400">
-        © {{ date('Y') }} · Sistem Pengumuman Kelulusan
+    <footer class="bg-white py-6">
+        <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-center text-xs font-semibold text-slate-400 sm:flex-row sm:px-6">
+            <div>© {{ date('Y') }} DompetKita. Keuangan bersama untuk pasangan.</div>
+            <div class="flex gap-4">
+                <a href="{{ route('privacy') }}" class="text-slate-400 no-underline hover:text-pink-600">Privasi</a>
+                <a href="{{ route('terms') }}" class="text-slate-400 no-underline hover:text-pink-600">Ketentuan</a>
+            </div>
+        </div>
     </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <script>
-        function togglePw() {
-            const inp = document.getElementById('inputPassword');
-            const icon = document.getElementById('pwIcon');
-            if (inp.type === 'password') {
-                inp.type = 'text';
-                icon.className = 'fa-regular fa-eye-slash';
-            } else {
-                inp.type = 'password';
-                icon.className = 'fa-regular fa-eye';
-            }
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('errorBar');
-            document.getElementById('errorText').textContent = msg;
-            el.style.display = 'flex';
-            setTimeout(() => { el.style.display = 'none'; }, 5000);
-        }
-
-        function setLoading(on) {
-            const btn = document.getElementById('submitBtn');
-            const spin = document.getElementById('spinner');
-            const icon = document.getElementById('searchIcon');
-            const text = document.getElementById('btnText');
-            btn.disabled = on;
-            spin.style.display = on ? 'block' : 'none';
-            icon.style.display = on ? 'none' : 'inline';
-            text.textContent = on ? 'Memuat...' : 'Cek Kelulusan';
-        }
-
-        function backToForm() {
-            document.getElementById('resultSection').classList.remove('show', 'lulus-glow');
-            document.getElementById('mainGrid').style.display = '';
-            document.getElementById('loginSection').style.display = '';
-            document.getElementById('inputNis').value = '';
-            document.getElementById('inputPassword').value = '';
-
-            // Reset hero
-            document.getElementById('heroTitle').innerHTML = `Halo! 👋<br><span class="gradient-text italic">Siap Lihat Hasilmu? 🎓</span>`;
-            document.getElementById('heroSubtitle').textContent = 'Yuk cek hasil kelulusanmu di sini. Masukkan NIS dan password yang sudah diberikan ya.';
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function playConfetti() {
-            const end = Date.now() + 3000;
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 70, origin: { x: 0 } });
-                confetti({ particleCount: 5, angle: 120, spread: 70, origin: { x: 1 } });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            })();
-        }
-
-        document.getElementById('checkForm')?.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            setLoading(true);
-            document.getElementById('errorBar').style.display = 'none';
-
-            const nis = document.getElementById('inputNis').value.trim();
-            const password = document.getElementById('inputPassword').value.trim();
-
-            try {
-                const res = await fetch('{{ route("check.result") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ nis, password })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok || !data.success) {
-                    showError(data.message ?? 'NIS atau password salah.');
-                    setLoading(false);
-                    return;
-                }
-
-                const s = data.student;
-                const dlBtn = document.getElementById('downloadBtn');
-
-                document.getElementById('resAvatar').textContent = (s.nama || '?').charAt(0).toUpperCase();
-                document.getElementById('resNama').textContent = s.nama;
-                document.getElementById('resNis').textContent = s.nis;
-                document.getElementById('resKelas').textContent = s.kelas;
-                document.getElementById('resTotalScore').textContent = s.total_score ?? '—';
-                document.getElementById('resAvgScore').textContent = s.average_score ? parseFloat(s.average_score).toFixed(2) : '—';
-                document.getElementById('resRanking').textContent = s.ranking ? '#' + s.ranking : '—';
-                document.getElementById('infoNisn').textContent = s.nisn || '-';
-
-                const tempat = s.tempat_lahir || '-';
-                const tgl = s.tanggal_lahir
-                    ? new Date(s.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-                    : '-';
-                document.getElementById('infoTTL').textContent = tempat + ', ' + tgl;
-                document.getElementById('infoOrtu').textContent = s.nama_orang_tua || '-';
-                document.getElementById('infoMapel').textContent = s.mapel || '-';
-
-                const lulus = s.status === 'lulus';
-
-                const heroTitle = document.getElementById('heroTitle');
-                const heroSubtitle = document.getElementById('heroSubtitle');
-
-                if (lulus) {
-                    heroTitle.innerHTML = `Selamat! 🎉<br><span class="gradient-text italic">Kamu Dinyatakan Lulus! 🎓</span>`;
-                    heroSubtitle.textContent = ` Semangat untuk langkah berikutnya, ${s.nama.split(' ')[0]}!`;
-                } else {
-                    heroTitle.innerHTML = `Hai, ${s.nama.split(' ')[0]} 👋<br><span style="-webkit-text-fill-color:#dc2626;background:none">Belum Berhasil Kali Ini</span>`;
-                    heroSubtitle.textContent = 'Jangan menyerah. Tetap semangat dan terus berjuang untuk masa depanmu!';
-                }
-
-                document.getElementById('infoStatus').textContent = lulus ? 'LULUS' : 'TIDAK LULUS';
-                document.getElementById('infoStatus').style.color = lulus ? '#059669' : '#dc2626';
-
-                document.getElementById('resBadge').innerHTML = lulus
-                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold tracking-widest uppercase"><i class="fa-solid fa-circle-check text-[10px]"></i> LULUS</span>`
-                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold tracking-widest uppercase"><i class="fa-solid fa-circle-xmark text-[10px]"></i> TIDAK LULUS</span>`;
-
-                if (lulus) {
-                    dlBtn.href = '#';
-                    dlBtn.onclick = async (ev) => {
-                        ev.preventDefault();
-
-                        if (!s.file_surat) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Surat Belum Digenerate',
-                                text: 'Surat kelulusan belum dibuat. Hubungi admin untuk generate surat terlebih dahulu.',
-                                confirmButtonColor: '#6366f1',
-                                customClass: { popup: 'rounded-2xl' }
-                            });
-                            return;
-                        }
-
-                        const fileUrl = `/storage/${s.file_surat}`;
-                        const a = document.createElement('a');
-                        a.href = fileUrl;
-                        a.download = `Surat_Kelulusan_${s.nis}.pdf`;
-                        a.target = '_blank';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    };
-                } else {
-                    dlBtn.href = '#';
-                    dlBtn.onclick = (ev) => {
-                        ev.preventDefault();
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Tidak Tersedia',
-                            text: 'Surat kelulusan hanya tersedia untuk siswa yang dinyatakan LULUS.',
-                            confirmButtonColor: '#6366f1',
-                            customClass: { popup: 'rounded-2xl' }
-                        });
-                    };
-                }
-                if (lulus) {
-                    playConfetti();
-                    document.getElementById('resultSection').classList.add('lulus-glow');
-                }
-
-                document.getElementById('mainGrid').style.display = 'none';
-                document.getElementById('resultSection').classList.add('show');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            } catch (err) {
-                showError('Terjadi kesalahan. Coba lagi nanti.');
-            }
-
-            setLoading(false);
-        });
-    </script>
-
 </body>
 
 </html>

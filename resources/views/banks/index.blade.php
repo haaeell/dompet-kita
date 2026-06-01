@@ -9,6 +9,10 @@
             <p class="text-sm text-slate-500">Kelola semua pos dan tempat penyimpanan uang kalian</p>
         </div>
         <div class="flex gap-2 flex-wrap">
+            <button type="button" data-toggle-sensitive-money class="btn-ghost whitespace-nowrap" aria-pressed="false">
+                <i class="fa-solid fa-eye-slash"></i>
+                <span data-sensitive-money-toggle-label>Sembunyikan Saldo</span>
+            </button>
             <a href="{{ route('banks.transfer') }}" class="btn-ghost whitespace-nowrap">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i> Transfer
             </a>
@@ -42,7 +46,7 @@
 
                 <div class="my-4">
                     <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Saldo Saat Ini</div>
-                    <div class="text-3xl font-extrabold text-slate-900">
+                    <div class="text-3xl font-extrabold text-slate-900" data-sensitive-money data-mask-text="Rp •••••••">
                         <span class="text-base font-semibold text-slate-400 mr-1">Rp</span>{{ number_format($bank->current_balance, 0, ',', '.') }}
                     </div>
                 </div>

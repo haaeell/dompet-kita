@@ -27,6 +27,10 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
+                <button type="button" data-toggle-sensitive-money class="btn-ghost whitespace-nowrap" aria-pressed="false">
+                    <i class="fa-solid fa-eye-slash"></i>
+                    <span data-sensitive-money-toggle-label>Sembunyikan Saldo</span>
+                </button>
                 <a href="{{ route('banks.mutations.pdf', ['bank' => $bank] + $downloadQuery) }}"
                     class="btn-ghost whitespace-nowrap">
                     <i class="fa-solid fa-file-pdf"></i> Download PDF
@@ -40,7 +44,7 @@
                         </div>
                         <div>
                             <div class="text-[11px] uppercase tracking-[0.2em] text-slate-400">Saldo Saat Ini</div>
-                            <div class="text-xl font-bold text-slate-900">
+                            <div class="text-xl font-bold text-slate-900" data-sensitive-money data-mask-text="Rp •••••••">
                                 Rp {{ number_format($bank->current_balance, 0, ',', '.') }}
                             </div>
                         </div>
@@ -52,7 +56,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="text-[11px] uppercase tracking-[0.2em] text-slate-400">Saldo Awal Rekening</div>
-                <div class="mt-3 text-2xl font-bold text-slate-900">
+                <div class="mt-3 text-2xl font-bold text-slate-900" data-sensitive-money data-mask-text="Rp •••••••">
                     Rp {{ number_format($bank->initial_balance, 0, ',', '.') }}
                 </div>
                 <p class="mt-2 text-sm text-slate-500 mb-0">Saldo awal saat rekening ini pertama dicatat.</p>
@@ -164,7 +168,7 @@
                                 <td class="px-6 py-5 align-top whitespace-nowrap text-sm text-slate-600">
                                     {{ $tx->user->avatar ?? 'User' }} {{ $tx->user->name }}
                                 </td>
-                                <td class="px-6 py-5 align-top whitespace-nowrap text-right text-sm text-slate-600">
+                                <td class="px-6 py-5 align-top whitespace-nowrap text-right text-sm text-slate-600" data-sensitive-money data-mask-text="Rp •••••••">
                                     Rp {{ number_format($tx->opening_balance, 0, ',', '.') }}
                                 </td>
                                 <td class="px-6 py-5 align-top whitespace-nowrap text-right">
@@ -177,7 +181,7 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-5 align-top whitespace-nowrap text-right text-sm font-semibold text-slate-900">
+                                <td class="px-6 py-5 align-top whitespace-nowrap text-right text-sm font-semibold text-slate-900" data-sensitive-money data-mask-text="Rp •••••••">
                                     Rp {{ number_format($tx->closing_balance, 0, ',', '.') }}
                                 </td>
                             </tr>
@@ -226,13 +230,13 @@
                         <div class="mt-4 grid grid-cols-2 gap-3">
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
                                 <div class="text-[11px] uppercase tracking-[0.16em] text-slate-400">Saldo Awal</div>
-                                <div class="mt-2 text-sm font-semibold text-slate-800">
+                                <div class="mt-2 text-sm font-semibold text-slate-800" data-sensitive-money data-mask-text="Rp •••••••">
                                     Rp {{ number_format($tx->opening_balance, 0, ',', '.') }}
                                 </div>
                             </div>
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
                                 <div class="text-[11px] uppercase tracking-[0.16em] text-slate-400">Saldo Akhir</div>
-                                <div class="mt-2 text-sm font-semibold text-slate-800">
+                                <div class="mt-2 text-sm font-semibold text-slate-800" data-sensitive-money data-mask-text="Rp •••••••">
                                     Rp {{ number_format($tx->closing_balance, 0, ',', '.') }}
                                 </div>
                             </div>

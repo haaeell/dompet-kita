@@ -550,8 +550,8 @@
         const chatStoreUrl = @json(route('chats.store'));
         const chatUpdateUrlTemplate = @json(route('chats.update', ['chatMessage' => '__ID__']));
         const chatDeleteUrlTemplate = @json(route('chats.destroy', ['chatMessage' => '__ID__']));
-        const chatFirebaseConfig = @json(config('firebase.web'));
-        const chatFirebaseReady = Boolean(chatFirebaseConfig.apiKey && chatFirebaseConfig.projectId && chatFirebaseConfig.appId);
+        const chatFirebaseConfig = @json(config('firebase.web') ?? []);
+        const chatFirebaseReady = Boolean(chatFirebaseConfig?.apiKey && chatFirebaseConfig?.projectId && chatFirebaseConfig?.appId);
         const chatCoupleId = @json((string) auth()->user()->couple_id);
         const chatCurrentUserId = @json(auth()->id());
         const chatCsrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -1053,6 +1053,7 @@
 
         function startFallbackPolling() {
             if (pollingTimer) return;
+            fetchMessages();
             pollingTimer = window.setInterval(fetchMessages, chatFallbackPollMs);
         }
 
@@ -1079,6 +1080,7 @@
                 chatDebug('Pesan dipublish ke Firestore', message);
             } catch (error) {
                 setChatStatus('Firebase publish gagal, fallback tetap aktif', error);
+                startFallbackPolling();
             }
         }
 
@@ -1378,6 +1380,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             applyChatTheme(loadChatTheme());
             renderMessages(chatInitialMessages);
+            startFallbackPolling();
             initFirebaseRealtime();
             document.addEventListener('visibilitychange', function () {
                 if (!document.hidden) fetchMessages();

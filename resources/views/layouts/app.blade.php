@@ -2100,7 +2100,65 @@
                     showPageLoveLoader();
                 }
             });
+
+            initSensitiveMoneyPrivacy();
         });
+
+        function isSensitiveMoneyHidden() {
+            try {
+                return localStorage.getItem('dompetkitaHideSensitiveMoney') === '1';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function setSensitiveMoneyHidden(hidden) {
+            try {
+                localStorage.setItem('dompetkitaHideSensitiveMoney', hidden ? '1' : '0');
+            } catch (error) {
+                // Abaikan jika browser memblokir localStorage.
+            }
+
+            applySensitiveMoneyPrivacy(hidden);
+        }
+
+        function applySensitiveMoneyPrivacy(hidden = isSensitiveMoneyHidden()) {
+            document.querySelectorAll('[data-sensitive-money]').forEach(element => {
+                if (!element.dataset.visibleText) {
+                    element.dataset.visibleText = element.textContent.trim();
+                }
+
+                element.textContent = hidden
+                    ? (element.dataset.maskText || 'Rp •••••••')
+                    : element.dataset.visibleText;
+            });
+
+            document.querySelectorAll('[data-toggle-sensitive-money]').forEach(button => {
+                button.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+                button.title = hidden ? 'Tampilkan saldo' : 'Sembunyikan saldo';
+
+                const label = button.querySelector('[data-sensitive-money-toggle-label]');
+                if (label) {
+                    label.textContent = hidden ? 'Tampilkan Saldo' : 'Sembunyikan Saldo';
+                }
+
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', hidden);
+                    icon.classList.toggle('fa-eye-slash', !hidden);
+                }
+            });
+        }
+
+        function initSensitiveMoneyPrivacy() {
+            document.querySelectorAll('[data-toggle-sensitive-money]').forEach(button => {
+                button.addEventListener('click', function () {
+                    setSensitiveMoneyHidden(!isSensitiveMoneyHidden());
+                });
+            });
+
+            applySensitiveMoneyPrivacy();
+        }
 
         async function deleteConfirm(url, callback) {
             const result = await Swal.fire({

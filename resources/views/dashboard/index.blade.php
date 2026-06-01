@@ -1007,6 +1007,8 @@
                                     {{ $bank->name }} ({{ $bank->account_name }})
                                 </div>
                                 <div class="text-xs font-bold overflow-hidden text-ellipsis whitespace-nowrap"
+                                    data-sensitive-money
+                                    data-mask-text="Rp •••••••"
                                     style="color:{{ $bank->color }};">
                                     Rp {{ number_format($bank->current_balance, 0, ',', '.') }}
                                 </div>

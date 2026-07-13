@@ -3,12 +3,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asset;
+use App\Models\BillReminder;
 use App\Models\Couple;
+use App\Models\Debt;
+use App\Models\Target;
+use App\Models\TargetSaving;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Bank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -169,6 +176,36 @@ class AuthController extends Controller
         $user->save();
 
         return redirect()->route('profile')->with('success', 'Password berhasil diperbarui.');
+    }
+
+    public function resetData(Request $request)
+    {
+        $request->validateWithBag('resetData', [
+            'confirmation' => 'required|in:RESET',
+        ], [
+            'confirmation.in' => 'Ketik "RESET" dengan benar untuk konfirmasi.',
+        ]);
+
+        $user = Auth::user();
+
+        DB::transaction(function () use ($user) {
+            $bankIds = Transaction::where('user_id', $user->id)->pluck('bank_id')
+                ->merge(Debt::where('user_id', $user->id)->pluck('bank_id'))
+                ->merge(Debt::where('user_id', $user->id)->pluck('settlement_bank_id'))
+                ->filter()
+                ->unique();
+
+            TargetSaving::where('user_id', $user->id)->get()->each(fn ($saving) => $saving->delete());
+
+            Debt::where('user_id', $user->id)->delete();
+            Transaction::where('user_id', $user->id)->delete();
+            Asset::where('user_id', $user->id)->delete();
+            BillReminder::where('user_id', $user->id)->delete();
+
+            Bank::whereIn('id', $bankIds)->get()->each(fn ($bank) => $bank->recalculateBalance());
+        });
+
+        return redirect()->route('profile')->with('success', 'Data pribadi kamu (transaksi, hutang/piutang, tabungan, aset, pengingat) berhasil direset seperti baru.');
     }
 
     private function seedDefaultCategories(int $coupleId): void

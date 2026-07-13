@@ -241,11 +241,68 @@
                     </div>
                 </form>
             </div>
+
+            <div class="profile-form-card card p-6 border border-rose-200" id="reset-data">
+                <h2 class="text-lg font-semibold mb-2 text-rose-700">Zona Berbahaya</h2>
+                <p class="text-sm text-[var(--text-secondary)] mb-4">
+                    Reset semua data pribadimu (transaksi, saldo bank, hutang/piutang, kontribusi tabungan,
+                    aset, dan pengingat tagihan) seperti akun baru. Data bank/rekening tidak akan dihapus,
+                    hanya saldonya dihitung ulang dari nol. Tindakan ini <strong>tidak bisa dibatalkan</strong>.
+                </p>
+                <button type="button" class="btn-ghost border border-rose-300 text-rose-700 hover:bg-rose-50"
+                    onclick="document.getElementById('resetDataModal').classList.remove('hidden')">
+                    <i class="fa-solid fa-trash-can"></i> Reset Data Saya
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resetDataModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="card p-6 w-full max-w-md bg-white rounded-3xl">
+            <h3 class="text-lg font-bold text-rose-700 mb-2">
+                <i class="fa-solid fa-triangle-exclamation"></i> Reset Data Saya
+            </h3>
+            <p class="text-sm text-[var(--text-secondary)] mb-4">
+                Semua transaksi, hutang/piutang, kontribusi tabungan, aset, dan pengingat tagihan milikmu akan
+                dihapus permanen. Bank tidak dihapus, tapi saldonya akan kembali ke saldo awal. Aksi ini tidak
+                bisa dibatalkan.
+            </p>
+            <form action="{{ route('profile.reset-data') }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="grid gap-4">
+                    @if ($errors->resetData->any())
+                        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-800">
+                            <ul class="list-disc list-inside">
+                                @foreach ($errors->resetData->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <div>
+                        <label class="label" for="reset_confirmation">Ketik <strong>RESET</strong> untuk
+                            konfirmasi</label>
+                        <input type="text" id="reset_confirmation" name="confirmation" class="input-field" required
+                            autocomplete="off" placeholder="RESET">
+                    </div>
+                    <div class="flex gap-3 justify-end">
+                        <button type="button" class="btn-ghost"
+                            onclick="document.getElementById('resetDataModal').classList.add('hidden')">Batal</button>
+                        <button type="submit" class="btn-primary bg-rose-600 hover:bg-rose-700">Ya, Reset Data
+                            Saya</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
     @push('scripts')
         <script>
+            @if ($errors->resetData->any())
+                document.getElementById('resetDataModal').classList.remove('hidden');
+            @endif
+
             const profilePhotoInput = document.getElementById('profile_photo');
             const photoWarning = document.getElementById('photoWarning');
             const profileForm = document.querySelector('form[action="{{ route('profile.update') }}"]');

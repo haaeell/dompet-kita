@@ -132,6 +132,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
+    Route::delete('/profile/reset-data', [AuthController::class, 'resetData'])->name('profile.reset-data');
     Route::put('/feature-announcements/{featureAnnouncement}/read', [FeatureAnnouncementController::class, 'dismiss'])
         ->name('feature-announcements.read');
 
